@@ -51,8 +51,17 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
+      - name: 设置镜像为公开
+        run: |
+          curl -L -X PATCH \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/user/packages/container/${{ github.event.repository.name }}/visibility" \
+            -d '{"visibility":"public"}'
+          echo "✅ 镜像已设置为公开"
+
       - name: 输出镜像地址
         run: |
-          echo "✅ Docker 镜像已推送"
+          echo "✅ Docker 镜像已推送并设为公开"
           echo "镜像地址: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
           echo "可用于 Sealos 部署"
