@@ -1355,7 +1355,21 @@ app.post('/api/ticket/copy-stream', analyzeRateLimit, validate(schemas.ticketCop
 
 // ========== 全局错误处理 ==========
 
-// 404 处理
+// SPA fallback：非 /api 开头的 GET 请求返回 index.html（前端路由由浏览器处理）
+app.use((req, res, next) => {
+  if (req.method === 'GET' && !req.path.startsWith('/api/') && !req.path.startsWith('/generated/')) {
+    const indexPath = path.join(
+      path.isAbsolute(staticDir) ? staticDir : path.join(__dirname, staticDir),
+      'index.html'
+    );
+    if (fs.existsSync(indexPath)) {
+      return res.sendFile(indexPath);
+    }
+  }
+  next();
+});
+
+// 404 处理（API 请求到此）
 app.use((req, res) => {
   errorResponse(req, res, 404, '接口不存在');
 });
