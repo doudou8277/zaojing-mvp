@@ -42,6 +42,9 @@ COPY --from=backend-builder /app/server/node_modules ./node_modules
 # 复制后端源码
 COPY server/ ./
 
+# 复制 shared 共享数据目录（导演 DNA 等前后端共享数据）
+COPY shared/ /app/shared/
+
 # 从 frontend-builder 复制构建产物
 COPY --from=frontend-builder /app/dist /app/dist
 
