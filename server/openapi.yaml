@@ -1,0 +1,1286 @@
+openapi: 3.0.3
+info:
+  title: 造境 ZaoJing API
+  version: 1.0.0
+  description: |
+    AI 电影海报生成器后端 API。
+
+    ## 认证方式
+    除健康检查端点（`/api/health`、`/api/health/ready`）外，所有 `/api/*` 端点均需认证：
+    - 在请求头携带 `X-API-Key`。
+    - 开发环境未配置 `API_KEY` 时仅允许 localhost 访问。
+    - 管理端点（`/api/admin/*`）额外需要 `X-Admin-Token` 头。
+
+    ## 统一响应格式
+    - 成功响应：`{ data, requestId? }`（部分历史端点直接返回业务对象）
+    - 错误响应：`{ error: { code, message }, requestId?, details? }`
+
+    ## 速率限制
+    - 分析类端点：20 次/分钟
+    - 生图类端点：15 次/分钟
+    - 管理类端点：10 次/分钟
+    - 触发限流时返回 `429` 并附带 `Retry-After` 响应头。
+
+  contact:
+    name: 造境 ZaoJing
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:8127
+    description: 开发环境
+  - url: https://your-domain.com
+    description: 生产环境
+
+tags:
+  - name: 系统
+    description: 健康检查与就绪探针
+  - name: 错误追踪
+    description: 前端错误上报端点（免认证）
+  - name: AI 服务
+    description: 情绪分析、图片生成、文案生成等核心 AI 能力
+  - name: Agent 编排
+    description: 全链路一键生成
+  - name: 风格引擎
+    description: 风格解析、混搭与推荐
+  - name: MCP 文件系统
+    description: 海报画廊与导演参考素材管理
+  - name: 热门电影
+    description: 热门电影列表、详情与 DNA 分析
+  - name: 管理后台
+    description: 电影审核与数据刷新（需 Admin Token）
+
+# ========== 安全方案 ==========
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API 访问密钥，保护所有 /api/* 端点（健康检查除外）。
+    AdminTokenAuth:
+      type: apiKey
+      in: header
+      name: X-Admin-Token
+      description: 管理员令牌，保护 /api/admin/* 端点。
+
+  # ========== 可复用参数 ==========
+  parameters:
+    MovieIdPath:
+      name: id
+      in: path
+      required: true
+      description: 电影 ID（字母、数字、下划线、短横线，长度 1-64）
+      schema:
+        type: string
+        pattern: '^[a-zA-Z0-9_-]{1,64}$'
+    PosterIdPath:
+      name: id
+      in: path
+      required: true
+      description: 海报 ID（字母、数字、下划线、短横线，长度 1-64）
+      schema:
+        type: string
+        pattern: '^[a-zA-Z0-9_-]{1,64}$'
+    DirectorIdPath:
+      name: directorId
+      in: path
+      required: true
+      description: 导演 ID（字母、数字、下划线、短横线，长度 1-64）
+      schema:
+        type: string
+        pattern: '^[a-zA-Z0-9_-]{1,64}$'
+    RequestIdHeader:
+      name: X-Request-Id
+      in: header
+      required: false
+      description: 请求追踪 ID，未提供时由服务端自动生成。
+      schema:
+        type: string
+
+  # ========== 可复用响应 ==========
+  responses:
+    BadRequest:
+      description: 输入校验失败
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              code: 400
+              message: 请输入文字内容
+            details:
+              - field: text
+                message: 请输入文字内容
+    Unauthorized:
+      description: 未授权，缺少或无效的 API Key
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              code: 401
+              message: 未授权：缺少或无效的 API Key
+    Forbidden:
+      description: 禁止访问，无效的管理令牌
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              code: 403
+              message: 禁止：无效的管理令牌
+    NotFound:
+      description: 资源不存在
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              code: 404
+              message: 接口不存在
+    RateLimited:
+      description: 请求过于频繁
+      headers:
+        Retry-After:
+          description: 建议重试等待秒数
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              code: 429
+              message: 请求过于频繁，请稍后再试
+    InternalError:
+      description: 服务器内部错误
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              code: 500
+              message: 服务器内部错误
+
+  # ========== 可复用 Schema ==========
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: integer
+              description: HTTP 状态码
+            message:
+              type: string
+              description: 错误描述
+        requestId:
+          type: string
+          description: 请求追踪 ID
+        details:
+          type: array
+          description: 校验错误明细（仅 400 响应包含）
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+        service:
+          type: string
+          example: zaojing-server
+        version:
+          type: string
+          example: 1.0.0
+        agent:
+          type: boolean
+        mcp:
+          type: boolean
+        engines:
+          type: object
+          properties:
+            seedream:
+              type: boolean
+        cache:
+          type: object
+        cost:
+          type: object
+
+    ReadyResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: ready
+        checks:
+          type: object
+          properties:
+            server:
+              type: boolean
+            aiService:
+              type: boolean
+            tmdb:
+              type: boolean
+
+    ErrorReportRequest:
+      type: object
+      required: [errors]
+      properties:
+        errors:
+          type: array
+          description: 前端批量上报的错误列表
+          items:
+            type: object
+            required: [type, message]
+            properties:
+              type:
+                type: string
+                enum: [exception, message]
+                description: 错误类型（异常或消息）
+              level:
+                type: string
+                description: 消息级别（仅 type=message 时有效）
+                enum: [info, warning, error]
+              message:
+                type: string
+                description: 错误信息
+              stack:
+                type: string
+                description: 错误堆栈（仅 type=exception 时存在）
+              url:
+                type: string
+                description: 错误发生时的页面 URL
+              userAgent:
+                type: string
+                description: 浏览器 User-Agent
+              timestamp:
+                type: integer
+                description: 错误发生时间戳（毫秒）
+              timeSinceLoad:
+                type: integer
+                description: 距页面加载的毫秒数
+              sessionId:
+                type: string
+                description: 前端会话 ID
+              viewport:
+                type: object
+                properties:
+                  w:
+                    type: integer
+                  h:
+                    type: integer
+              extra:
+                type: object
+                description: 额外上下文（如 filename、lineno 等）
+
+    AnalyzeRequest:
+      type: object
+      required: [text]
+      properties:
+        text:
+          type: string
+          description: 用户输入文本（1-500 字）
+          minLength: 1
+          maxLength: 500
+        moodTagId:
+          type: string
+          description: 情绪标签 ID（可选）
+
+    AnalyzeResponse:
+      type: object
+      properties:
+        primaryEmotion:
+          type: string
+          description: 主情绪
+        recommendedDirectors:
+          type: array
+          items:
+            type: object
+            properties:
+              directorId:
+                type: string
+              name:
+                type: string
+
+    GenerateImageRequest:
+      type: object
+      required: [text, directorId]
+      properties:
+        text:
+          type: string
+          minLength: 1
+          maxLength: 500
+        directorId:
+          type: string
+          description: 导演 ID
+        emotion:
+          type: string
+        engine:
+          type: string
+          enum: [seedream, canvas]
+          default: seedream
+        size:
+          type: string
+          enum: [vertical, horizontal, square]
+          default: vertical
+        stylePrompt:
+          type: string
+          maxLength: 2000
+        negativePrompt:
+          type: string
+          maxLength: 1000
+
+    GenerateImageResponse:
+      type: object
+      properties:
+        engine:
+          type: string
+        imageBase64:
+          type: string
+          description: Base64 编码图片（可选）
+        imageUrl:
+          type: string
+          description: 图片 URL（可选）
+
+    GenerateCopyRequest:
+      type: object
+      required: [text, directorId]
+      properties:
+        text:
+          type: string
+          minLength: 1
+          maxLength: 500
+        directorId:
+          type: string
+        emotion:
+          type: string
+        type:
+          type: string
+          description: 文案类型（可选）
+
+    GenerateCopyResponse:
+      type: object
+      properties:
+        titles:
+          type: array
+          items:
+            type: string
+        quotes:
+          type: array
+          items:
+            type: string
+        review:
+          type: string
+
+    AgentCreateRequest:
+      type: object
+      required: [text]
+      properties:
+        text:
+          type: string
+          minLength: 1
+          maxLength: 500
+        moodTagId:
+          type: string
+        directorIds:
+          type: array
+          items:
+            type: string
+          description: 指定导演 ID 列表（可选，不传则自动匹配）
+        engine:
+          type: string
+          enum: [seedream, canvas]
+          default: seedream
+        size:
+          type: string
+          enum: [vertical, horizontal, square]
+          default: vertical
+
+    AgentCreateResponse:
+      type: object
+      properties:
+        emotion:
+          type: object
+        results:
+          type: array
+          items:
+            type: object
+
+    AnalyzeImageRequest:
+      type: object
+      required: [imageBase64]
+      properties:
+        imageBase64:
+          type: string
+          description: Base64 编码图片数据
+          minLength: 100
+          maxLength: 15000000
+
+    ParseStyleRequest:
+      type: object
+      required: [description]
+      properties:
+        description:
+          type: string
+          description: 风格描述文本（1-500 字）
+          minLength: 1
+          maxLength: 500
+
+    AnalyzeMovieRequest:
+      type: object
+      required: [movieName]
+      properties:
+        movieName:
+          type: string
+          description: 电影名称（1-200 字）
+          minLength: 1
+          maxLength: 200
+
+    BlendStylesRequest:
+      type: object
+      required: [styleA, styleB]
+      properties:
+        styleA:
+          type: object
+          description: 风格 A 对象
+        styleB:
+          type: object
+          description: 风格 B 对象
+        ratio:
+          type: number
+          minimum: 0
+          maximum: 1
+          default: 0.5
+          description: 混合比例（0=完全 A，1=完全 B）
+
+    RecommendStyleRequest:
+      type: object
+      required: [emotion]
+      properties:
+        emotion:
+          type: string
+          description: 情绪关键词
+        styles:
+          type: array
+          description: 候选风格列表
+          default: []
+          items:
+            type: object
+
+    SavePosterRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 200
+        director:
+          type: string
+          maxLength: 100
+        imageBase64:
+          type: string
+          maxLength: 15000000
+        emotion:
+          type: string
+          maxLength: 100
+      description: 至少需提供 title 或 imageBase64 之一。
+
+    Movie:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        styleDNA:
+          type: object
+        colors:
+          type: array
+          items:
+            type: string
+
+# ========== 路径定义 ==========
+paths:
+  # ---------- 系统 ----------
+  /api/health:
+    get:
+      summary: 健康检查（存活探针）
+      description: 返回服务状态、缓存统计与成本摘要，用于存活探针。
+      tags: [系统]
+      security: []
+      responses:
+        '200':
+          description: 服务正常
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /api/health/ready:
+    get:
+      summary: 就绪检查
+      description: |
+        检查关键依赖是否就绪（AI 服务、TMDB）。
+        返回 200 表示服务可用，503 表示依赖未就绪。
+      tags: [系统]
+      security: []
+      responses:
+        '200':
+          description: 服务就绪
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadyResponse'
+        '503':
+          description: 依赖未就绪
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadyResponse'
+
+  # ---------- 错误追踪 ----------
+  /api/errors:
+    post:
+      summary: 前端错误上报
+      description: |
+        接收前端轻量错误追踪模块（sentry.js）批量上报的未捕获异常与消息。
+        端点免 API Key 认证（前端以同源 fetch 上报，无法携带 API Key），
+        仅记录日志，不做持久化存储。
+      tags: [错误追踪]
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/RequestIdHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorReportRequest'
+            example:
+              errors:
+                - type: exception
+                  message: Cannot read properties of undefined (reading 'map')
+                  url: https://example.com/
+                  sessionId: lx1abc23
+                  timeSinceLoad: 5234
+                  stack: "TypeError: Cannot read properties of undefined...\n    at HTMLButtonElement.<anonymous>"
+      responses:
+        '204':
+          description: 上报成功（无响应体）
+        '400':
+          description: 格式错误（errors 不是数组）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: INVALID_FORMAT
+                  message: errors 必须是数组
+
+  # ---------- AI 服务 ----------
+  /api/analyze:
+    post:
+      summary: 情绪分析
+      description: 分析用户输入文本的情绪，并推荐匹配的导演风格。
+      tags: [AI 服务]
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RequestIdHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalyzeRequest'
+            example:
+              text: 今天阳光明媚，我想去海边
+              moodTagId: joy
+      responses:
+        '200':
+          description: 分析成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyzeResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/generate-image:
+    post:
+      summary: AI 图片生成
+      description: 根据文本、导演风格生成电影海报图片。
+      tags: [AI 服务]
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RequestIdHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateImageRequest'
+            example:
+              text: 孤独的旅人走在沙漠中
+              directorId: miyazaki
+              engine: seedream
+              size: vertical
+      responses:
+        '200':
+          description: 图片生成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateImageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/generate-copy:
+    summary: AI 文案生成
+    description: 根据文本与导演风格生成海报文案（标题、金句、影评）。
+    post:
+      summary: AI 文案生成
+      tags: [AI 服务]
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RequestIdHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateCopyRequest'
+            example:
+              text: 孤独的旅人走在沙漠中
+              directorId: wkw
+              type: all
+      responses:
+        '200':
+          description: 文案生成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateCopyResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/generate-copy-stream:
+    post:
+      summary: AI 文案流式生成（SSE）
+      description: |
+        通过 Server-Sent Events 逐 token 返回文案，前端可实现打字机效果。
+
+        事件类型：
+        - `start`：开始生成，携带 `{ directorId, directorName }`
+        - `token`：逐 token 输出，携带 `{ token }`
+        - `done`：生成完成，携带完整 JSON 结果
+        - `error`：生成失败，携带 `{ error }`
+      tags: [AI 服务]
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RequestIdHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateCopyRequest'
+      responses:
+        '200':
+          description: SSE 流式响应
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                description: SSE 事件流
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  # ---------- Agent 编排 ----------
+  /api/agent/create:
+    post:
+      summary: Agent 全链路编排
+      description: 一键完成情绪分析 + 导演匹配 + 图片生成 + 文案生成的全链路编排。
+      tags: [Agent 编排]
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RequestIdHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentCreateRequest'
+            example:
+              text: 孤独的旅人走在沙漠中
+              moodTagId: melancholy
+              directorIds: [miyazaki, wkw]
+              engine: seedream
+              size: vertical
+      responses:
+        '200':
+          description: 编排完成
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentCreateResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/analyze-image:
+    post:
+      summary: 图片情绪分析
+      description: 分析上传图片的情绪，并推荐匹配的导演风格。
+      tags: [AI 服务]
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RequestIdHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalyzeImageRequest'
+      responses:
+        '200':
+          description: 分析成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyzeResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ---------- 风格引擎 ----------
+  /api/parse-style:
+    post:
+      summary: 自定义风格解析
+      description: 将自然语言风格描述解析为结构化风格对象。
+      tags: [风格引擎]
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RequestIdHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ParseStyleRequest'
+            example:
+              description: 赛博朋克风格，霓虹灯光，雨夜城市
+      responses:
+        '200':
+          description: 解析成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  styleName:
+                    type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/analyze-movie:
+    post:
+      summary: 电影风格分析
+      description: 分析电影名称对应的视觉风格，生成结构化风格对象。
+      tags: [风格引擎]
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RequestIdHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalyzeMovieRequest'
+            example:
+              movieName: 银翼杀手
+      responses:
+        '200':
+          description: 分析成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  styleName:
+                    type: string
+                  source:
+                    type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/blend-styles:
+    post:
+      summary: 风格混搭
+      description: 将两种风格按比例混合，生成新的风格对象。
+      tags: [风格引擎]
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RequestIdHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BlendStylesRequest'
+      responses:
+        '200':
+          description: 混搭成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  styleName:
+                    type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/recommend-style:
+    post:
+      summary: 情绪推荐风格
+      description: 根据情绪从候选风格列表中推荐匹配度最高的风格。
+      tags: [风格引擎]
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RequestIdHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecommendStyleRequest'
+      responses:
+        '200':
+          description: 推荐成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    matchScore:
+                      type: string
+                      description: 匹配度百分比
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ---------- MCP 文件系统 ----------
+  /api/mcp/gallery:
+    get:
+      summary: 读取海报画廊
+      description: 获取已保存的海报列表。
+      tags: [MCP 文件系统]
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RequestIdHeader'
+      responses:
+        '200':
+          description: 画廊列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/mcp/save-poster:
+    post:
+      summary: 保存海报
+      description: 将生成的海报保存到文件系统画廊。至少需提供 title 或 imageBase64 之一。
+      tags: [MCP 文件系统]
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RequestIdHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SavePosterRequest'
+            example:
+              title: 沙漠旅人
+              director: miyazaki
+              emotion: melancholy
+      responses:
+        '201':
+          description: 保存成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/mcp/gallery/{id}:
+    delete:
+      summary: 删除海报
+      description: 根据 ID 删除指定海报。
+      tags: [MCP 文件系统]
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PosterIdPath'
+        - $ref: '#/components/parameters/RequestIdHeader'
+      responses:
+        '204':
+          description: 删除成功（无响应体）
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/mcp/reference/{directorId}:
+    get:
+      summary: 获取导演参考素材
+      description: 根据导演 ID 获取该导演的参考风格素材列表。
+      tags: [MCP 文件系统]
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DirectorIdPath'
+        - $ref: '#/components/parameters/RequestIdHeader'
+      responses:
+        '200':
+          description: 参考素材列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ---------- 热门电影 ----------
+  /api/movies:
+    get:
+      summary: 获取已审核的热门电影列表
+      description: 返回已通过审核的热门电影列表。无数据时返回 fallback 标记。
+      tags: [热门电影]
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RequestIdHeader'
+      responses:
+        '200':
+          description: 电影列表
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  movies:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Movie'
+                  fallback:
+                    type: boolean
+                  message:
+                    type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/movies/ranking:
+    get:
+      summary: 获取热度排行榜
+      description: 返回电影热度排行榜数据。
+      tags: [热门电影]
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RequestIdHeader'
+      responses:
+        '200':
+          description: 排行榜数据
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/movies/{id}:
+    get:
+      summary: 获取电影详情
+      description: 根据电影 ID 获取单部电影详情。
+      tags: [热门电影]
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: '#/components/parameters/MovieIdPath'
+        - $ref: '#/components/parameters/RequestIdHeader'
+      responses:
+        '200':
+          description: 电影详情
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Movie'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/movies/{id}/analyze-dna:
+    post:
+      summary: 触发电影风格 DNA 分析
+      description: |
+        分析指定电影的视觉风格 DNA（色彩、构图等）。
+        若已有 DNA 数据则直接返回缓存结果。
+      tags: [热门电影]
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: '#/components/parameters/MovieIdPath'
+        - $ref: '#/components/parameters/RequestIdHeader'
+      responses:
+        '200':
+          description: DNA 分析结果
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  styleDNA:
+                    type: object
+                  colors:
+                    type: array
+                    items:
+                      type: string
+                  cached:
+                    type: boolean
+                    description: 是否为缓存结果
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ---------- 管理后台 ----------
+  /api/admin/movies/{id}/approve:
+    post:
+      summary: 审核通过电影
+      description: 管理员审核通过待审核电影，可附加审核信息。
+      tags: [管理后台]
+      security:
+        - ApiKeyAuth: []
+        - AdminTokenAuth: []
+      parameters:
+        - $ref: '#/components/parameters/MovieIdPath'
+        - $ref: '#/components/parameters/RequestIdHeader'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              description: 可选的审核附加信息
+      responses:
+        '200':
+          description: 审核成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Movie'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/admin/movies/{id}/reject:
+    post:
+      summary: 拒绝电影
+      description: 管理员拒绝待审核电影。
+      tags: [管理后台]
+      security:
+        - ApiKeyAuth: []
+        - AdminTokenAuth: []
+      parameters:
+        - $ref: '#/components/parameters/MovieIdPath'
+        - $ref: '#/components/parameters/RequestIdHeader'
+      responses:
+        '200':
+          description: 拒绝成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/admin/movies/refresh:
+    post:
+      summary: 手动刷新热度数据
+      description: 管理员手动触发电影热度数据刷新（从 TMDB 拉取最新数据）。
+      tags: [管理后台]
+      security:
+        - ApiKeyAuth: []
+        - AdminTokenAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RequestIdHeader'
+      responses:
+        '200':
+          description: 刷新成功
+          content:
+            application/json:
+              schema:
+                type: object
+                description: 刷新结果统计
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'

@@ -1,0 +1,12 @@
+{
+  "movies": [
+    {
+      "id": "m1",
+      "title": "原名",
+      "heatScore": 90,
+      "featured": true
+    }
+  ],
+  "lastFetch": null,
+  "pendingReview": []
+}

@@ -1,0 +1,207 @@
+# 造境 ZaoJing CI/CD 流水线
+# PR 时运行测试，合并到 main 时构建 Docker 镜像并部署
+
+name: CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+# 并发控制：同一分支的新提交自动取消旧的 CI 运行
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  # ========== 测试任务 ==========
+  test:
+    name: 单元测试 + 类型检查
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: |
+            package-lock.json
+            server/package-lock.json
+            e2e/package-lock.json
+
+      # --- 后端测试 ---
+      - name: 安装后端依赖
+        working-directory: server
+        run: npm ci
+
+      - name: 运行后端单元测试
+        working-directory: server
+        run: npm test
+
+      - name: 上传测试覆盖率
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-test-results
+          path: server/coverage/
+          retention-days: 7
+
+      # --- 前端构建 + 类型检查 ---
+      - name: 安装前端依赖
+        run: npm ci
+
+      - name: 安全审计（前端）
+        run: npm audit --audit-level=high
+        continue-on-error: true
+
+      - name: 安全审计（后端）
+        working-directory: server
+        run: npm audit --audit-level=high
+        continue-on-error: true
+
+      - name: TypeScript 类型检查
+        run: npm run typecheck
+
+      - name: ESLint 代码规范检查
+        run: npm run lint
+
+      - name: 前端构建
+        run: npm run build
+
+      - name: Bundle 体积检查
+        run: npm run check-bundle
+        continue-on-error: true
+
+      - name: 运行前端单元测试
+        run: npm test
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          retention-days: 7
+
+  # ========== E2E 测试任务 ==========
+  e2e:
+    name: E2E 测试
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: |
+            package-lock.json
+            server/package-lock.json
+            e2e/package-lock.json
+
+      - name: 安装前端依赖
+        run: npm ci
+
+      - name: 构建前端（供 E2E 测试使用）
+        run: npm run build
+
+      - name: 安装服务端依赖
+        working-directory: server
+        run: npm ci
+
+      - name: 安装 E2E 依赖
+        working-directory: e2e
+        run: npm ci
+
+      - name: 安装 Playwright 浏览器
+        working-directory: e2e
+        run: npx playwright install --with-deps chromium
+
+      - name: 启动服务器（带健康检查重试）
+        working-directory: server
+        run: |
+          STATIC_DIR=../dist node server.js &
+          # 重试健康检查，最多等待 30 秒
+          for i in $(seq 1 15); do
+            if curl -sf http://localhost:8127/api/health > /dev/null 2>&1; then
+              echo "服务器启动成功"
+              break
+            fi
+            echo "等待服务器启动... ($i/15)"
+            sleep 2
+          done
+          # 最终验证
+          curl -sf http://localhost:8127/api/health || (echo "服务器启动失败" && exit 1)
+
+      - name: 运行 E2E 测试
+        working-directory: e2e
+        run: npx playwright test
+
+      - name: 上传测试报告
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: e2e/playwright-report/
+          retention-days: 7
+
+  # ========== Docker 构建 ==========
+  docker:
+    name: Docker 构建
+    runs-on: ubuntu-latest
+    needs: [test, e2e]
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 构建 Docker 镜像
+        run: docker build -t zaojing:${{ github.sha }} .
+
+      - name: 安全扫描 Docker 镜像
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: zaojing:${{ github.sha }}
+          format: table
+          exit-code: '1'
+          severity: CRITICAL,HIGH
+        continue-on-error: true
+
+      - name: 运行容器冒烟测试
+        run: |
+          docker run -d --name zaojing-test -p 8127:8127 zaojing:${{ github.sha }}
+          sleep 5
+          curl -s http://localhost:8127/api/health | grep -q '"status"'
+          docker stop zaojing-test
+          docker rm zaojing-test
+
+  # ========== 部署（仅 main 分支） ==========
+  # 注意：此处为部署通知，实际部署步骤需根据目标平台配置
+  # 可选方案：SSH 部署、云平台 CLI、Kubernetes kubectl 等
+  deploy:
+    name: 部署通知
+    runs-on: ubuntu-latest
+    needs: [test, e2e, docker]
+    if: github.ref == 'refs/heads/main'
+    environment: production
+
+    steps:
+      - name: 部署通知
+        run: |
+          echo "✅ 造境 ZaoJing 部署成功"
+          echo "提交: ${{ github.event.head_commit.message }}"
+          echo "作者: ${{ github.actor }}"
+          echo "镜像: zaojing:${{ github.sha }}"
+          echo "TODO: 配置实际部署步骤（SSH/云平台/K8s）"

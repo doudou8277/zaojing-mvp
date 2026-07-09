@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>造境 ZaoJing · AI 电影海报生成器 — TRAE AI 创意大赛参赛作品</title>
+<meta name="description" content="造境是一款 AI 电影海报生成器：输入一句话，AI 分析情绪、匹配导演、30秒生成电影级海报。基于 TRAE 构建。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700;900&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   造境 ZaoJing — 竞赛展示页
+   Aesthetic: Cinematic Showcase · Dark Gallery · Editorial
+   ============================================================ */
+:root{
+  --bg:#0a0a0a; --bg-2:#0f0f0f; --bg-3:#161616; --bg-4:#1e1e1e;
+  --ink:#f5f0e8; --ink-dim:#c4bcb0; --ink-mute:#a59e92; --ink-faint:#9a9388;
+  --line:rgba(245,240,232,.14); --line-strong:rgba(245,240,232,.30);
+  --miya:#7fc4ab; --wkw:#3d7a5a; --koreeda:#d4b88a; --wes:#e89bb0; --nolan:#5a8aac; --chow:#e8b830;
+  --jia:#a89060; --lee:#2d6a4f; --kuro:#c0392b; --sofia:#e8c5c5; --chaz:#6a1b9a; --quin:#b71c1c;
+  --accent:#7fc4ab;
+  --serif:'Noto Serif SC',serif; --sans:'Noto Sans SC',sans-serif; --mono:'JetBrains Mono',monospace;
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.7;overflow-x:hidden}
+h1,h2,h3,h4{font-family:var(--serif);font-weight:700;line-height:1.3}
+a{color:var(--miya);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* ========== 导航 ========== */
+.nav{position:fixed;top:0;left:0;right:0;z-index:100;height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 32px;background:rgba(10,10,10,.85);backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}
+.nav-logo{font-family:var(--serif);font-weight:900;font-size:1.2rem;letter-spacing:.04em}
+.nav-logo span{color:var(--miya)}
+.nav-links{display:flex;gap:28px;align-items:center}
+.nav-links a{font-size:.85rem;color:var(--ink-mute);transition:color .2s}
+.nav-links a:hover{color:var(--ink);text-decoration:none}
+.nav-cta{padding:8px 20px;background:var(--ink);color:var(--bg)!important;border-radius:8px;font-weight:500;font-size:.85rem;transition:all .25s var(--ease)}
+.nav-cta:hover{background:var(--miya);text-decoration:none;transform:translateY(-1px)}
+
+/* ========== Hero ========== */
+.hero{min-height:100vh;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;padding-top:60px}
+.hero-bg{position:absolute;inset:0;z-index:0}
+.hero-bg::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 30% 40%,rgba(127,196,171,.08) 0%,transparent 50%),radial-gradient(ellipse at 70% 60%,rgba(58,122,90,.06) 0%,transparent 50%)}
+.hero-bg::after{content:'';position:absolute;inset:0;background:
+  repeating-linear-gradient(90deg,transparent,transparent 2px,rgba(245,240,232,.015) 2px,rgba(245,240,232,.015) 4px)}
+.hero-content{position:relative;z-index:1;text-align:center;max-width:800px;padding:0 24px}
+.hero-tag{display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border:1px solid var(--line-strong);border-radius:24px;font-size:.78rem;color:var(--ink-mute);font-family:var(--mono);margin-bottom:32px;letter-spacing:.05em}
+.hero-tag .dot{width:6px;height:6px;border-radius:50%;background:var(--miya);box-shadow:0 0 8px var(--miya);animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.hero h1{font-size:clamp(2.5rem,6vw,4.5rem);font-weight:900;margin-bottom:16px;letter-spacing:.02em}
+.hero h1 .accent{color:var(--miya)}
+.hero-sub{font-size:clamp(1rem,2vw,1.25rem);color:var(--ink-dim);margin-bottom:12px;font-family:var(--serif)}
+.hero-desc{font-size:.95rem;color:var(--ink-mute);max-width:560px;margin:0 auto 40px;line-height:1.8}
+.hero-actions{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 32px;font-size:.95rem;font-weight:500;border-radius:8px;transition:all .25s var(--ease);cursor:pointer;border:none;font-family:inherit}
+.btn-primary{background:var(--ink);color:var(--bg)}
+.btn-primary:hover{background:var(--miya);transform:translateY(-2px);box-shadow:0 8px 24px rgba(127,196,171,.3)}
+.btn-ghost{border:1px solid var(--line-strong);color:var(--ink-dim);background:transparent}
+.btn-ghost:hover{border-color:var(--ink);color:var(--ink);background:var(--bg-3)}
+
+/* Hero 装饰胶片孔 */
+.film-strip{position:absolute;top:0;bottom:0;width:32px;display:flex;flex-direction:column;justify-content:space-evenly;padding:80px 0;z-index:0}
+.film-strip.left{left:0}.film-strip.right{right:0}
+.film-hole{width:16px;height:20px;background:var(--bg-3);border-radius:3px;margin:0 auto}
+
+/* ========== 通用 Section ========== */
+.section{padding:100px 24px;max-width:1200px;margin:0 auto}
+.section-label{font-size:.75rem;font-weight:500;color:var(--miya);text-transform:uppercase;letter-spacing:.15em;font-family:var(--mono);margin-bottom:12px}
+.section-title{font-size:clamp(1.8rem,4vw,2.8rem);margin-bottom:16px}
+.section-desc{font-size:1rem;color:var(--ink-mute);max-width:600px;margin-bottom:48px}
+
+/* ========== How It Works ========== */
+.flow{display:grid;grid-template-columns:repeat(3,1fr);gap:32px;margin-top:48px}
+.flow-step{position:relative;padding:32px;background:var(--bg-2);border:1px solid var(--line);border-radius:16px;transition:all .3s var(--ease)}
+.flow-step:hover{border-color:var(--line-strong);transform:translateY(-4px)}
+.flow-num{position:absolute;top:-14px;left:32px;width:32px;height:32px;background:var(--miya);color:var(--bg);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:.85rem}
+.flow-icon{font-size:2rem;margin-bottom:16px}
+.flow-step h3{font-size:1.15rem;margin-bottom:8px}
+.flow-step p{font-size:.88rem;color:var(--ink-mute);line-height:1.6}
+.flow-arrow{position:absolute;top:50%;right:-20px;color:var(--ink-faint);font-size:1.5rem;transform:translateY(-50%);z-index:1}
+
+/* ========== Features Grid ========== */
+.features{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin-top:48px}
+.feature-card{padding:28px;background:var(--bg-2);border:1px solid var(--line);border-radius:12px;transition:all .3s var(--ease);position:relative;overflow:hidden}
+.feature-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--accent-color,var(--miya));transform:scaleX(0);transform-origin:left;transition:transform .3s var(--ease)}
+.feature-card:hover::before{transform:scaleX(1)}
+.feature-card:hover{border-color:var(--line-strong);transform:translateY(-2px)}
+.feature-icon{font-size:1.8rem;margin-bottom:12px}
+.feature-card h3{font-size:1.05rem;margin-bottom:6px}
+.feature-card p{font-size:.85rem;color:var(--ink-mute);line-height:1.6}
+.feature-tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.7rem;font-family:var(--mono);margin-top:8px;background:rgba(127,196,171,.12);color:var(--miya)}
+
+/* ========== 导演展示 ========== */
+.directors-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-top:48px}
+.director-card{padding:24px 16px;background:var(--bg-2);border:1px solid var(--line);border-radius:12px;text-align:center;transition:all .3s var(--ease);cursor:pointer;position:relative;overflow:hidden}
+.director-card:hover{transform:translateY(-4px);border-color:var(--dir-c,var(--miya))}
+.director-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--dir-c,var(--miya));transform:scaleX(0);transition:transform .3s var(--ease)}
+.director-card:hover::after{transform:scaleX(1)}
+.director-avatar{font-size:2.5rem;margin-bottom:8px}
+.director-name{font-family:var(--serif);font-weight:700;font-size:1rem;margin-bottom:2px}
+.director-en{font-size:.7rem;color:var(--ink-faint);font-family:var(--mono);margin-bottom:8px}
+.director-tag{font-size:.78rem;color:var(--ink-mute)}
+
+/* ========== 技术架构 ========== */
+.tech-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;margin-top:48px}
+.tech-card{padding:28px;background:var(--bg-2);border:1px solid var(--line);border-radius:12px}
+.tech-card h3{font-size:1.05rem;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.tech-card h3 .badge{font-size:.65rem;padding:2px 8px;border-radius:4px;font-family:var(--mono);font-weight:400}
+.tech-card .badge.trae{background:rgba(127,196,171,.15);color:var(--miya)}
+.tech-card .badge.ai{background:rgba(232,184,48,.15);color:var(--chow)}
+.tech-card .badge.mcp{background:rgba(232,155,176,.15);color:var(--wes)}
+.tech-list{list-style:none;padding:0}
+.tech-list li{padding:6px 0;font-size:.85rem;color:var(--ink-dim);border-bottom:1px solid var(--line)}
+.tech-list li:last-child{border-bottom:none}
+.tech-list li code{font-family:var(--mono);font-size:.78rem;color:var(--miya);background:var(--bg-3);padding:1px 6px;border-radius:3px}
+
+/* ========== 评审标准映射 ========== */
+.criteria-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px;margin-top:48px}
+.criteria-card{padding:28px;background:var(--bg-2);border:1px solid var(--line);border-radius:12px;position:relative}
+.criteria-score{position:absolute;top:20px;right:20px;font-family:var(--mono);font-size:1.5rem;font-weight:700;color:var(--miya)}
+.criteria-card h3{font-size:1rem;margin-bottom:12px;padding-right:60px}
+.criteria-points{list-style:none;padding:0}
+.criteria-points li{padding:4px 0;font-size:.82rem;color:var(--ink-mute);padding-left:16px;position:relative}
+.criteria-points li::before{content:'•';position:absolute;left:0;color:var(--miya)}
+
+/* ========== CTA ========== */
+.cta-section{text-align:center;padding:120px 24px;position:relative;overflow:hidden}
+.cta-section::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(127,196,171,.06) 0%,transparent 60%)}
+.cta-content{position:relative;z-index:1;max-width:600px;margin:0 auto}
+.cta-content h2{font-size:clamp(1.8rem,4vw,2.8rem);margin-bottom:16px}
+.cta-content p{font-size:1rem;color:var(--ink-mute);margin-bottom:32px}
+
+/* ========== Footer ========== */
+.footer{padding:40px 24px;border-top:1px solid var(--line);text-align:center}
+.footer p{font-size:.8rem;color:var(--ink-faint)}
+.footer .footer-links{display:flex;gap:20px;justify-content:center;margin-bottom:12px}
+.footer .footer-links a{font-size:.82rem;color:var(--ink-mute)}
+
+/* ========== 响应式 ========== */
+@media(max-width:768px){
+  .nav{padding:0 16px}
+  .nav-links{display:none}
+  .nav-links.show-mobile{display:flex;flex-direction:column;position:absolute;top:60px;left:0;right:0;background:var(--bg-2);padding:16px;gap:12px;border-bottom:1px solid var(--line)}
+  .flow{grid-template-columns:1fr}
+  .flow-arrow{display:none}
+  .film-strip{display:none}
+  .section{padding:60px 16px}
+  .hero-actions{flex-direction:column}
+  .hero-actions .btn{width:100%}
+}
+
+/* ========== 动画 ========== */
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.fade-up{animation:fadeUp .6s var(--ease) forwards}
+.delay-1{animation-delay:.1s;opacity:0}
+.delay-2{animation-delay:.2s;opacity:0}
+.delay-3{animation-delay:.3s;opacity:0}
+.delay-4{animation-delay:.4s;opacity:0}
+
+/* ========== 海报预览 ========== */
+.poster-preview{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-top:48px}
+.poster-item{aspect-ratio:2/3;border-radius:8px;overflow:hidden;border:1px solid var(--line);position:relative;transition:all .3s var(--ease)}
+.poster-item:hover{transform:scale(1.03);border-color:var(--line-strong)}
+.poster-item .poster-bg{position:absolute;inset:0}
+.poster-item .poster-text{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:20px;text-align:center}
+.poster-item .poster-text h4{font-size:.9rem;margin-bottom:4px;text-shadow:0 2px 8px rgba(0,0,0,.5)}
+.poster-item .poster-text p{font-size:.7rem;color:rgba(255,255,255,.7);text-shadow:0 1px 4px rgba(0,0,0,.5)}
+.poster-item .poster-label{position:absolute;bottom:8px;left:8px;font-size:.65rem;padding:2px 8px;background:rgba(0,0,0,.5);border-radius:4px;color:#fff;font-family:var(--mono)}
+
+/* 各导演预览背景 */
+.poster-miyazaki{background:linear-gradient(180deg,#4a90d9 0%,#87ceeb 25%,#b3e5fc 50%,#c8e6c9 70%,#66bb6a 100%)}
+.poster-wkw{background:linear-gradient(135deg,#0d1f15 0%,#1a2e1f 50%,#0a1810 100%)}
+.poster-koreeda{background:linear-gradient(180deg,#f5ede0 0%,#f0e7d3 50%,#e8dcc4 100%)}
+.poster-wes{background:linear-gradient(180deg,#fce4ec 0%,#a4d4ae 100%)}
+.poster-nolan{background:linear-gradient(180deg,#0a1929 0%,#0d1b2a 50%,#050d18 100%)}
+.poster-chow{background:linear-gradient(180deg,#fff3cd 0%,#ffcc00 50%,#ff9800 100%)}
+.poster-jia{background:linear-gradient(180deg,#8b7355 0%,#a89060 50%,#6b5d3e 100%)}
+.poster-lee{background:linear-gradient(180deg,#1b5e20 0%,#2d6a4f 50%,#0d3b1f 100%)}
+.poster-kuro{background:linear-gradient(180deg,#c0392b 0%,#8e1d1d 50%,#1a237e 100%)}
+.poster-sofia{background:linear-gradient(180deg,#fce4ec 0%,#e8c5c5 50%,#bbdefb 100%)}
+.poster-chaz{background:linear-gradient(180deg,#6a1b9a 0%,#8e24aa 50%,#ff6f00 100%)}
+.poster-quin{background:linear-gradient(180deg,#b71c1c 0%,#d32f2f 50%,#ffc107 100%)}
+
+/* ========== P0: 可访问性修复 ========== */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.01ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.01ms !important;
+    scroll-behavior:auto !important;
+  }
+}
+button:focus-visible,a:focus-visible,input:focus-visible,[tabindex]:focus-visible{
+  outline:2px solid var(--miya);outline-offset:2px;border-radius:2px;
+}
+</style>
+</head>
+<body>
+
+<!-- ========== 导航 ========== -->
+<nav class="nav">
+  <div class="nav-logo">造<span>境</span></div>
+  <div class="nav-links" id="nav-links">
+    <a href="#how">工作原理</a>
+    <a href="#features">功能亮点</a>
+    <a href="#directors">导演阵容</a>
+    <a href="#tech">技术架构</a>
+    <a href="#criteria">评审映射</a>
+    <a href="index.html" class="nav-cta">立即造境 →</a>
+  </div>
+</nav>
+
+<!-- ========== Hero ========== -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="film-strip left">
+    <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+    <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+    <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+    <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+  </div>
+  <div class="film-strip right">
+    <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+    <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+    <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+    <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+  </div>
+  <div class="hero-content">
+    <div class="hero-tag fade-up">
+      <span class="dot"></span>
+      TRAE AI 创意大赛参赛作品
+    </div>
+    <h1 class="fade-up delay-1">造<span class="accent">境</span> ZaoJing</h1>
+    <p class="hero-sub fade-up delay-2">一句话，让你的情绪变成电影海报</p>
+    <p class="hero-desc fade-up delay-3">
+      输入文字、语音或图片，AI 分析情绪，匹配 12 位世界级导演美学风格，<br>
+      30 秒生成电影级海报。支持多人共创、预告片模拟、交互式情绪光谱。
+    </p>
+    <div class="hero-actions fade-up delay-4">
+      <a href="index.html" class="btn btn-primary">立即造境 →</a>
+      <a href="#how" class="btn btn-ghost">了解工作原理</a>
+    </div>
+  </div>
+</section>
+
+<!-- ========== How It Works ========== -->
+<section class="section" id="how">
+  <div class="section-label">HOW IT WORKS</div>
+  <h2 class="section-title">三步生成你的电影海报</h2>
+  <p class="section-desc">从情绪到画面，AI 全流程参与创作。</p>
+
+  <div class="flow">
+    <div class="flow-step" style="--accent-color:var(--wkw)">
+      <div class="flow-num">1</div>
+      <div class="flow-icon">✍️</div>
+      <h3>输入情绪</h3>
+      <p>写下一句话，或选择心情标签。AI 理解你的情绪内核，提取关键词和情感强度。</p>
+      <div class="flow-arrow">→</div>
+    </div>
+    <div class="flow-step" style="--accent-color:var(--koreeda)">
+      <div class="flow-num">2</div>
+      <div class="flow-icon">🎬</div>
+      <h3>匹配导演</h3>
+      <p>AI 根据情绪自动推荐最匹配的导演，计算匹配度。也可手动选择 1-12 位导演拍系列海报。</p>
+      <div class="flow-arrow">→</div>
+    </div>
+    <div class="flow-step" style="--accent-color:var(--miya)">
+      <div class="flow-num">3</div>
+      <div class="flow-icon">🖼️</div>
+      <h3>生成海报</h3>
+      <p>AI 生成电影级背景画面，Canvas 引擎叠加文字排版、胶片质感、暗角效果，输出高清海报。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ========== Features ========== -->
+<section class="section" id="features">
+  <div class="section-label">FEATURES</div>
+  <h2 class="section-title">功能亮点</h2>
+  <p class="section-desc">不止是海报生成器，更是情绪到电影的完整创作链路。</p>
+
+  <div class="features">
+    <div class="feature-card" style="--accent-color:var(--miya)">
+      <div class="feature-icon">🧠</div>
+      <h3>AI 情绪分析</h3>
+      <p>GPT-4o 分析文字情绪，识别情感类型、强度、关键词，智能推荐最匹配的导演。</p>
+      <span class="feature-tag">GPT-4o</span>
+    </div>
+    <div class="feature-card" style="--accent-color:var(--wkw)">
+      <div class="feature-icon">🎨</div>
+      <h3>双引擎 AI 生图</h3>
+      <p>支持 GPT Image 2 和 Seedream 4.0 双引擎切换，生成电影级背景画面。Canvas 模式优雅降级。</p>
+      <span class="feature-tag">GPT Image + Seedream</span>
+    </div>
+    <div class="feature-card" style="--accent-color:var(--koreeda)">
+      <div class="feature-icon">🎭</div>
+      <h3>12 位导演美学</h3>
+      <p>宫崎骏、王家卫、是枝裕和、韦斯·安德森、诺兰、周星驰、贾樟柯、李安、黑泽明、索菲亚·科波拉、查泽雷、昆汀，每位导演独特的视觉语言和色彩体系。</p>
+      <span class="feature-tag">12 Directors</span>
+    </div>
+    <div class="feature-card" style="--accent-color:var(--wes)">
+      <div class="feature-icon">📐</div>
+      <h3>系列海报 & 九宫格</h3>
+      <p>多位导演同时拍摄系列海报，或生成九宫格合集。4 种版式：竖版、横版、方形、九宫格。</p>
+      <span class="feature-tag">Multi-Poster</span>
+    </div>
+    <div class="feature-card" style="--accent-color:var(--nolan)">
+      <div class="feature-icon">✏️</div>
+      <h3>二次创作</h3>
+      <p>切换备选标题、刷新导演金句、切换版式、开关金句显示。每一张海报都可以反复打磨。</p>
+      <span class="feature-tag">Creative Control</span>
+    </div>
+    <div class="feature-card" style="--accent-color:var(--chow)">
+      <div class="feature-icon">🎬</div>
+      <h3>电影上映模拟</h3>
+      <p>模拟电影信息卡片：上映日期、豆瓣评分、票房、类型标签。AI 影评 + 导演手记，沉浸式体验。</p>
+      <span class="feature-tag">Immersive</span>
+    </div>
+    <div class="feature-card" style="--accent-color:var(--miya)">
+      <div class="feature-icon">🌈</div>
+      <h3>情绪光谱可视化</h3>
+      <p>将抽象情绪转化为可视化光谱，渐变色条展示情绪类型和强度，关键词标签辅助理解。</p>
+      <span class="feature-tag">Visualization</span>
+    </div>
+    <div class="feature-card" style="--accent-color:var(--wkw)">
+      <div class="feature-icon">🖼️</div>
+      <h3>电影墙 & 分享</h3>
+      <p>本地持久化保存作品集，支持下载高清海报、生成分享链接和二维码，一键分享到社交平台。</p>
+      <span class="feature-tag">Persistence</span>
+    </div>
+    <div class="feature-card" style="--accent-color:var(--miya)">
+      <div class="feature-icon">🔌</div>
+      <h3>TRAE 深度集成</h3>
+      <p>基于 TRAE IDE 构建，集成 MCP 工具链、Agent 编排、多模态输入。Node.js 后端保护 API Key。</p>
+      <span class="feature-tag">TRAE Native</span>
+    </div>
+    <div class="feature-card" style="--accent-color:var(--wkw)">
+      <div class="feature-icon">🎤</div>
+      <h3>多模态输入</h3>
+      <p>文字、语音（Web Speech API）、图片（GPT-4o Vision）三种输入方式。说出心情，或上传照片让 AI 理解情绪。</p>
+      <span class="feature-tag">Voice + Vision</span>
+    </div>
+    <div class="feature-card" style="--accent-color:var(--koreeda)">
+      <div class="feature-icon">🤖</div>
+      <h3>Agent 全链路编排</h3>
+      <p>AI Agent 自动编排：情绪分析 → 导演匹配 → 图片生成 → 文案创作，一步到位生成完整创作包。</p>
+      <span class="feature-tag">Agent Pipeline</span>
+    </div>
+    <div class="feature-card" style="--accent-color:var(--wes)">
+      <div class="feature-icon">🎭</div>
+      <h3>多人共创</h3>
+      <p>多位创作者各写一句话，AI 融合所有情绪生成统一创意。支持动态添加创作者，协同创作一张海报。</p>
+      <span class="feature-tag">Co-Creation</span>
+    </div>
+    <div class="feature-card" style="--accent-color:var(--nolan)">
+      <div class="feature-icon">🎚️</div>
+      <h3>交互式情绪光谱</h3>
+      <p>情绪可视化色条支持拖拽调节强度、点击切换情绪类型。实时反馈，让情绪调整像调色一样直观。</p>
+      <span class="feature-tag">Interactive</span>
+    </div>
+    <div class="feature-card" style="--accent-color:var(--chow)">
+      <div class="feature-icon">🎬</div>
+      <h3>电影预告片模拟</h3>
+      <p>6 场景动画序列模拟电影预告片：导演出品 → 情绪文字 → 关键词 → 标题 → 金句 → 即将上映。</p>
+      <span class="feature-tag">Trailer Sim</span>
+    </div>
+    <div class="feature-card" style="--accent-color:var(--miya)">
+      <div class="feature-icon">📁</div>
+      <h3>MCP 文件系统</h3>
+      <p>模拟 MCP 文件系统工具：海报资产保存/读取/删除，导演参考素材库。API 代理保护密钥零暴露。</p>
+      <span class="feature-tag">MCP Tools</span>
+    </div>
+    <div class="feature-card" style="--accent-color:var(--jia)">
+      <div class="feature-icon">✨</div>
+      <h3>自定义风格创建</h3>
+      <p>用自然语言描述风格，AI 解析为可视化风格档案（色彩、关键词、DNA）。</p>
+      <span class="feature-tag">Custom Style</span>
+    </div>
+    <div class="feature-card" style="--accent-color:var(--lee)">
+      <div class="feature-icon">🎬</div>
+      <h3>电影风格分析</h3>
+      <p>输入电影名称，AI 分析其视觉风格并生成可复用的风格模板。</p>
+      <span class="feature-tag">Film Analysis</span>
+    </div>
+    <div class="feature-card" style="--accent-color:var(--kuro)">
+      <div class="feature-icon">🧬</div>
+      <h3>风格DNA雷达图</h3>
+      <p>8维风格DNA模型，量化每位导演的视觉特征，雷达图可视化呈现。</p>
+      <span class="feature-tag">DNA Radar</span>
+    </div>
+    <div class="feature-card" style="--accent-color:var(--chaz)">
+      <div class="feature-icon">🎨</div>
+      <h3>风格混搭</h3>
+      <p>选择两位导演，调整混合比例，生成全新混搭风格。</p>
+      <span class="feature-tag">Style Mix</span>
+    </div>
+    <div class="feature-card" style="--accent-color:var(--sofia)">
+      <div class="feature-icon">💡</div>
+      <h3>情绪→风格推荐</h3>
+      <p>基于DNA相似度计算，智能推荐最匹配当前情绪的导演风格。</p>
+      <span class="feature-tag">Mood Match</span>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 导演展示 ========== -->
+<section class="section" id="directors">
+  <div class="section-label">DIRECTORS</div>
+  <h2 class="section-title">十二位导演，十二种美学</h2>
+  <p class="section-desc">每位导演都有独特的视觉语言、色彩体系和金句库。</p>
+
+  <div class="directors-grid">
+    <div class="director-card" style="--dir-c:var(--miya)">
+      <div class="director-avatar">🌿</div>
+      <div class="director-name">宫崎骏</div>
+      <div class="director-en">Miyazaki Hayao</div>
+      <div class="director-tag">天空、绿野、少女、治愈</div>
+    </div>
+    <div class="director-card" style="--dir-c:var(--wkw)">
+      <div class="director-avatar">🎞️</div>
+      <div class="director-name">王家卫</div>
+      <div class="director-en">Wong Kar-wai</div>
+      <div class="director-tag">暧昧光影、霓虹绿、城市独白</div>
+    </div>
+    <div class="director-card" style="--dir-c:var(--koreeda)">
+      <div class="director-avatar">☀️</div>
+      <div class="director-name">是枝裕和</div>
+      <div class="director-en">Koreeda Hirokazu</div>
+      <div class="director-tag">夏日午后、生活流、家庭温度</div>
+    </div>
+    <div class="director-card" style="--dir-c:var(--wes)">
+      <div class="director-avatar">🍬</div>
+      <div class="director-name">韦斯·安德森</div>
+      <div class="director-en">Wes Anderson</div>
+      <div class="director-tag">对称构图、糖果色、怪趣仪式</div>
+    </div>
+    <div class="director-card" style="--dir-c:var(--nolan)">
+      <div class="director-avatar">🌌</div>
+      <div class="director-name">诺兰</div>
+      <div class="director-en">Christopher Nolan</div>
+      <div class="director-tag">冷峻、巨物、时间扭曲</div>
+    </div>
+    <div class="director-card" style="--dir-c:var(--chow)">
+      <div class="director-avatar">🎭</div>
+      <div class="director-name">周星驰</div>
+      <div class="director-en">Stephen Chow</div>
+      <div class="director-tag">无厘头、港风、丧中带燃</div>
+    </div>
+    <div class="director-card" style="--dir-c:var(--jia)">
+      <div class="director-avatar">🏚️</div>
+      <div class="director-name">贾樟柯</div>
+      <div class="director-en">Jia Zhangke</div>
+      <div class="director-tag">土黄、纪实、变迁</div>
+    </div>
+    <div class="director-card" style="--dir-c:var(--lee)">
+      <div class="director-avatar">🎋</div>
+      <div class="director-name">李安</div>
+      <div class="director-en">Ang Lee</div>
+      <div class="director-tag">东方、克制、画意</div>
+    </div>
+    <div class="director-card" style="--dir-c:var(--kuro)">
+      <div class="director-avatar">⚔️</div>
+      <div class="director-name">黑泽明</div>
+      <div class="director-en">Akira Kurosawa</div>
+      <div class="director-tag">朱红、靛蓝、史诗</div>
+    </div>
+    <div class="director-card" style="--dir-c:var(--sofia)">
+      <div class="director-avatar">🌸</div>
+      <div class="director-name">索菲亚·科波拉</div>
+      <div class="director-en">Sofia Coppola</div>
+      <div class="director-tag">柔粉、淡蓝、疏离</div>
+    </div>
+    <div class="director-card" style="--dir-c:var(--chaz)">
+      <div class="director-avatar">🎺</div>
+      <div class="director-name">查泽雷</div>
+      <div class="director-en">Damien Chazelle</div>
+      <div class="director-tag">梦幻紫、日落橙、爵士</div>
+    </div>
+    <div class="director-card" style="--dir-c:var(--quin)">
+      <div class="director-avatar">🔫</div>
+      <div class="director-name">昆汀</div>
+      <div class="director-en">Quentin Tarantino</div>
+      <div class="director-tag">血红、暖黄、复古</div>
+    </div>
+  </div>
+
+  <!-- 海报预览 -->
+  <div class="poster-preview">
+    <div class="poster-item">
+      <div class="poster-bg poster-miyazaki"></div>
+      <div class="poster-text">
+        <h4 style="color:#1b5e20">夏日远行</h4>
+        <p style="color:#2e7d32">宫崎骏风格</p>
+      </div>
+      <div class="poster-label">Miyazaki</div>
+    </div>
+    <div class="poster-item">
+      <div class="poster-bg poster-wkw"></div>
+      <div class="poster-text">
+        <h4 style="color:#e8d5b7">霓虹独白</h4>
+        <p style="color:#c9a36b">王家卫风格</p>
+      </div>
+      <div class="poster-label">WKW</div>
+    </div>
+    <div class="poster-item">
+      <div class="poster-bg poster-koreeda"></div>
+      <div class="poster-text">
+        <h4 style="color:#5d4e37">回家路上</h4>
+        <p style="color:#8b7355">是枝裕和风格</p>
+      </div>
+      <div class="poster-label">Koreeda</div>
+    </div>
+    <div class="poster-item">
+      <div class="poster-bg poster-wes"></div>
+      <div class="poster-text">
+        <h4 style="color:#4a4a4a">对称之夏</h4>
+        <p style="color:#6d6d6d">韦斯·安德森风格</p>
+      </div>
+      <div class="poster-label">Wes</div>
+    </div>
+    <div class="poster-item">
+      <div class="poster-bg poster-nolan"></div>
+      <div class="poster-text">
+        <h4 style="color:#e0e0e0">时间裂缝</h4>
+        <p style="color:#b0bec5">诺兰风格</p>
+      </div>
+      <div class="poster-label">Nolan</div>
+    </div>
+    <div class="poster-item">
+      <div class="poster-bg poster-chow"></div>
+      <div class="poster-text">
+        <h4 style="color:#b71c1c">咸鱼翻身</h4>
+        <p style="color:#d32f2f">周星驰风格</p>
+      </div>
+      <div class="poster-label">Chow</div>
+    </div>
+    <div class="poster-item">
+      <div class="poster-bg poster-jia"></div>
+      <div class="poster-text">
+        <h4 style="color:#f5e6c8">小武回乡</h4>
+        <p style="color:#d4b88a">贾樟柯风格</p>
+      </div>
+      <div class="poster-label">Jia</div>
+    </div>
+    <div class="poster-item">
+      <div class="poster-bg poster-lee"></div>
+      <div class="poster-text">
+        <h4 style="color:#a5d6a7">卧虎藏龙</h4>
+        <p style="color:#81c784">李安风格</p>
+      </div>
+      <div class="poster-label">Lee</div>
+    </div>
+    <div class="poster-item">
+      <div class="poster-bg poster-kuro"></div>
+      <div class="poster-text">
+        <h4 style="color:#ffcdd2">乱世家书</h4>
+        <p style="color:#ef9a9a">黑泽明风格</p>
+      </div>
+      <div class="poster-label">Kurosawa</div>
+    </div>
+    <div class="poster-item">
+      <div class="poster-bg poster-sofia"></div>
+      <div class="poster-text">
+        <h4 style="color:#6a1b9a">迷失东京</h4>
+        <p style="color:#8e24aa">索菲亚·科波拉风格</p>
+      </div>
+      <div class="poster-label">Coppola</div>
+    </div>
+    <div class="poster-item">
+      <div class="poster-bg poster-chaz"></div>
+      <div class="poster-text">
+        <h4 style="color:#ffe082">爱乐之城</h4>
+        <p style="color:#ffcc02">查泽雷风格</p>
+      </div>
+      <div class="poster-label">Chazelle</div>
+    </div>
+    <div class="poster-item">
+      <div class="poster-bg poster-quin"></div>
+      <div class="poster-text">
+        <h4 style="color:#ffeb3b">低俗小说</h4>
+        <p style="color:#ffc107">昆汀风格</p>
+      </div>
+      <div class="poster-label">Tarantino</div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 技术架构 ========== -->
+<section class="section" id="tech">
+  <div class="section-label">TECH STACK</div>
+  <h2 class="section-title">技术架构</h2>
+  <p class="section-desc">基于 TRAE 构建，AI 全链路驱动，优雅降级保障可用性。</p>
+
+  <div class="tech-grid">
+    <div class="tech-card">
+      <h3>🎯 TRAE 集成 <span class="badge trae">TRAE Native</span></h3>
+      <ul class="tech-list">
+        <li>基于 <code>TRAE IDE</code> 全流程开发</li>
+        <li>集成 <code>TRAE MCP</code> 工具链（200+ 工具）</li>
+        <li>Agent 编排：情绪分析 → 导演匹配 → 生图 → 排版</li>
+        <li>多模态输入：文本 + 语音 + 图片视觉</li>
+        <li>MCP 文件系统：海报资产保存/读取/删除</li>
+        <li>MCP 浏览器：导演参考素材抓取</li>
+      </ul>
+    </div>
+    <div class="tech-card">
+      <h3>🤖 AI 管线 <span class="badge ai">AI Pipeline</span></h3>
+      <ul class="tech-list">
+        <li>情绪分析：<code>GPT-4o</code> + 本地降级</li>
+        <li>AI 生图：<code>GPT Image 2</code> + <code>Seedream 4.0</code></li>
+        <li>图片视觉分析：<code>GPT-4o Vision</code></li>
+        <li>语音输入：<code>Web Speech API</code> (zh-CN)</li>
+        <li>Agent 编排：<code>/api/agent/create</code> 全链路</li>
+        <li>双引擎切换：用户可选生图引擎</li>
+        <li>火山引擎豆包 <code>doubao-1.5-pro-32k</code>（文本）、<code>doubao-1.5-vision-pro</code>（视觉）、<code>doubao-seedream-4-0</code>（图像）</li>
+      </ul>
+    </div>
+    <div class="tech-card">
+      <h3>🔧 工程架构 <span class="badge mcp">Architecture</span></h3>
+      <ul class="tech-list">
+        <li>前端：原生 <code>HTML/CSS/JS</code> + Canvas 2D</li>
+        <li>后端：<code>Node.js + Express</code> API 代理</li>
+        <li>API Key 保护：后端代理，前端零暴露</li>
+        <li>优雅降级：AI 不可用时 → Canvas 程序化绘制</li>
+        <li>本地持久化：<code>localStorage</code> 电影墙</li>
+      </ul>
+    </div>
+    <div class="tech-card">
+      <h3>🧬 风格DNA引擎 <span class="badge ai">AI</span></h3>
+      <ul class="tech-list">
+        <li>8维DNA模型、相似度计算、情绪映射、色彩混合算法</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 评审标准映射 ========== -->
+<section class="section" id="criteria">
+  <div class="section-label">EVALUATION</div>
+  <h2 class="section-title">评审标准映射</h2>
+  <p class="section-desc">每一项评审标准都有对应的功能落地。</p>
+
+  <div class="criteria-grid">
+    <div class="criteria-card">
+      <div class="criteria-score">30%</div>
+      <h3>创新性</h3>
+      <ul class="criteria-points">
+        <li>情绪 → 导演 → 海报的创意链路</li>
+        <li>多模态输入：语音 + 图片视觉分析</li>
+        <li>多人共创：AI 融合多用户情绪</li>
+        <li>电影预告片模拟动画</li>
+        <li>交互式情绪光谱可调节</li>
+        <li>Agent 全链路智能编排</li>
+      </ul>
+    </div>
+    <div class="criteria-card">
+      <div class="criteria-score">30%</div>
+      <h3>实用性</h3>
+      <ul class="criteria-points">
+        <li>真实场景：社交媒体海报生成</li>
+        <li>4 种版式适配各平台</li>
+        <li>语音输入解放双手</li>
+        <li>图片上传自动分析情绪</li>
+        <li>MCP 文件系统管理海报资产</li>
+        <li>Canvas 降级保障离线可用</li>
+      </ul>
+    </div>
+    <div class="criteria-card">
+      <div class="criteria-score">20%</div>
+      <h3>完成度</h3>
+      <ul class="criteria-points">
+        <li>12 位导演 + 4 种版式 + 九宫格</li>
+        <li>Agent 编排 + MCP 工具链</li>
+        <li>多模态输入（文字/语音/图片）</li>
+        <li>多人共创 + 预告片 + 交互光谱</li>
+        <li>前后端完整架构 + 端到端验证</li>
+      </ul>
+    </div>
+    <div class="criteria-card">
+      <div class="criteria-score">20%</div>
+      <h3>美观度</h3>
+      <ul class="criteria-points">
+        <li>电影级暗色主题设计</li>
+        <li>胶片孔、暗角、渐变质感</li>
+        <li>12 种导演独特视觉风格</li>
+        <li>流畅动画过渡</li>
+        <li>响应式适配移动端</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ========== CTA ========== -->
+<section class="cta-section">
+  <div class="cta-content">
+    <h2>准备好创作你的电影了吗？</h2>
+    <p>输入一句话，让 AI 为你拍一部电影。</p>
+    <a href="index.html" class="btn btn-primary" style="font-size:1.05rem;padding:16px 40px">立即造境 →</a>
+  </div>
+</section>
+
+<!-- ========== Footer ========== -->
+<footer class="footer">
+  <div class="footer-links">
+    <a href="index.html">体验 Demo</a>
+    <a href="#how">工作原理</a>
+    <a href="#tech">技术架构</a>
+    <a href="#criteria">评审映射</a>
+  </div>
+  <p>造境 ZaoJing · TRAE AI 创意大赛参赛作品 · 2026</p>
+</footer>
+
+<script>
+// 平滑滚动 & 导航高亮
+const navLinks = document.querySelectorAll('.nav-links a[href^="#"]');
+navLinks.forEach(link => {
+  link.addEventListener('click', (e) => {
+    const href = link.getAttribute('href');
+    if (href === '#') return;
+    e.preventDefault();
+    const target = document.querySelector(href);
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+});
+
+// 滚动渐入动画
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.style.opacity = '1';
+      entry.target.style.transform = 'translateY(0)';
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.flow-step, .feature-card, .director-card, .tech-card, .criteria-card, .poster-item').forEach(el => {
+  el.style.opacity = '0';
+  el.style.transform = 'translateY(20px)';
+  el.style.transition = 'opacity .5s cubic-bezier(.22,1,.36,1), transform .5s cubic-bezier(.22,1,.36,1)';
+  observer.observe(el);
+});
+</script>
+
+</body>
+</html>

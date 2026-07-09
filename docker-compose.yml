@@ -1,0 +1,32 @@
+# 造境 ZaoJing Docker Compose
+# 一键启动前端 + 后端服务
+
+services:
+  zaojing:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8127:8127"
+    environment:
+      - NODE_ENV=production
+      - PORT=8127
+      - VOLCENGINE_API_KEY=${VOLCENGINE_API_KEY:-}
+      - TMDB_API_KEY=${TMDB_API_KEY:-}
+      - API_KEY=${API_KEY:-}
+      - CORS_WHITELIST=${CORS_WHITELIST:-}
+    volumes:
+      # 持久化生成的图片和画廊数据
+      - zaojing-generated:/app/server/generated
+      - zaojing-gallery:/app/server/gallery
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:'+(process.env.PORT||8127)+'/api/health',r=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  zaojing-generated:
+  zaojing-gallery:
