@@ -336,7 +336,10 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
     uptime: Math.floor(process.uptime()),
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    engines: {
+      seedream: !!process.env.VOLCENGINE_API_KEY
+    }
   });
 });
 
