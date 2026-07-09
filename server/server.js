@@ -193,7 +193,9 @@ app.use(express.json({ limit: '15mb' }));
 // 静态文件服务（前端文件），生产环境启用缓存
 // Vite 构建的 JS/CSS 文件名包含内容哈希，可安全设置 1 年强缓存；HTML 不包含哈希需 no-cache
 const staticDir = process.env.STATIC_DIR || '../';
-app.use(express.static(path.join(__dirname, staticDir), {
+// 支持绝对路径（Docker 中 STATIC_DIR=/app/dist）和相对路径（开发中 ../）
+const staticPath = path.isAbsolute(staticDir) ? staticDir : path.join(__dirname, staticDir);
+app.use(express.static(staticPath, {
   maxAge: isProduction ? '1y' : 0,
   etag: true,
   lastModified: true,
