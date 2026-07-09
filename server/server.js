@@ -248,8 +248,18 @@ setInterval(() => {
 // 所有请求（含同源浏览器请求）必须提供 X-API-Key 头；
 // 开发环境未配置 API_KEY 时仅允许 localhost 访问
 function apiKeyAuth(req, res, next) {
-  // 开发模式：未配置 API_KEY 时跳过认证（仅允许 localhost）
+  // 健康检查端点免认证
+  if (req.path === '/health' || req.path === '/health/ready') return next();
+
+  // 未配置 API_KEY 时：允许同源请求（Referer 或 Origin 匹配 Host）
+  // 适用于前后端同源部署且暂未设置 API_KEY 的场景
   if (!API_KEY) {
+    const host = req.get('host');
+    const origin = req.get('origin');
+    const referer = req.get('referer');
+    if (origin && host && origin.includes(host)) return next();
+    if (referer && host && referer.includes(host)) return next();
+    // localhost 开发环境
     const ip = req.ip || (req.socket && req.socket.remoteAddress) || '';
     if (ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1') return next();
     return errorResponse(req, res, 401, '未授权：生产环境必须配置 API_KEY');
