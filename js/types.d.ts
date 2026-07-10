@@ -266,6 +266,7 @@ export interface ImageResult {
 export interface GenerateImageResponse {
   imageBase64?: string;
   imageUrl?: string;
+  imageFormat?: string;
   engine: string;
 }
 

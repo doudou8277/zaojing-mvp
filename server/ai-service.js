@@ -16,12 +16,12 @@ const { writeJsonAtomicAsync } = require('./utils/atomic-write');
 
 // ========== API 超时常量（毫秒） ==========
 const TIMEOUTS = {
-  DEFAULT: 30000,       // 默认 LLM 调用超时
-  STREAM: 60000,        // 流式调用超时
-  IMAGE_GEN: 120000,    // 图片生成超时
-  IMAGE_FETCH: 30000,   // 图片下载超时
-  HTTP_FETCH: 15000,    // 外部 HTTP 请求超时
-  MAX_RETRIES: 2,       // 最大重试次数
+  DEFAULT: 30000, // 默认 LLM 调用超时
+  STREAM: 60000, // 流式调用超时
+  IMAGE_GEN: 120000, // 图片生成超时
+  IMAGE_FETCH: 30000, // 图片下载超时
+  HTTP_FETCH: 15000, // 外部 HTTP 请求超时
+  MAX_RETRIES: 2, // 最大重试次数
 };
 
 // ========== 导演风格 DNA 数据（单一来源：shared/directors.json） ==========
@@ -38,15 +38,18 @@ const ARK_BASE_URL = 'https://ark.cn-beijing.volces.com/api/v3';
 
 // 火山引擎豆包模型 ID
 const ARK_MODELS = {
-  text: 'doubao-seed-2-0-lite-260428',         // 文本理解模型（Seed 2.0 Lite）
-  vision: 'doubao-seed-2-0-lite-260428',       // 视觉理解模型（同上，支持图文）
-  image: 'doubao-seedream-5-0-pro-260628'       // 图片生成模型（Seedream 5.0 Pro）
+  text: 'doubao-seed-2-0-lite-260428', // 文本理解模型（Seed 2.0 Lite）
+  vision: 'doubao-seed-2-0-lite-260428', // 视觉理解模型（同上，支持图文）
+  image: 'doubao-seedream-5-0-pro-260628', // 图片生成模型（Seedream 5.0 Pro）
 };
 
 // ========== 清理 AI 返回内容中的 markdown 代码块标记 ==========
 // 提取纯 JSON 文本，兼容 ```json ... ``` 和 ``` ... ``` 两种包裹形式
 function cleanJsonResponse(content) {
-  return content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+  return content
+    .replace(/```json\n?/g, '')
+    .replace(/```\n?/g, '')
+    .trim();
 }
 
 // ========== 带超时的 fetch 封装（使用 AbortController） ==========
@@ -77,7 +80,7 @@ async function callWithRetry(fn, maxRetries = TIMEOUTS.MAX_RETRIES) {
       if (attempt < maxRetries) {
         const delay = Math.pow(2, attempt) * 1000; // 指数退避：1s, 2s
         logger.warn({ attempt: attempt + 1, delay, err: error.message }, 'API 调用重试');
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
   }
@@ -105,21 +108,25 @@ async function callLLMStream(messages, options, onToken, abortSignal) {
 
   const model = options.vision ? ARK_MODELS.vision : ARK_MODELS.text;
 
-  const response = await fetchWithTimeout(`${ARK_BASE_URL}/chat/completions`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${volcKey}`
+  const response = await fetchWithTimeout(
+    `${ARK_BASE_URL}/chat/completions`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${volcKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages,
+        temperature: options.temperature || 0.8,
+        max_tokens: options.maxTokens || 1000,
+        stream: true, // 启用流式输出
+      }),
+      signal: abortSignal,
     },
-    body: JSON.stringify({
-      model,
-      messages,
-      temperature: options.temperature || 0.8,
-      max_tokens: options.maxTokens || 1000,
-      stream: true // 启用流式输出
-    }),
-    signal: abortSignal
-  }, TIMEOUTS.STREAM); // 流式调用超时
+    TIMEOUTS.STREAM
+  ); // 流式调用超时
 
   if (!response.ok) {
     const errText = await response.text();
@@ -194,34 +201,38 @@ async function callLLMOnce(messages, options = {}) {
   const model = options.vision ? ARK_MODELS.vision : ARK_MODELS.text;
   const aiStart = Date.now();
   try {
-  const response = await fetchWithTimeout(`${ARK_BASE_URL}/chat/completions`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${volcKey}`
-    },
-    body: JSON.stringify({
-      model,
-      messages,
-      temperature: options.temperature || 0.8,
-      max_tokens: options.maxTokens || 1000
-    })
-  }, TIMEOUTS.DEFAULT);
+    const response = await fetchWithTimeout(
+      `${ARK_BASE_URL}/chat/completions`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${volcKey}`,
+        },
+        body: JSON.stringify({
+          model,
+          messages,
+          temperature: options.temperature || 0.8,
+          max_tokens: options.maxTokens || 1000,
+        }),
+      },
+      TIMEOUTS.DEFAULT
+    );
 
-  if (!response.ok) {
-    const errText = await response.text();
-    throw new Error(`火山引擎 API 错误: ${response.status} - ${errText}`);
-  }
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`火山引擎 API 错误: ${response.status} - ${errText}`);
+    }
 
-  const data = await response.json();
-  // 追踪 Token 用量
-  if (data.usage) {
-    costMonitor.recordLLMCall(model, data.usage.prompt_tokens, data.usage.completion_tokens);
-  }
-  // Prometheus 指标
-  metrics.aiCallCounter.inc({ service: 'llm', model, status: 'success' });
-  metrics.aiCallDuration.observe({ service: 'llm', model }, (Date.now() - aiStart) / 1000);
-  return data.choices[0].message.content;
+    const data = await response.json();
+    // 追踪 Token 用量
+    if (data.usage) {
+      costMonitor.recordLLMCall(model, data.usage.prompt_tokens, data.usage.completion_tokens);
+    }
+    // Prometheus 指标
+    metrics.aiCallCounter.inc({ service: 'llm', model, status: 'success' });
+    metrics.aiCallDuration.observe({ service: 'llm', model }, (Date.now() - aiStart) / 1000);
+    return data.choices[0].message.content;
   } catch (err) {
     metrics.aiCallCounter.inc({ service: 'llm', model, status: 'error' });
     throw err;
@@ -243,7 +254,7 @@ async function callLLMWithTools(messages, tools, options = {}) {
     model,
     messages,
     temperature: options.temperature || 0.4,
-    max_tokens: options.maxTokens || 600
+    max_tokens: options.maxTokens || 600,
   };
   // 仅在提供 tools 时启用 function calling，避免无谓开销
   if (tools && tools.length > 0) {
@@ -251,14 +262,18 @@ async function callLLMWithTools(messages, tools, options = {}) {
     requestBody.tool_choice = 'auto';
   }
 
-  const response = await fetchWithTimeout(`${ARK_BASE_URL}/chat/completions`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${volcKey}`
+  const response = await fetchWithTimeout(
+    `${ARK_BASE_URL}/chat/completions`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${volcKey}`,
+      },
+      body: JSON.stringify(requestBody),
     },
-    body: JSON.stringify(requestBody)
-  }, TIMEOUTS.DEFAULT);
+    TIMEOUTS.DEFAULT
+  );
 
   if (!response.ok) {
     const errText = await response.text();
@@ -293,27 +308,33 @@ async function callVisionLLMOnce(textPrompt, imageBase64, options = {}) {
   }
 
   // 构造图文混合消息（OpenAI 多模态格式，火山引擎同样兼容）
-  const messages = [{
-    role: 'user',
-    content: [
-      { type: 'text', text: textPrompt },
-      { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${imageBase64}` } }
-    ]
-  }];
-
-  const response = await fetchWithTimeout(`${ARK_BASE_URL}/chat/completions`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${volcKey}`
+  const messages = [
+    {
+      role: 'user',
+      content: [
+        { type: 'text', text: textPrompt },
+        { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${imageBase64}` } },
+      ],
     },
-    body: JSON.stringify({
-      model: ARK_MODELS.vision,
-      messages,
-      temperature: options.temperature || 0.5,
-      max_tokens: options.maxTokens || 1000
-    })
-  }, TIMEOUTS.DEFAULT);
+  ];
+
+  const response = await fetchWithTimeout(
+    `${ARK_BASE_URL}/chat/completions`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${volcKey}`,
+      },
+      body: JSON.stringify({
+        model: ARK_MODELS.vision,
+        messages,
+        temperature: options.temperature || 0.5,
+        max_tokens: options.maxTokens || 1000,
+      }),
+    },
+    TIMEOUTS.DEFAULT
+  );
 
   if (!response.ok) {
     const errText = await response.text();
@@ -330,131 +351,233 @@ async function callVisionLLMOnce(textPrompt, imageBase64, options = {}) {
 // ========== 导演风格 Prompt 模板 ==========
 const DIRECTOR_PROMPTS = {
   miyazaki: {
-    style: "Studio Ghibli style, Hayao Miyazaki aesthetic, hand-drawn animation, lush green landscapes, soft watercolor textures, warm sunlight, whimsical and nostalgic atmosphere, soaring skies with cumulus clouds, nature-centric composition",
-    color: "warm greens, sky blues, soft whites, earthy browns",
-    mood: "nostalgic, hopeful, gentle, adventurous"
+    style:
+      'Studio Ghibli style, Hayao Miyazaki aesthetic, hand-drawn animation, lush green landscapes, soft watercolor textures, warm sunlight, whimsical and nostalgic atmosphere, soaring skies with cumulus clouds, nature-centric composition',
+    color: 'warm greens, sky blues, soft whites, earthy browns',
+    mood: 'nostalgic, hopeful, gentle, adventurous',
   },
   wkw: {
-    style: "Wong Kar-wai cinematic style, neon-lit urban night, rain-soaked streets reflecting neon signs, moody chiaroscuro lighting, step-printing motion blur aesthetic, deep saturated greens and reds, lonely figures in crowded spaces, 35mm film grain",
-    color: "neon green, deep red, amber yellow, dark teal",
-    mood: "melancholic, romantic, longing, urban loneliness"
+    style:
+      'Wong Kar-wai cinematic style, neon-lit urban night, rain-soaked streets reflecting neon signs, moody chiaroscuro lighting, step-printing motion blur aesthetic, deep saturated greens and reds, lonely figures in crowded spaces, 35mm film grain',
+    color: 'neon green, deep red, amber yellow, dark teal',
+    mood: 'melancholic, romantic, longing, urban loneliness',
   },
   koreeda: {
-    style: "Hirokazu Kore-eda style, naturalistic daylight, soft window light, ordinary domestic scenes, muted warm tones, gentle and observant composition, slice-of-life intimacy, 35mm film texture with subtle grain",
-    color: "warm beige, soft amber, muted greens, gentle whites",
-    mood: "tender, bittersweet, family, quiet contemplation"
+    style:
+      'Hirokazu Kore-eda style, naturalistic daylight, soft window light, ordinary domestic scenes, muted warm tones, gentle and observant composition, slice-of-life intimacy, 35mm film texture with subtle grain',
+    color: 'warm beige, soft amber, muted greens, gentle whites',
+    mood: 'tender, bittersweet, family, quiet contemplation',
   },
   wes: {
-    style: "Wes Anderson symmetrical composition, pastel color palette, centered framing, dollhouse aesthetic, vintage retro styling, flat front-facing composition, precise geometric arrangements, storybook quality",
-    color: "pastel pink, mustard yellow, teal, cream white",
-    mood: "whimsical, precise, nostalgic, storybook charm"
+    style:
+      'Wes Anderson symmetrical composition, pastel color palette, centered framing, dollhouse aesthetic, vintage retro styling, flat front-facing composition, precise geometric arrangements, storybook quality',
+    color: 'pastel pink, mustard yellow, teal, cream white',
+    mood: 'whimsical, precise, nostalgic, storybook charm',
   },
   nolan: {
-    style: "Christopher Nolan cinematic style, IMAX-scale grandeur, cold blue-gray palette, monumental architecture, dramatic low-angle shots, practical effects aesthetic, temporal complexity visual cues, high contrast lighting",
-    color: "cold steel blue, gray, black, stark white",
-    mood: "epic, intense, mind-bending, gravitas"
+    style:
+      'Christopher Nolan cinematic style, IMAX-scale grandeur, cold blue-gray palette, monumental architecture, dramatic low-angle shots, practical effects aesthetic, temporal complexity visual cues, high contrast lighting',
+    color: 'cold steel blue, gray, black, stark white',
+    mood: 'epic, intense, mind-bending, gravitas',
   },
   chow: {
-    style: "Stephen Chow comedy style, vibrant exaggerated colors, dynamic action poses, cartoonish visual gags, Hong Kong street market aesthetic, 90s retro film look, energetic composition with comedic timing",
-    color: "vibrant yellow, red, green, bright blue",
-    mood: "hilarious, energetic, absurd, underdog triumph"
+    style:
+      'Stephen Chow comedy style, vibrant exaggerated colors, dynamic action poses, cartoonish visual gags, Hong Kong street market aesthetic, 90s retro film look, energetic composition with comedic timing',
+    color: 'vibrant yellow, red, green, bright blue',
+    mood: 'hilarious, energetic, absurd, underdog triumph',
   },
   // === 新增导演 ===
   jia: {
-    style: 'Jia Zhangke style, muted earth tones, faded desaturated colors, long take static wide shots, observational distance, natural available light, demolition sites and transitional spaces, documentary realism, social transformation landscape',
+    style:
+      'Jia Zhangke style, muted earth tones, faded desaturated colors, long take static wide shots, observational distance, natural available light, demolition sites and transitional spaces, documentary realism, social transformation landscape',
     color: 'earth yellow #a89060, industrial gray #7a7a6e, faded red #9c5c4a, gray blue #6a7a8a',
-    mood: 'nostalgic, wandering, homesick, changing era, quiet melancholy'
+    mood: 'nostalgic, wandering, homesick, changing era, quiet melancholy',
   },
   lee: {
-    style: 'Ang Lee style, classical balanced composition, fluid camera movement, painterly naturalistic lighting, Eastern aesthetic ink-wash atmosphere, lush greens and golds, emotional restraint, cinematic elegance',
+    style:
+      'Ang Lee style, classical balanced composition, fluid camera movement, painterly naturalistic lighting, Eastern aesthetic ink-wash atmosphere, lush greens and golds, emotional restraint, cinematic elegance',
     color: 'jade green #2d6a4f, gold #d4a843, indigo #1a3a5c, warm white #f0e6d2',
-    mood: 'restrained, contemplative, elegant, philosophical, gentle warmth'
+    mood: 'restrained, contemplative, elegant, philosophical, gentle warmth',
   },
   kurosawa: {
-    style: 'Akira Kurosawa style, bold primary colors, dynamic geometric blocking of multiple figures, telephoto compression, weather as character rain wind fog snow, dramatic natural lighting, epic humanistic scale, movement-based composition',
+    style:
+      'Akira Kurosawa style, bold primary colors, dynamic geometric blocking of multiple figures, telephoto compression, weather as character rain wind fog snow, dramatic natural lighting, epic humanistic scale, movement-based composition',
     color: 'vermillion #c0392b, indigo #2c3e7b, bright yellow #f1c40f, black #1a1a1a, white #f0f0f0',
-    mood: 'epic, tragic, heroic, fatalistic, powerful human drama'
+    mood: 'epic, tragic, heroic, fatalistic, powerful human drama',
   },
   coppola: {
-    style: 'Sofia Coppola style, soft pastel palette, muted pinks and blues, abundant negative space, natural window light, golden hour glow, isolated figures in vast spaces, hotel liminal spaces, dreamy overexposed highlights, intimate loneliness',
+    style:
+      'Sofia Coppola style, soft pastel palette, muted pinks and blues, abundant negative space, natural window light, golden hour glow, isolated figures in vast spaces, hotel liminal spaces, dreamy overexposed highlights, intimate loneliness',
     color: 'soft pink #e8c5c5, pale blue #b8cfe0, warm white #f5ede0, lavender gray #c4b8d0',
-    mood: 'dreamy, melancholic, alienated, intimate, drifting'
+    mood: 'dreamy, melancholic, alienated, intimate, drifting',
   },
   chazelle: {
-    style: 'Damien Chazelle style, vibrant primary colors, dreamy purple and sunset orange, dynamic whip pans and long takes, theatrical stage lighting, colored gel lighting, golden hour backlight, musical staging composition, jazz imagery',
+    style:
+      'Damien Chazelle style, vibrant primary colors, dreamy purple and sunset orange, dynamic whip pans and long takes, theatrical stage lighting, colored gel lighting, golden hour backlight, musical staging composition, jazz imagery',
     color: 'dreamy purple #6a4c93, sunset orange #ff6b35, deep blue #1a2a5c, bright yellow #ffd23f',
-    mood: 'dreams, passion, bittersweet, ambition, romantic'
+    mood: 'dreams, passion, bittersweet, ambition, romantic',
   },
   tarantino: {
-    style: 'Quentin Tarantino style, bold saturated colors, blood red and warm yellow, dynamic low-angle shots, trunk shot perspective, extreme close-ups, retro grindhouse aesthetic, 70mm wide frame, stylized violence, pop culture references',
+    style:
+      'Quentin Tarantino style, bold saturated colors, blood red and warm yellow, dynamic low-angle shots, trunk shot perspective, extreme close-ups, retro grindhouse aesthetic, 70mm wide frame, stylized violence, pop culture references',
     color: 'blood red #8b0000, warm yellow #e8b830, retro brown #6b4423, neon pink #ff6b9d',
-    mood: 'cool, violent, retro, dark humor, stylized'
-  }
+    mood: 'cool, violent, retro, dark humor, stylized',
+  },
 };
 
 // ========== 导演参考电影素材（模拟 MCP 浏览器抓取） ==========
 const DIRECTOR_REFERENCES = {
   miyazaki: [
-    { title: '千与千寻', year: 2001, description: '少女千寻在神灵世界的奇幻冒险，宫崎骏式的温暖与勇气。', palette: ['#4a90d9', '#87ceeb', '#66bb6a'] },
-    { title: '龙猫', year: 1988, description: '乡间夏日里两个姐妹与森林精灵龙猫的纯真相遇。', palette: ['#8bc34a', '#cddc39', '#ffeb3b'] },
-    { title: '天空之城', year: 1986, description: '少年少女追寻传说中的天空之城拉普达的冒险旅程。', palette: ['#42a5f5', '#90caf9', '#b3e5fc'] }
+    {
+      title: '千与千寻',
+      year: 2001,
+      description: '少女千寻在神灵世界的奇幻冒险，宫崎骏式的温暖与勇气。',
+      palette: ['#4a90d9', '#87ceeb', '#66bb6a'],
+    },
+    {
+      title: '龙猫',
+      year: 1988,
+      description: '乡间夏日里两个姐妹与森林精灵龙猫的纯真相遇。',
+      palette: ['#8bc34a', '#cddc39', '#ffeb3b'],
+    },
+    {
+      title: '天空之城',
+      year: 1986,
+      description: '少年少女追寻传说中的天空之城拉普达的冒险旅程。',
+      palette: ['#42a5f5', '#90caf9', '#b3e5fc'],
+    },
   ],
   wkw: [
-    { title: '花样年华', year: 2000, description: '六十年代香港，两个被背叛的灵魂在暧昧中克制纠缠。', palette: ['#1a2e1f', '#3d7a5a', '#e8d5b7'] },
-    { title: '重庆森林', year: 1994, description: '都市森林里两段交错的爱情，霓虹与孤独的迷离叙事。', palette: ['#0d1f15', '#ff6b6b', '#feca57'] },
-    { title: '堕落天使', year: 1995, description: '黑夜都市中杀手与搭档的疏离关系，王家卫式的极致美学。', palette: ['#1a1a2e', '#16213e', '#e94560'] }
+    {
+      title: '花样年华',
+      year: 2000,
+      description: '六十年代香港，两个被背叛的灵魂在暧昧中克制纠缠。',
+      palette: ['#1a2e1f', '#3d7a5a', '#e8d5b7'],
+    },
+    {
+      title: '重庆森林',
+      year: 1994,
+      description: '都市森林里两段交错的爱情，霓虹与孤独的迷离叙事。',
+      palette: ['#0d1f15', '#ff6b6b', '#feca57'],
+    },
+    {
+      title: '堕落天使',
+      year: 1995,
+      description: '黑夜都市中杀手与搭档的疏离关系，王家卫式的极致美学。',
+      palette: ['#1a1a2e', '#16213e', '#e94560'],
+    },
   ],
   koreeda: [
-    { title: '小偷家族', year: 2018, description: '没有血缘的一家人在底层生活中相互取暖的温柔故事。', palette: ['#f5ede0', '#d4b88a', '#a8c8b5'] },
-    { title: '海街日记', year: 2015, description: '三姐妹接纳同父异母的妹妹，在镰仓四季中治愈成长。', palette: ['#e8dcc4', '#f0e7d3', '#b3e5fc'] },
-    { title: '如父如子', year: 2013, description: '两个家庭因孩子被调换而重新审视血缘与亲情的意义。', palette: ['#f5ede0', '#a8c8b5', '#d4b88a'] }
+    {
+      title: '小偷家族',
+      year: 2018,
+      description: '没有血缘的一家人在底层生活中相互取暖的温柔故事。',
+      palette: ['#f5ede0', '#d4b88a', '#a8c8b5'],
+    },
+    {
+      title: '海街日记',
+      year: 2015,
+      description: '三姐妹接纳同父异母的妹妹，在镰仓四季中治愈成长。',
+      palette: ['#e8dcc4', '#f0e7d3', '#b3e5fc'],
+    },
+    {
+      title: '如父如子',
+      year: 2013,
+      description: '两个家庭因孩子被调换而重新审视血缘与亲情的意义。',
+      palette: ['#f5ede0', '#a8c8b5', '#d4b88a'],
+    },
   ],
   wes: [
-    { title: '布达佩斯大饭店', year: 2014, description: '对称构图下的传奇饭店与门童的冒险，韦斯式童话美学。', palette: ['#e89bb0', '#a4d4ae', '#fce4ec'] },
-    { title: '月升王国', year: 2012, description: '两个少年私奔到小岛，复古色调中的纯真叛逆故事。', palette: ['#ffd54f', '#a4d4ae', '#ffab91'] },
-    { title: '天才一族', year: 2001, description: '天才一家人的破碎与重组，精致对称的家庭悲喜剧。', palette: ['#e89bb0', '#ffd54f', '#a4d4ae'] }
+    {
+      title: '布达佩斯大饭店',
+      year: 2014,
+      description: '对称构图下的传奇饭店与门童的冒险，韦斯式童话美学。',
+      palette: ['#e89bb0', '#a4d4ae', '#fce4ec'],
+    },
+    {
+      title: '月升王国',
+      year: 2012,
+      description: '两个少年私奔到小岛，复古色调中的纯真叛逆故事。',
+      palette: ['#ffd54f', '#a4d4ae', '#ffab91'],
+    },
+    {
+      title: '天才一族',
+      year: 2001,
+      description: '天才一家人的破碎与重组，精致对称的家庭悲喜剧。',
+      palette: ['#e89bb0', '#ffd54f', '#a4d4ae'],
+    },
   ],
   nolan: [
-    { title: '盗梦空间', year: 2010, description: '在多层梦境中植入潜意识，诺兰式的时间与意识迷宫。', palette: ['#0a1929', '#0d1b2a', '#4fc3f7'] },
-    { title: '星际穿越', year: 2014, description: '父亲穿越虫洞拯救人类，冷峻宇宙中的深情与宏大。', palette: ['#050d18', '#1a237e', '#42a5f5'] },
-    { title: '记忆碎片', year: 2000, description: '失忆男子倒序追凶，诺兰标志性的非线性叙事实验。', palette: ['#0a0a0a', '#424242', '#e0e0e0'] }
+    {
+      title: '盗梦空间',
+      year: 2010,
+      description: '在多层梦境中植入潜意识，诺兰式的时间与意识迷宫。',
+      palette: ['#0a1929', '#0d1b2a', '#4fc3f7'],
+    },
+    {
+      title: '星际穿越',
+      year: 2014,
+      description: '父亲穿越虫洞拯救人类，冷峻宇宙中的深情与宏大。',
+      palette: ['#050d18', '#1a237e', '#42a5f5'],
+    },
+    {
+      title: '记忆碎片',
+      year: 2000,
+      description: '失忆男子倒序追凶，诺兰标志性的非线性叙事实验。',
+      palette: ['#0a0a0a', '#424242', '#e0e0e0'],
+    },
   ],
   chow: [
-    { title: '大话西游', year: 1995, description: '至尊宝与紫霞仙子的前世今生，无厘头外衣下的深情。', palette: ['#ffcc00', '#ff9800', '#e8b830'] },
-    { title: '喜剧之王', year: 1999, description: '龙套演员尹天仇的演艺梦想与爱情，周星驰式的自嘲。', palette: ['#e8b830', '#f4d03f', '#d68910'] },
-    { title: '功夫', year: 2004, description: '小混混逆袭成为功夫高手，夸张视觉与草根英雄主义。', palette: ['#e8b830', '#d32f2f', '#ffcc00'] }
+    {
+      title: '大话西游',
+      year: 1995,
+      description: '至尊宝与紫霞仙子的前世今生，无厘头外衣下的深情。',
+      palette: ['#ffcc00', '#ff9800', '#e8b830'],
+    },
+    {
+      title: '喜剧之王',
+      year: 1999,
+      description: '龙套演员尹天仇的演艺梦想与爱情，周星驰式的自嘲。',
+      palette: ['#e8b830', '#f4d03f', '#d68910'],
+    },
+    {
+      title: '功夫',
+      year: 2004,
+      description: '小混混逆袭成为功夫高手，夸张视觉与草根英雄主义。',
+      palette: ['#e8b830', '#d32f2f', '#ffcc00'],
+    },
   ],
   // === 新增导演参考电影 ===
   jia: [
     { title: '三峡好人', year: 2006, palette: ['#a89060', '#7a7a6e', '#9c5c4a'] },
     { title: '山河故人', year: 2015, palette: ['#a89060', '#6a7a8a', '#d5c8a8'] },
-    { title: '小武', year: 1997, palette: ['#7a7a6e', '#3d3528', '#9c5c4a'] }
+    { title: '小武', year: 1997, palette: ['#7a7a6e', '#3d3528', '#9c5c4a'] },
   ],
   lee: [
     { title: '卧虎藏龙', year: 2000, palette: ['#2d6a4f', '#d4a843', '#1a3a5c'] },
     { title: '少年派的奇幻漂流', year: 2012, palette: ['#1a3a5c', '#2d6a4f', '#f0e6d2'] },
-    { title: '饮食男女', year: 1994, palette: ['#d4a843', '#2d6a4f', '#f0e6d2'] }
+    { title: '饮食男女', year: 1994, palette: ['#d4a843', '#2d6a4f', '#f0e6d2'] },
   ],
   kurosawa: [
     { title: '七武士', year: 1954, palette: ['#c0392b', '#2c3e7b', '#f1c40f'] },
     { title: '乱', year: 1985, palette: ['#c0392b', '#1a1a1a', '#f0f0f0'] },
-    { title: '梦', year: 1990, palette: ['#2c3e7b', '#f1c40f', '#c0392b'] }
+    { title: '梦', year: 1990, palette: ['#2c3e7b', '#f1c40f', '#c0392b'] },
   ],
   coppola: [
     { title: '迷失东京', year: 2003, palette: ['#e8c5c5', '#b8cfe0', '#c4b8d0'] },
     { title: '绝代艳后', year: 2006, palette: ['#e8c5c5', '#ffd54f', '#a4d4ae'] },
-    { title: '牡丹花下', year: 2017, palette: ['#c4b8d0', '#e8c5c5', '#f5ede0'] }
+    { title: '牡丹花下', year: 2017, palette: ['#c4b8d0', '#e8c5c5', '#f5ede0'] },
   ],
   chazelle: [
     { title: '爱乐之城', year: 2016, palette: ['#6a4c93', '#ff6b35', '#ffd23f'] },
     { title: '爆裂鼓手', year: 2014, palette: ['#1a2a5c', '#8b0000', '#ffd23f'] },
-    { title: '登月第一人', year: 2018, palette: ['#1a2a5c', '#4a4a4a', '#e0e0e0'] }
+    { title: '登月第一人', year: 2018, palette: ['#1a2a5c', '#4a4a4a', '#e0e0e0'] },
   ],
   tarantino: [
     { title: '低俗小说', year: 1994, palette: ['#8b0000', '#e8b830', '#6b4423'] },
     { title: '杀死比尔', year: 2003, palette: ['#8b0000', '#ff6b9d', '#1a1a1a'] },
-    { title: '无耻混蛋', year: 2009, palette: ['#8b0000', '#6b4423', '#e8b830'] }
-  ]
+    { title: '无耻混蛋', year: 2009, palette: ['#8b0000', '#6b4423', '#e8b830'] },
+  ],
 };
 
 // ========== 情绪分析 ==========
@@ -512,10 +635,7 @@ ${wrapUserInput(text)}
 
   try {
     // 使用统一的 LLM 调用函数（火山引擎豆包）
-    const content = await callLLM(
-      [{ role: 'user', content: prompt }],
-      { temperature: 0.8, maxTokens: 800 }
-    );
+    const content = await callLLM([{ role: 'user', content: prompt }], { temperature: 0.8, maxTokens: 800 });
     // 清理可能的 markdown 代码块标记并解析 JSON
     const jsonStr = cleanJsonResponse(content);
     const result = JSON.parse(jsonStr);
@@ -560,23 +680,55 @@ function localEmotionAnalysis(text, moodTagId) {
     lonely: { emotion: '孤独', directors: ['coppola', 'wkw'] },
     healing: { emotion: '治愈', directors: ['miyazaki', 'lee'] },
     relief: { emotion: '释然', directors: ['lee', 'wes'] },
-    crush: { emotion: '心动', directors: ['chazelle', 'nolan'] }
+    crush: { emotion: '心动', directors: ['chazelle', 'nolan'] },
   };
 
   // 文本关键词规则匹配（当无 moodTagId 或作为补充）
   const keywordRules = [
-    { keys: ['孤独', '寂寞', '一个人', '空荡', '无人', 'alone', 'lonely'], emotion: '孤独', directors: ['wkw', 'coppola'] },
-    { keys: ['温暖', '阳光', '回家', '陪伴', '幸福', 'warm', 'home'], emotion: '温暖', directors: ['miyazaki', 'koreeda'] },
+    {
+      keys: ['孤独', '寂寞', '一个人', '空荡', '无人', 'alone', 'lonely'],
+      emotion: '孤独',
+      directors: ['wkw', 'coppola'],
+    },
+    {
+      keys: ['温暖', '阳光', '回家', '陪伴', '幸福', 'warm', 'home'],
+      emotion: '温暖',
+      directors: ['miyazaki', 'koreeda'],
+    },
     { keys: ['忧伤', '悲伤', '哭', '泪', '心碎', '失去', 'sad', 'cry'], emotion: '忧伤', directors: ['wkw', 'jia'] },
     { keys: ['愤怒', '生气', '恨', '不公', 'fight', 'angry'], emotion: '愤怒', directors: ['tarantino', 'nolan'] },
     { keys: ['喜悦', '快乐', '开心', '笑', '庆祝', 'happy', 'joy'], emotion: '喜悦', directors: ['chow', 'chazelle'] },
-    { keys: ['思念', '想念', '回忆', '从前', '怀念', 'miss', 'memory'], emotion: '思念', directors: ['jia', 'koreeda'] },
-    { keys: ['自由', '逃离', '远方', '旅行', '飞', 'free', 'escape'], emotion: '自由', directors: ['miyazaki', 'kurosawa'] },
-    { keys: ['疲惫', '累', '加班', '压力', '喘不过气', 'tired', 'exhausted'], emotion: '疲惫', directors: ['jia', 'tarantino'] },
-    { keys: ['心动', '喜欢', '爱', '邂逅', '怦然', 'love', 'crush'], emotion: '心动', directors: ['chazelle', 'nolan'] },
+    {
+      keys: ['思念', '想念', '回忆', '从前', '怀念', 'miss', 'memory'],
+      emotion: '思念',
+      directors: ['jia', 'koreeda'],
+    },
+    {
+      keys: ['自由', '逃离', '远方', '旅行', '飞', 'free', 'escape'],
+      emotion: '自由',
+      directors: ['miyazaki', 'kurosawa'],
+    },
+    {
+      keys: ['疲惫', '累', '加班', '压力', '喘不过气', 'tired', 'exhausted'],
+      emotion: '疲惫',
+      directors: ['jia', 'tarantino'],
+    },
+    {
+      keys: ['心动', '喜欢', '爱', '邂逅', '怦然', 'love', 'crush'],
+      emotion: '心动',
+      directors: ['chazelle', 'nolan'],
+    },
     { keys: ['释然', '放下', '解脱', '终于', '平静', 'relief'], emotion: '释然', directors: ['lee', 'wes'] },
-    { keys: ['恐惧', '害怕', '噩梦', '黑暗', '恐怖', 'fear', 'dark'], emotion: '恐惧', directors: ['nolan', 'kubrick'] },
-    { keys: ['冒险', '探索', '未知', '出发', 'adventure', 'explore'], emotion: '冒险', directors: ['miyazaki', 'nolan'] }
+    {
+      keys: ['恐惧', '害怕', '噩梦', '黑暗', '恐怖', 'fear', 'dark'],
+      emotion: '恐惧',
+      directors: ['nolan', 'kubrick'],
+    },
+    {
+      keys: ['冒险', '探索', '未知', '出发', 'adventure', 'explore'],
+      emotion: '冒险',
+      directors: ['miyazaki', 'nolan'],
+    },
   ];
 
   // 优先使用 moodTagId 映射
@@ -586,7 +738,7 @@ function localEmotionAnalysis(text, moodTagId) {
   if (!mood) {
     const lowerText = (text || '').toLowerCase();
     for (const rule of keywordRules) {
-      if (rule.keys.some(key => lowerText.includes(key))) {
+      if (rule.keys.some((key) => lowerText.includes(key))) {
         mood = { emotion: rule.emotion, directors: rule.directors };
         break;
       }
@@ -602,19 +754,19 @@ function localEmotionAnalysis(text, moodTagId) {
 
   // 根据情绪生成更贴切的金句
   const quoteMap = {
-    '孤独': '城市那么大，却容不下一个拥抱。',
-    '温暖': '最亮的光，一直在回家的路上。',
-    '忧伤': '有些雨，下在心里就不会停。',
-    '愤怒': '沉默太久，爆发只需一秒。',
-    '喜悦': '笑着的眼睛，是最好看的风景。',
-    '思念': '想念是一种会呼吸的痛。',
-    '自由': '风没有方向，所以处处都是方向。',
-    '疲惫': '深夜的灯，亮给不回家的人。',
-    '心动': '一眼万年，不过如此。',
-    '释然': '放下的那一刻，风都轻了。',
-    '恐惧': '黑暗中最可怕的，是回头的自己。',
-    '冒险': '出发，就是最好的答案。',
-    '复杂': '关于这一刻，每个人都有自己的故事。'
+    孤独: '城市那么大，却容不下一个拥抱。',
+    温暖: '最亮的光，一直在回家的路上。',
+    忧伤: '有些雨，下在心里就不会停。',
+    愤怒: '沉默太久，爆发只需一秒。',
+    喜悦: '笑着的眼睛，是最好看的风景。',
+    思念: '想念是一种会呼吸的痛。',
+    自由: '风没有方向，所以处处都是方向。',
+    疲惫: '深夜的灯，亮给不回家的人。',
+    心动: '一眼万年，不过如此。',
+    释然: '放下的那一刻，风都轻了。',
+    恐惧: '黑暗中最可怕的，是回头的自己。',
+    冒险: '出发，就是最好的答案。',
+    复杂: '关于这一刻，每个人都有自己的故事。',
   };
 
   return {
@@ -623,10 +775,10 @@ function localEmotionAnalysis(text, moodTagId) {
     keywords: [mood.emotion, '生活', '感悟'],
     recommendedDirectors: [
       { directorId: mood.directors[0], reason: '风格匹配度最高', matchScore: 85 },
-      { directorId: mood.directors[1], reason: '情绪氛围契合', matchScore: 72 }
+      { directorId: mood.directors[1], reason: '情绪氛围契合', matchScore: 72 },
     ],
     suggestedTitles: titles,
-    aiQuote: quoteMap[mood.emotion] || quoteMap['复杂']
+    aiQuote: quoteMap[mood.emotion] || quoteMap['复杂'],
   };
 }
 
@@ -687,19 +839,20 @@ Requirements:
       }
 
       // 记录图片生成成本
-      costMonitor.recordImageCall('doubao-seedream-5-0-pro-260628');
+      costMonitor.recordImageCall(ARK_MODELS.image);
 
       // 将 Base64 图片保存为文件，返回 URL（减少网络传输量）
+      // 注意：始终保留 imageBase64 作为 fallback，防止文件服务异常导致图片无法显示
       if (result.imageBase64) {
         try {
-          const imageUrl = imageStorage.saveBase64Image(result.imageBase64);
-          result.imageUrl = imageUrl;
+          const saved = imageStorage.saveBase64Image(result.imageBase64);
+          result.imageUrl = saved.url;
+          result.imageFormat = saved.format;
+          logger.info({ imageUrl: saved.url, format: saved.format }, '图片已保存为文件');
         } catch (e) {
-          logger.warn({ err: e.message }, '图片保存为文件失败，保留 base64 传输');
-        }
-        // 如果图片已保存为文件，不返回 base64（前端从 URL 加载，减少网络传输）
-        if (result.imageUrl) {
-          delete result.imageBase64;
+          logger.warn({ err: e.message }, '图片保存为文件失败，将使用 base64 传输');
+          // 检测格式用于正确的 data URL
+          result.imageFormat = imageStorage.detectImageFormatFromBase64(result.imageBase64);
         }
       }
 
@@ -715,7 +868,7 @@ Requirements:
   throw lastError || new Error(`Unknown engine: ${engine}`);
 }
 
-// ========== Seedream 4.0 生成 ==========
+// ========== Seedream 5.0 Pro 生成 ==========
 async function generateWithSeedream(prompt, size, directorId) {
   const apiKey = process.env.VOLCENGINE_API_KEY;
   if (!apiKey) {
@@ -723,27 +876,31 @@ async function generateWithSeedream(prompt, size, directorId) {
   }
 
   const sizeMap = {
-    'vertical': '1024x1280',
-    'horizontal': '1280x1024',
-    'square': '1024x1024',
-    'grid9': '1024x1024'
+    vertical: '1024x1280',
+    horizontal: '1280x1024',
+    square: '1024x1024',
+    grid9: '1024x1024',
   };
   const apiSize = sizeMap[size] || '1024x1280';
 
-  const response = await fetchWithTimeout('https://ark.cn-beijing.volces.com/api/v3/images/generations', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
+  const response = await fetchWithTimeout(
+    'https://ark.cn-beijing.volces.com/api/v3/images/generations',
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: ARK_MODELS.image,
+        prompt: prompt,
+        size: apiSize,
+        response_format: 'b64_json',
+        watermark: false,
+      }),
     },
-    body: JSON.stringify({
-      model: ARK_MODELS.image,
-      prompt: prompt,
-      size: apiSize,
-      response_format: 'b64_json',
-      watermark: false
-    })
-  }, TIMEOUTS.IMAGE_GEN);
+    TIMEOUTS.IMAGE_GEN
+  );
 
   if (!response.ok) {
     const err = await response.text();
@@ -755,10 +912,14 @@ async function generateWithSeedream(prompt, size, directorId) {
   if (data.data && data.data[0]) {
     // 优先使用 b64_json 格式，确保图片数据可持久化
     if (data.data[0].b64_json) {
+      const b64 = data.data[0].b64_json;
+      // 检测图片格式
+      const imageFormat = imageStorage.detectImageFormatFromBase64(b64);
       return {
-        imageBase64: data.data[0].b64_json,
+        imageBase64: b64,
         imageUrl: null,
-        engine: 'seedream'
+        imageFormat: imageFormat,
+        engine: 'seedream',
       };
     }
     // 兼容返回 URL 的情况：立即下载并转为 base64，避免临时 URL 过期
@@ -768,10 +929,13 @@ async function generateWithSeedream(prompt, size, directorId) {
         if (imgResp.ok) {
           const arrayBuffer = await imgResp.arrayBuffer();
           const buffer = Buffer.from(arrayBuffer);
+          const b64 = buffer.toString('base64');
+          const imageFormat = imageStorage.detectImageFormatFromBase64(b64);
           return {
-            imageBase64: buffer.toString('base64'),
+            imageBase64: b64,
             imageUrl: null,
-            engine: 'seedream'
+            imageFormat: imageFormat,
+            engine: 'seedream',
           };
         }
       } catch (e) {
@@ -781,7 +945,8 @@ async function generateWithSeedream(prompt, size, directorId) {
       return {
         imageBase64: null,
         imageUrl: data.data[0].url,
-        engine: 'seedream'
+        imageFormat: 'jpg',
+        engine: 'seedream',
       };
     }
   }
@@ -832,10 +997,7 @@ ${wrapUserInput(text)}
 
   try {
     // 使用统一的 LLM 调用函数（火山引擎豆包）
-    const content = await callLLM(
-      [{ role: 'user', content: prompt }],
-      { temperature: 0.9, maxTokens: 500 }
-    );
+    const content = await callLLM([{ role: 'user', content: prompt }], { temperature: 0.9, maxTokens: 500 });
     // 清理可能的 markdown 代码块标记并解析 JSON
     const jsonStr = cleanJsonResponse(content);
     const result = JSON.parse(jsonStr);
@@ -851,12 +1013,8 @@ ${wrapUserInput(text)}
 function localCopy(text, directorName, emotion) {
   return {
     titles: generateLocalTitles(text),
-    quotes: [
-      `关于${emotion || '生活'}，每个人都有自己的故事。`,
-      `时间会给出所有答案。`,
-      `这一刻，就是永恒。`
-    ],
-    review: `一部关于${emotion || '生活'}的短片，${directorName}式的镜头语言让平凡瞬间有了诗意。`
+    quotes: [`关于${emotion || '生活'}，每个人都有自己的故事。`, `时间会给出所有答案。`, `这一刻，就是永恒。`],
+    review: `一部关于${emotion || '生活'}的短片，${directorName}式的镜头语言让平凡瞬间有了诗意。`,
   };
 }
 
@@ -873,11 +1031,11 @@ const AGENT_TOOLS = [
         type: 'object',
         properties: {
           text: { type: 'string', description: '用户输入的文字内容' },
-          moodTagId: { type: 'string', description: '用户选择的心情标签 ID（可选）' }
+          moodTagId: { type: 'string', description: '用户选择的心情标签 ID（可选）' },
         },
-        required: ['text']
-      }
-    }
+        required: ['text'],
+      },
+    },
   },
   {
     type: 'function',
@@ -888,11 +1046,11 @@ const AGENT_TOOLS = [
         type: 'object',
         properties: {
           directorId: { type: 'string', description: '导演 ID，如 miyazaki/wkw/koreeda 等' },
-          emotion: { type: 'string', description: '从情绪分析结果中获取的主要情绪' }
+          emotion: { type: 'string', description: '从情绪分析结果中获取的主要情绪' },
         },
-        required: ['directorId', 'emotion']
-      }
-    }
+        required: ['directorId', 'emotion'],
+      },
+    },
   },
   {
     type: 'function',
@@ -903,11 +1061,11 @@ const AGENT_TOOLS = [
         type: 'object',
         properties: {
           directorId: { type: 'string', description: '导演 ID' },
-          emotion: { type: 'string', description: '主要情绪' }
+          emotion: { type: 'string', description: '主要情绪' },
         },
-        required: ['directorId', 'emotion']
-      }
-    }
+        required: ['directorId', 'emotion'],
+      },
+    },
   },
   {
     type: 'function',
@@ -918,11 +1076,11 @@ const AGENT_TOOLS = [
         type: 'object',
         properties: {
           directorId: { type: 'string', description: '要评估的导演 ID' },
-          emotion: { type: 'string', description: '主要情绪' }
+          emotion: { type: 'string', description: '主要情绪' },
         },
-        required: ['directorId']
-      }
-    }
+        required: ['directorId'],
+      },
+    },
   },
   {
     type: 'function',
@@ -932,12 +1090,12 @@ const AGENT_TOOLS = [
       parameters: {
         type: 'object',
         properties: {
-          summary: { type: 'string', description: '本次创作的简要总结' }
+          summary: { type: 'string', description: '本次创作的简要总结' },
         },
-        required: ['summary']
-      }
-    }
-  }
+        required: ['summary'],
+      },
+    },
+  },
 ];
 
 // ========== ReAct Agent 工具执行分发 ==========
@@ -951,12 +1109,12 @@ async function executeAgentTool(toolName, args, context) {
       try {
         const emotion = await analyzeEmotion(args.text || text, args.moodTagId || moodTagId);
         state.emotion = emotion;
-        const recs = emotion.recommendedDirectors.map(d => d.directorId).join(', ');
+        const recs = emotion.recommendedDirectors.map((d) => d.directorId).join(', ');
         return JSON.stringify({
           primaryEmotion: emotion.primaryEmotion,
           intensity: emotion.emotionIntensity,
           recommendedDirectors: recs,
-          suggestedTitles: emotion.suggestedTitles
+          suggestedTitles: emotion.suggestedTitles,
         });
       } catch (error) {
         const fallback = localEmotionAnalysis(args.text || text, args.moodTagId || moodTagId);
@@ -972,19 +1130,28 @@ async function executeAgentTool(toolName, args, context) {
           directorId: args.directorId,
           emotion: args.emotion || (state.emotion && state.emotion.primaryEmotion),
           engine,
-          size
+          size,
         });
         // 累积到 state.results（按 directorId 索引）
         if (!state.resultsByDirector[args.directorId]) {
           state.resultsByDirector[args.directorId] = { directorId: args.directorId, image: null, copy: null };
         }
         state.resultsByDirector[args.directorId].image = image;
-        return JSON.stringify({ success: true, engine: image.engine, hasImage: !!(image.imageBase64 || image.imageUrl) });
+        return JSON.stringify({
+          success: true,
+          engine: image.engine,
+          hasImage: !!(image.imageBase64 || image.imageUrl),
+        });
       } catch (error) {
         if (!state.resultsByDirector[args.directorId]) {
           state.resultsByDirector[args.directorId] = { directorId: args.directorId, image: null, copy: null };
         }
-        state.resultsByDirector[args.directorId].image = { imageBase64: null, imageUrl: null, engine, error: error.message };
+        state.resultsByDirector[args.directorId].image = {
+          imageBase64: null,
+          imageUrl: null,
+          engine,
+          error: error.message,
+        };
         return JSON.stringify({ success: false, error: error.message });
       }
     }
@@ -994,7 +1161,7 @@ async function executeAgentTool(toolName, args, context) {
         const copy = await generateCopy({
           text,
           directorId: args.directorId,
-          emotion: args.emotion || (state.emotion && state.emotion.primaryEmotion)
+          emotion: args.emotion || (state.emotion && state.emotion.primaryEmotion),
         });
         if (!state.resultsByDirector[args.directorId]) {
           state.resultsByDirector[args.directorId] = { directorId: args.directorId, image: null, copy: null };
@@ -1002,7 +1169,11 @@ async function executeAgentTool(toolName, args, context) {
         state.resultsByDirector[args.directorId].copy = copy;
         return JSON.stringify({ success: true, hasTitle: !!copy.title, hasQuote: !!copy.quote });
       } catch (error) {
-        const fallback = localCopy(text, directorNames[args.directorId] || '宫崎骏', args.emotion || (state.emotion && state.emotion.primaryEmotion));
+        const fallback = localCopy(
+          text,
+          directorNames[args.directorId] || '宫崎骏',
+          args.emotion || (state.emotion && state.emotion.primaryEmotion)
+        );
         if (!state.resultsByDirector[args.directorId]) {
           state.resultsByDirector[args.directorId] = { directorId: args.directorId, image: null, copy: null };
         }
@@ -1016,7 +1187,11 @@ async function executeAgentTool(toolName, args, context) {
       if (!entry || !entry.image) {
         return JSON.stringify({ score: 0, note: '尚无图片结果，无法评估' });
       }
-      const evalResult = selfEvaluate(args.directorId, entry, args.emotion || (state.emotion && state.emotion.primaryEmotion));
+      const evalResult = selfEvaluate(
+        args.directorId,
+        entry,
+        args.emotion || (state.emotion && state.emotion.primaryEmotion)
+      );
       return JSON.stringify(evalResult);
     }
 
@@ -1066,7 +1241,7 @@ function selfEvaluate(directorId, entry, emotion) {
     score,
     directorId,
     directorName: directorNames[directorId] || directorId,
-    notes: notes.length > 0 ? notes : ['结果完整，情绪匹配良好']
+    notes: notes.length > 0 ? notes : ['结果完整，情绪匹配良好'],
   };
 }
 
@@ -1082,7 +1257,7 @@ async function agentReActLoop(options) {
     emotion: null,
     resultsByDirector: {},
     finished: false,
-    summary: ''
+    summary: '',
   };
 
   // reasoningChain：真正的 Thought/Action/Observation 三元组（前端可展示 Agent 推理过程）
@@ -1109,7 +1284,7 @@ async function agentReActLoop(options) {
 
 ${wrapUserInput(text)}
 用户心情标签：${sanitizeUserInput(moodTagId || '未指定')}
-${directorIds && directorIds.length > 0 ? `用户指定导演：${directorIds.map(id => sanitizeUserInput(id)).join(', ')}` : '导演由情绪分析结果决定'}
+${directorIds && directorIds.length > 0 ? `用户指定导演：${directorIds.map((id) => sanitizeUserInput(id)).join(', ')}` : '导演由情绪分析结果决定'}
 图片引擎：${sanitizeUserInput(engine)}
 尺寸：${sanitizeUserInput(size)}`;
 
@@ -1129,7 +1304,7 @@ ${directorIds && directorIds.length > 0 ? `用户指定导演：${directorIds.ma
         iteration: i + 1,
         thought,
         action: null,
-        observation: '模型未调用工具，结束循环'
+        observation: '模型未调用工具，结束循环',
       });
       agentLog.push({ step: 'react_done', status: 'success', message: thought.substring(0, 100) });
       break;
@@ -1152,7 +1327,11 @@ ${directorIds && directorIds.length > 0 ? `用户指定导演：${directorIds.ma
 
       // 执行工具
       const observationStr = await executeAgentTool(toolName, args, {
-        text, moodTagId, engine, size, state
+        text,
+        moodTagId,
+        engine,
+        size,
+        state,
       });
 
       // 记录 Thought/Action/Observation 三元组
@@ -1160,20 +1339,20 @@ ${directorIds && directorIds.length > 0 ? `用户指定导演：${directorIds.ma
         iteration: i + 1,
         thought,
         action: { tool: toolName, args },
-        observation: observationStr
+        observation: observationStr,
       });
 
       agentLog.push({
         step: toolName,
         status: 'success',
-        message: `[迭代 ${i + 1}] 调用 ${toolName}`
+        message: `[迭代 ${i + 1}] 调用 ${toolName}`,
       });
 
       // 把工具结果作为 tool 角色消息回传给模型
       messages.push({
         role: 'tool',
         tool_call_id: toolCall.id,
-        content: observationStr
+        content: observationStr,
       });
 
       // finish 工具触发结束
@@ -1187,7 +1366,11 @@ ${directorIds && directorIds.length > 0 ? `用户指定导演：${directorIds.ma
 
   // 若循环结束但模型未调用 finish，补充一个结束标记
   if (!state.finished) {
-    agentLog.push({ step: 'react_timeout', status: 'fallback', message: `达到最大迭代次数 ${MAX_ITERATIONS}，强制结束` });
+    agentLog.push({
+      step: 'react_timeout',
+      status: 'fallback',
+      message: `达到最大迭代次数 ${MAX_ITERATIONS}，强制结束`,
+    });
   }
 
   // 组装最终结果（兼容旧前端结构）
@@ -1196,18 +1379,21 @@ ${directorIds && directorIds.length > 0 ? `用户指定导演：${directorIds.ma
   // 如果状态中没有 emotion（模型未调用 analyze_emotion），用本地降级补上
   const emotion = state.emotion || localEmotionAnalysis(text, moodTagId);
 
-  logger.info({
-    iterations: reasoningChain.length,
-    directors: results.length,
-    finished: state.finished
-  }, '[Agent] ReAct 循环完成');
+  logger.info(
+    {
+      iterations: reasoningChain.length,
+      directors: results.length,
+      finished: state.finished,
+    },
+    '[Agent] ReAct 循环完成'
+  );
 
   return {
     emotion,
     results,
     reasoningChain,
     agentLog,
-    summary: state.summary || 'ReAct Agent 创作完成'
+    summary: state.summary || 'ReAct Agent 创作完成',
   };
 }
 
@@ -1227,7 +1413,7 @@ async function agentCreate(options) {
       iteration: idx + 1,
       thought: log.message,
       action: { tool: log.step, args: {} },
-      observation: log.status
+      observation: log.status,
     }));
     legacyResult.summary = '降级模式：固定流程编排';
     legacyResult.fallback = true;
@@ -1252,7 +1438,7 @@ async function agentCreateLegacy(options) {
     agentLog.push({
       step: 'emotion',
       status: 'success',
-      message: `情绪分析完成：${emotion.primaryEmotion}，推荐导演 ${emotion.recommendedDirectors.map(d => d.directorId).join(', ')}`
+      message: `情绪分析完成：${emotion.primaryEmotion}，推荐导演 ${emotion.recommendedDirectors.map((d) => d.directorId).join(', ')}`,
     });
   } catch (error) {
     logger.error({ err: error.message }, '[Agent] 情绪分析失败，使用降级方案');
@@ -1261,60 +1447,75 @@ async function agentCreateLegacy(options) {
   }
 
   // 确定要处理的导演列表：优先使用传入的 directorIds，否则用情绪分析推荐的前两位
-  const targetDirectors = (directorIds && directorIds.length > 0)
-    ? directorIds
-    : emotion.recommendedDirectors.slice(0, 2).map(d => d.directorId);
+  const targetDirectors =
+    directorIds && directorIds.length > 0
+      ? directorIds
+      : emotion.recommendedDirectors.slice(0, 2).map((d) => d.directorId);
 
   logger.info({ directors: targetDirectors }, '[Agent] 待创作导演列表');
   agentLog.push({ step: 'directors', status: 'info', message: `待创作导演：${targetDirectors.join(', ')}` });
 
   // 第二步 & 第三步：为每位导演并行生成图片和文案
-  const directorResults = await Promise.all(targetDirectors.map(async (directorId) => {
-    logger.info({ directorId }, '[Agent] 开始生成图片和文案');
-    agentLog.push({ step: 'generate', status: 'start', message: `开始为导演 ${directorId} 生成内容` });
+  const directorResults = await Promise.all(
+    targetDirectors.map(async (directorId) => {
+      logger.info({ directorId }, '[Agent] 开始生成图片和文案');
+      agentLog.push({ step: 'generate', status: 'start', message: `开始为导演 ${directorId} 生成内容` });
 
-    // 图片生成和文案生成并行执行
-    const [imageResult, copyResult] = await Promise.allSettled([
-      generateImage({
-        text,
-        directorId,
-        emotion: emotion.primaryEmotion,
-        engine,
-        size
-      }),
-      generateCopy({
-        text,
-        directorId,
-        emotion: emotion.primaryEmotion
-      })
-    ]);
+      // 图片生成和文案生成并行执行
+      const [imageResult, copyResult] = await Promise.allSettled([
+        generateImage({
+          text,
+          directorId,
+          emotion: emotion.primaryEmotion,
+          engine,
+          size,
+        }),
+        generateCopy({
+          text,
+          directorId,
+          emotion: emotion.primaryEmotion,
+        }),
+      ]);
 
-    // 处理图片结果
-    let image = null;
-    if (imageResult.status === 'fulfilled') {
-      image = imageResult.value;
-      logger.info({ directorId, engine: image.engine }, '[Agent] 图片生成完成');
-      agentLog.push({ step: 'image', status: 'success', message: `导演 ${directorId} 图片生成完成，引擎: ${image.engine}` });
-    } else {
-      logger.error({ directorId, err: imageResult.reason?.message }, '[Agent] 图片生成失败');
-      image = { imageBase64: null, imageUrl: null, engine, error: imageResult.reason?.message || '未知错误' };
-      agentLog.push({ step: 'image', status: 'fallback', message: `导演 ${directorId} 图片生成失败：${imageResult.reason?.message}` });
-    }
+      // 处理图片结果
+      let image = null;
+      if (imageResult.status === 'fulfilled') {
+        image = imageResult.value;
+        logger.info({ directorId, engine: image.engine }, '[Agent] 图片生成完成');
+        agentLog.push({
+          step: 'image',
+          status: 'success',
+          message: `导演 ${directorId} 图片生成完成，引擎: ${image.engine}`,
+        });
+      } else {
+        logger.error({ directorId, err: imageResult.reason?.message }, '[Agent] 图片生成失败');
+        image = { imageBase64: null, imageUrl: null, engine, error: imageResult.reason?.message || '未知错误' };
+        agentLog.push({
+          step: 'image',
+          status: 'fallback',
+          message: `导演 ${directorId} 图片生成失败：${imageResult.reason?.message}`,
+        });
+      }
 
-    // 处理文案结果
-    let copy = null;
-    if (copyResult.status === 'fulfilled') {
-      copy = copyResult.value;
-      logger.info({ directorId }, '[Agent] 文案生成完成');
-      agentLog.push({ step: 'copy', status: 'success', message: `导演 ${directorId} 文案生成完成` });
-    } else {
-      logger.error({ directorId, err: copyResult.reason?.message }, '[Agent] 文案生成失败');
-      copy = localCopy(text, directorNames[directorId] || '宫崎骏', emotion.primaryEmotion);
-      agentLog.push({ step: 'copy', status: 'fallback', message: `导演 ${directorId} 文案生成失败，使用降级方案：${copyResult.reason?.message}` });
-    }
+      // 处理文案结果
+      let copy = null;
+      if (copyResult.status === 'fulfilled') {
+        copy = copyResult.value;
+        logger.info({ directorId }, '[Agent] 文案生成完成');
+        agentLog.push({ step: 'copy', status: 'success', message: `导演 ${directorId} 文案生成完成` });
+      } else {
+        logger.error({ directorId, err: copyResult.reason?.message }, '[Agent] 文案生成失败');
+        copy = localCopy(text, directorNames[directorId] || '宫崎骏', emotion.primaryEmotion);
+        agentLog.push({
+          step: 'copy',
+          status: 'fallback',
+          message: `导演 ${directorId} 文案生成失败，使用降级方案：${copyResult.reason?.message}`,
+        });
+      }
 
-    return { directorId, image, copy };
-  }));
+      return { directorId, image, copy };
+    })
+  );
 
   results.push(...directorResults);
 
@@ -1324,7 +1525,7 @@ async function agentCreateLegacy(options) {
   return {
     emotion,
     results,
-    agentLog
+    agentLog,
   };
 }
 
@@ -1394,7 +1595,7 @@ function localImageAnalysis() {
     { emotion: '忧伤', directors: ['wkw', 'koreeda'] },
     { emotion: '自由', directors: ['miyazaki', 'wes'] },
     { emotion: '宏大', directors: ['nolan', 'wes'] },
-    { emotion: '喜悦', directors: ['chow', 'miyazaki'] }
+    { emotion: '喜悦', directors: ['chow', 'miyazaki'] },
   ];
   const picked = emotions[Math.floor(Math.random() * emotions.length)];
 
@@ -1404,10 +1605,10 @@ function localImageAnalysis() {
     keywords: [picked.emotion, '画面', '氛围'],
     recommendedDirectors: [
       { directorId: picked.directors[0], reason: '风格匹配度最高', matchScore: 85 },
-      { directorId: picked.directors[1], reason: '情绪氛围契合', matchScore: 72 }
+      { directorId: picked.directors[1], reason: '情绪氛围契合', matchScore: 72 },
     ],
     suggestedTitles: ['关于那一刻', '无声的对白', '光影之间', '时间的形状'],
-    aiQuote: `关于${picked.emotion}，每个人都有自己的故事。`
+    aiQuote: `关于${picked.emotion}，每个人都有自己的故事。`,
   };
 }
 
@@ -1456,7 +1657,7 @@ async function _savePosterImpl(data) {
     title: title || '未命名海报',
     director: director || 'unknown',
     emotion: emotion || '未知',
-    savedAt
+    savedAt,
   };
 
   posters.push(posterRecord);
@@ -1487,12 +1688,12 @@ async function getGallery() {
   try {
     const posters = JSON.parse(fileContent);
     // 只返回列表字段（不含图片数据）
-    return posters.map(p => ({
+    return posters.map((p) => ({
       id: p.id,
       title: p.title,
       director: p.director,
       emotion: p.emotion,
-      savedAt: p.savedAt
+      savedAt: p.savedAt,
     }));
   } catch (error) {
     logger.error('[MCP] 解析 posters.json 失败：', error.message);
@@ -1523,7 +1724,7 @@ async function _deletePosterImpl(id) {
     let posters = JSON.parse(fileContent);
 
     const originalLength = posters.length;
-    posters = posters.filter(p => p.id !== id);
+    posters = posters.filter((p) => p.id !== id);
 
     if (posters.length === originalLength) {
       logger.info(`[MCP] 未找到 ID 为 ${id} 的海报`);
@@ -1551,37 +1752,217 @@ async function getReference(directorId) {
   }
 
   // 返回参考电影列表（包含 title, year, description, palette）
-  return references.map(ref => ({
+  return references.map((ref) => ({
     title: ref.title,
     year: ref.year,
     description: ref.description,
-    palette: ref.palette
+    palette: ref.palette,
   }));
 }
 
 // ========== 情绪到风格 DNA 的映射表 ==========
 // 用于 recommendStyleByEmotion 函数，根据情绪匹配最合适的导演风格 DNA
 const EMOTION_TO_DNA = {
-  '孤独': { colorTemperature: 'cool', saturation: 'medium', contrast: 'high', compositionType: 'asymmetric', lightingType: 'low-key', scale: 'intimate', pace: 'static', texture: 'grainy' },
-  '忧伤': { colorTemperature: 'cool', saturation: 'low', contrast: 'medium', compositionType: 'asymmetric', lightingType: 'low-key', scale: 'intimate', pace: 'static', texture: 'grainy' },
-  '思念': { colorTemperature: 'warm', saturation: 'medium', contrast: 'low', compositionType: 'centered', lightingType: 'natural', scale: 'intimate', pace: 'static', texture: 'smooth' },
-  '温暖': { colorTemperature: 'warm', saturation: 'medium', contrast: 'low', compositionType: 'centered', lightingType: 'natural', scale: 'intimate', pace: 'static', texture: 'smooth' },
-  '治愈': { colorTemperature: 'warm', saturation: 'high', contrast: 'medium', compositionType: 'symmetric', lightingType: 'natural', scale: 'monumental', pace: 'dynamic', texture: 'smooth' },
-  '暧昧': { colorTemperature: 'cool', saturation: 'medium', contrast: 'high', compositionType: 'asymmetric', lightingType: 'low-key', scale: 'intimate', pace: 'static', texture: 'grainy' },
-  '心动': { colorTemperature: 'warm', saturation: 'medium', contrast: 'low', compositionType: 'centered', lightingType: 'natural', scale: 'intimate', pace: 'dynamic', texture: 'smooth' },
-  '渴望': { colorTemperature: 'warm', saturation: 'high', contrast: 'high', compositionType: 'centered', lightingType: 'dramatic', scale: 'monumental', pace: 'dynamic', texture: 'digital' },
-  '梦想': { colorTemperature: 'warm', saturation: 'high', contrast: 'medium', compositionType: 'symmetric', lightingType: 'high-key', scale: 'monumental', pace: 'dynamic', texture: 'smooth' },
-  '自由': { colorTemperature: 'warm', saturation: 'high', contrast: 'medium', compositionType: 'asymmetric', lightingType: 'natural', scale: 'monumental', pace: 'dynamic', texture: 'smooth' },
-  '沉思': { colorTemperature: 'cool', saturation: 'low', contrast: 'high', compositionType: 'symmetric', lightingType: 'dramatic', scale: 'monumental', pace: 'static', texture: 'digital' },
-  '戏谑': { colorTemperature: 'warm', saturation: 'high', contrast: 'high', compositionType: 'symmetric', lightingType: 'high-key', scale: 'medium', pace: 'dynamic', texture: 'digital' },
-  '遗憾': { colorTemperature: 'cool', saturation: 'low', contrast: 'medium', compositionType: 'asymmetric', lightingType: 'low-key', scale: 'intimate', pace: 'static', texture: 'grainy' },
-  '疲惫': { colorTemperature: 'cool', saturation: 'low', contrast: 'medium', compositionType: 'asymmetric', lightingType: 'low-key', scale: 'intimate', pace: 'static', texture: 'grainy' },
-  '亲情': { colorTemperature: 'warm', saturation: 'medium', contrast: 'low', compositionType: 'centered', lightingType: 'natural', scale: 'intimate', pace: 'static', texture: 'smooth' },
-  '幽默': { colorTemperature: 'warm', saturation: 'high', contrast: 'medium', compositionType: 'symmetric', lightingType: 'high-key', scale: 'medium', pace: 'dynamic', texture: 'digital' },
-  '回忆': { colorTemperature: 'warm', saturation: 'low', contrast: 'low', compositionType: 'centered', lightingType: 'natural', scale: 'intimate', pace: 'static', texture: 'grainy' },
-  '震撼': { colorTemperature: 'cool', saturation: 'medium', contrast: 'high', compositionType: 'symmetric', lightingType: 'dramatic', scale: 'monumental', pace: 'dynamic', texture: 'digital' },
-  '童心': { colorTemperature: 'warm', saturation: 'high', contrast: 'medium', compositionType: 'symmetric', lightingType: 'high-key', scale: 'medium', pace: 'dynamic', texture: 'handdrawn' },
-  '释然': { colorTemperature: 'warm', saturation: 'medium', contrast: 'low', compositionType: 'centered', lightingType: 'natural', scale: 'medium', pace: 'static', texture: 'smooth' }
+  孤独: {
+    colorTemperature: 'cool',
+    saturation: 'medium',
+    contrast: 'high',
+    compositionType: 'asymmetric',
+    lightingType: 'low-key',
+    scale: 'intimate',
+    pace: 'static',
+    texture: 'grainy',
+  },
+  忧伤: {
+    colorTemperature: 'cool',
+    saturation: 'low',
+    contrast: 'medium',
+    compositionType: 'asymmetric',
+    lightingType: 'low-key',
+    scale: 'intimate',
+    pace: 'static',
+    texture: 'grainy',
+  },
+  思念: {
+    colorTemperature: 'warm',
+    saturation: 'medium',
+    contrast: 'low',
+    compositionType: 'centered',
+    lightingType: 'natural',
+    scale: 'intimate',
+    pace: 'static',
+    texture: 'smooth',
+  },
+  温暖: {
+    colorTemperature: 'warm',
+    saturation: 'medium',
+    contrast: 'low',
+    compositionType: 'centered',
+    lightingType: 'natural',
+    scale: 'intimate',
+    pace: 'static',
+    texture: 'smooth',
+  },
+  治愈: {
+    colorTemperature: 'warm',
+    saturation: 'high',
+    contrast: 'medium',
+    compositionType: 'symmetric',
+    lightingType: 'natural',
+    scale: 'monumental',
+    pace: 'dynamic',
+    texture: 'smooth',
+  },
+  暧昧: {
+    colorTemperature: 'cool',
+    saturation: 'medium',
+    contrast: 'high',
+    compositionType: 'asymmetric',
+    lightingType: 'low-key',
+    scale: 'intimate',
+    pace: 'static',
+    texture: 'grainy',
+  },
+  心动: {
+    colorTemperature: 'warm',
+    saturation: 'medium',
+    contrast: 'low',
+    compositionType: 'centered',
+    lightingType: 'natural',
+    scale: 'intimate',
+    pace: 'dynamic',
+    texture: 'smooth',
+  },
+  渴望: {
+    colorTemperature: 'warm',
+    saturation: 'high',
+    contrast: 'high',
+    compositionType: 'centered',
+    lightingType: 'dramatic',
+    scale: 'monumental',
+    pace: 'dynamic',
+    texture: 'digital',
+  },
+  梦想: {
+    colorTemperature: 'warm',
+    saturation: 'high',
+    contrast: 'medium',
+    compositionType: 'symmetric',
+    lightingType: 'high-key',
+    scale: 'monumental',
+    pace: 'dynamic',
+    texture: 'smooth',
+  },
+  自由: {
+    colorTemperature: 'warm',
+    saturation: 'high',
+    contrast: 'medium',
+    compositionType: 'asymmetric',
+    lightingType: 'natural',
+    scale: 'monumental',
+    pace: 'dynamic',
+    texture: 'smooth',
+  },
+  沉思: {
+    colorTemperature: 'cool',
+    saturation: 'low',
+    contrast: 'high',
+    compositionType: 'symmetric',
+    lightingType: 'dramatic',
+    scale: 'monumental',
+    pace: 'static',
+    texture: 'digital',
+  },
+  戏谑: {
+    colorTemperature: 'warm',
+    saturation: 'high',
+    contrast: 'high',
+    compositionType: 'symmetric',
+    lightingType: 'high-key',
+    scale: 'medium',
+    pace: 'dynamic',
+    texture: 'digital',
+  },
+  遗憾: {
+    colorTemperature: 'cool',
+    saturation: 'low',
+    contrast: 'medium',
+    compositionType: 'asymmetric',
+    lightingType: 'low-key',
+    scale: 'intimate',
+    pace: 'static',
+    texture: 'grainy',
+  },
+  疲惫: {
+    colorTemperature: 'cool',
+    saturation: 'low',
+    contrast: 'medium',
+    compositionType: 'asymmetric',
+    lightingType: 'low-key',
+    scale: 'intimate',
+    pace: 'static',
+    texture: 'grainy',
+  },
+  亲情: {
+    colorTemperature: 'warm',
+    saturation: 'medium',
+    contrast: 'low',
+    compositionType: 'centered',
+    lightingType: 'natural',
+    scale: 'intimate',
+    pace: 'static',
+    texture: 'smooth',
+  },
+  幽默: {
+    colorTemperature: 'warm',
+    saturation: 'high',
+    contrast: 'medium',
+    compositionType: 'symmetric',
+    lightingType: 'high-key',
+    scale: 'medium',
+    pace: 'dynamic',
+    texture: 'digital',
+  },
+  回忆: {
+    colorTemperature: 'warm',
+    saturation: 'low',
+    contrast: 'low',
+    compositionType: 'centered',
+    lightingType: 'natural',
+    scale: 'intimate',
+    pace: 'static',
+    texture: 'grainy',
+  },
+  震撼: {
+    colorTemperature: 'cool',
+    saturation: 'medium',
+    contrast: 'high',
+    compositionType: 'symmetric',
+    lightingType: 'dramatic',
+    scale: 'monumental',
+    pace: 'dynamic',
+    texture: 'digital',
+  },
+  童心: {
+    colorTemperature: 'warm',
+    saturation: 'high',
+    contrast: 'medium',
+    compositionType: 'symmetric',
+    lightingType: 'high-key',
+    scale: 'medium',
+    pace: 'dynamic',
+    texture: 'handdrawn',
+  },
+  释然: {
+    colorTemperature: 'warm',
+    saturation: 'medium',
+    contrast: 'low',
+    compositionType: 'centered',
+    lightingType: 'natural',
+    scale: 'medium',
+    pace: 'static',
+    texture: 'smooth',
+  },
 };
 
 // ========== TMDB API 集成 ==========
@@ -1690,10 +2071,7 @@ ${wrapUserInput(description, 'user_description')}
 
   try {
     // 使用统一的 LLM 调用函数（火山引擎豆包）
-    const content = await callLLM(
-      [{ role: 'user', content: prompt }],
-      { temperature: 0.6, maxTokens: 1200 }
-    );
+    const content = await callLLM([{ role: 'user', content: prompt }], { temperature: 0.6, maxTokens: 1200 });
     const jsonStr = cleanJsonResponse(content);
     const result = JSON.parse(jsonStr);
     // 确保返回结构包含 id 和 name 字段（兼容规范要求）
@@ -1721,8 +2099,16 @@ function localParseStyle(description) {
       template: {
         styleName: '赛博朋克',
         styleDesc: '霓虹灯与雨夜的未来都市美学',
-        colors: { primary: '#ff0080', secondary: '#00ffff', accent: '#ff00ff', bg: '#0a0a1a', text: '#e0e0ff', textLight: '#a0a0c0' },
-        promptCore: 'cyberpunk style, neon lights, rain-soaked futuristic city, holographic displays, dark atmosphere, blade runner aesthetic',
+        colors: {
+          primary: '#ff0080',
+          secondary: '#00ffff',
+          accent: '#ff00ff',
+          bg: '#0a0a1a',
+          text: '#e0e0ff',
+          textLight: '#a0a0c0',
+        },
+        promptCore:
+          'cyberpunk style, neon lights, rain-soaked futuristic city, holographic displays, dark atmosphere, blade runner aesthetic',
         negativePrompt: 'natural daylight, rural, pastel colors, warm tones',
         emotions: ['孤独', '渴望', '沉思'],
         keywords: ['霓虹', '雨夜', '未来'],
@@ -1731,16 +2117,33 @@ function localParseStyle(description) {
         avatar: '🌃',
         tagline: '霓虹照亮未来',
         quotes: ['在霓虹深处，寻找真实的自己。', '未来已来，只是分布不均。', '雨夜的城市，从不缺少故事。'],
-        styleDNA: { colorTemperature: 'cool', saturation: 'high', contrast: 'high', compositionType: 'asymmetric', lightingType: 'low-key', scale: 'monumental', pace: 'dynamic', texture: 'digital' }
-      }
+        styleDNA: {
+          colorTemperature: 'cool',
+          saturation: 'high',
+          contrast: 'high',
+          compositionType: 'asymmetric',
+          lightingType: 'low-key',
+          scale: 'monumental',
+          pace: 'dynamic',
+          texture: 'digital',
+        },
+      },
     },
     {
       keys: ['水墨', 'ink', '国风', '中国', '山水', '留白'],
       template: {
         styleName: '水墨国风',
         styleDesc: '东方水墨意境，留白与晕染的诗意',
-        colors: { primary: '#2c2c2c', secondary: '#8a8a8a', accent: '#a0522d', bg: '#f5f0e8', text: '#1a1a1a', textLight: '#555555' },
-        promptCore: 'Chinese ink wash painting style, traditional shanshui landscape, minimalist composition, ink splash, rice paper texture, negative space',
+        colors: {
+          primary: '#2c2c2c',
+          secondary: '#8a8a8a',
+          accent: '#a0522d',
+          bg: '#f5f0e8',
+          text: '#1a1a1a',
+          textLight: '#555555',
+        },
+        promptCore:
+          'Chinese ink wash painting style, traditional shanshui landscape, minimalist composition, ink splash, rice paper texture, negative space',
         negativePrompt: 'vibrant colors, modern, digital, neon, 3d render',
         emotions: ['思念', '释然', '沉思'],
         keywords: ['水墨', '留白', '山水'],
@@ -1749,16 +2152,33 @@ function localParseStyle(description) {
         avatar: '🏔️',
         tagline: '墨分五色，意境万千',
         quotes: ['留白处，皆是山河。', '一笔墨色，半生江湖。', '山水之间，心自安然。'],
-        styleDNA: { colorTemperature: 'neutral', saturation: 'low', contrast: 'medium', compositionType: 'asymmetric', lightingType: 'natural', scale: 'monumental', pace: 'static', texture: 'handdrawn' }
-      }
+        styleDNA: {
+          colorTemperature: 'neutral',
+          saturation: 'low',
+          contrast: 'medium',
+          compositionType: 'asymmetric',
+          lightingType: 'natural',
+          scale: 'monumental',
+          pace: 'static',
+          texture: 'handdrawn',
+        },
+      },
     },
     {
       keys: ['复古', 'retro', '怀旧', '胶片', '80', '90', '老'],
       template: {
         styleName: '复古胶片',
         styleDesc: '褪色胶片质感，怀旧暖色调',
-        colors: { primary: '#c4956a', secondary: '#8b6f47', accent: '#e8c89c', bg: '#3d2b1f', text: '#f0e0c8', textLight: '#c4a882' },
-        promptCore: 'retro film aesthetic, faded 35mm film grain, warm sepia tones, vintage color grading, nostalgic atmosphere, analog photography',
+        colors: {
+          primary: '#c4956a',
+          secondary: '#8b6f47',
+          accent: '#e8c89c',
+          bg: '#3d2b1f',
+          text: '#f0e0c8',
+          textLight: '#c4a882',
+        },
+        promptCore:
+          'retro film aesthetic, faded 35mm film grain, warm sepia tones, vintage color grading, nostalgic atmosphere, analog photography',
         negativePrompt: 'digital, sharp, modern, neon, high saturation',
         emotions: ['回忆', '遗憾', '思念'],
         keywords: ['胶片', '褪色', '怀旧'],
@@ -1767,16 +2187,33 @@ function localParseStyle(description) {
         avatar: '📷',
         tagline: '时间在胶片上凝固',
         quotes: ['所有旧时光，都是金色的。', '记忆会褪色，但不会消失。', '那些年，风很轻，日子很慢。'],
-        styleDNA: { colorTemperature: 'warm', saturation: 'low', contrast: 'medium', compositionType: 'centered', lightingType: 'natural', scale: 'intimate', pace: 'static', texture: 'grainy' }
-      }
+        styleDNA: {
+          colorTemperature: 'warm',
+          saturation: 'low',
+          contrast: 'medium',
+          compositionType: 'centered',
+          lightingType: 'natural',
+          scale: 'intimate',
+          pace: 'static',
+          texture: 'grainy',
+        },
+      },
     },
     {
       keys: ['极简', 'minimal', '简约', '干净', '留白', '性冷淡'],
       template: {
         styleName: '极简主义',
         styleDesc: '少即是多，纯净留白的力量',
-        colors: { primary: '#333333', secondary: '#999999', accent: '#ff6b6b', bg: '#ffffff', text: '#1a1a1a', textLight: '#666666' },
-        promptCore: 'minimalist style, clean composition, abundant negative space, monochromatic palette, simple geometric forms, zen aesthetic',
+        colors: {
+          primary: '#333333',
+          secondary: '#999999',
+          accent: '#ff6b6b',
+          bg: '#ffffff',
+          text: '#1a1a1a',
+          textLight: '#666666',
+        },
+        promptCore:
+          'minimalist style, clean composition, abundant negative space, monochromatic palette, simple geometric forms, zen aesthetic',
         negativePrompt: 'cluttered, ornate, busy, multiple colors, complex patterns',
         emotions: ['释然', '沉思', '治愈'],
         keywords: ['极简', '留白', '纯净'],
@@ -1785,16 +2222,33 @@ function localParseStyle(description) {
         avatar: '⚪',
         tagline: '少即是多',
         quotes: ['留白，是最高级的表达。', '简单，是最深的复杂。', '少一点，再多一点。'],
-        styleDNA: { colorTemperature: 'neutral', saturation: 'low', contrast: 'low', compositionType: 'centered', lightingType: 'high-key', scale: 'medium', pace: 'static', texture: 'smooth' }
-      }
+        styleDNA: {
+          colorTemperature: 'neutral',
+          saturation: 'low',
+          contrast: 'low',
+          compositionType: 'centered',
+          lightingType: 'high-key',
+          scale: 'medium',
+          pace: 'static',
+          texture: 'smooth',
+        },
+      },
     },
     {
       keys: ['梦幻', 'dream', '童话', 'fantasy', '奇幻', '魔法'],
       template: {
         styleName: '梦幻童话',
         styleDesc: '柔光梦境，童话般的奇幻色彩',
-        colors: { primary: '#b39ddb', secondary: '#ce93d8', accent: '#fff176', bg: '#ede7f6', text: '#4527a0', textLight: '#7e57c2' },
-        promptCore: 'dreamy fantasy style, soft glow, ethereal lighting, pastel rainbow palette, magical atmosphere, fairy tale aesthetic, bokeh',
+        colors: {
+          primary: '#b39ddb',
+          secondary: '#ce93d8',
+          accent: '#fff176',
+          bg: '#ede7f6',
+          text: '#4527a0',
+          textLight: '#7e57c2',
+        },
+        promptCore:
+          'dreamy fantasy style, soft glow, ethereal lighting, pastel rainbow palette, magical atmosphere, fairy tale aesthetic, bokeh',
         negativePrompt: 'dark, gritty, realistic, horror, desaturated',
         emotions: ['梦想', '心动', '童心'],
         keywords: ['梦幻', '柔光', '奇幻'],
@@ -1803,16 +2257,33 @@ function localParseStyle(description) {
         avatar: '✨',
         tagline: '在梦里，一切皆有可能',
         quotes: ['梦是灵魂的另一种语言。', '星光不问赶路人。', '相信魔法的人，终会遇见魔法。'],
-        styleDNA: { colorTemperature: 'warm', saturation: 'high', contrast: 'low', compositionType: 'symmetric', lightingType: 'high-key', scale: 'monumental', pace: 'dynamic', texture: 'smooth' }
-      }
+        styleDNA: {
+          colorTemperature: 'warm',
+          saturation: 'high',
+          contrast: 'low',
+          compositionType: 'symmetric',
+          lightingType: 'high-key',
+          scale: 'monumental',
+          pace: 'dynamic',
+          texture: 'smooth',
+        },
+      },
     },
     {
       keys: ['暗黑', 'dark', '黑暗', '哥特', 'gothic', '恐怖'],
       template: {
         styleName: '暗黑哥特',
         styleDesc: '幽暗深邃，哥特式的神秘与压迫',
-        colors: { primary: '#1a1a2e', secondary: '#16213e', accent: '#e94560', bg: '#0f0f1a', text: '#c0c0c0', textLight: '#808080' },
-        promptCore: 'dark gothic style, deep shadows, moody atmosphere, chiaroscuro lighting, mysterious and ominous, baroque architecture',
+        colors: {
+          primary: '#1a1a2e',
+          secondary: '#16213e',
+          accent: '#e94560',
+          bg: '#0f0f1a',
+          text: '#c0c0c0',
+          textLight: '#808080',
+        },
+        promptCore:
+          'dark gothic style, deep shadows, moody atmosphere, chiaroscuro lighting, mysterious and ominous, baroque architecture',
         negativePrompt: 'bright, cheerful, pastel, cartoon, high-key',
         emotions: ['孤独', '忧伤', '沉思'],
         keywords: ['暗黑', '哥特', '神秘'],
@@ -1821,14 +2292,23 @@ function localParseStyle(description) {
         avatar: '🌑',
         tagline: '在黑暗中，看见光',
         quotes: ['黑暗不是终点，是另一种开始。', '最深的夜，孕育最亮的星。', '恐惧，是勇气的另一面。'],
-        styleDNA: { colorTemperature: 'cool', saturation: 'low', contrast: 'high', compositionType: 'asymmetric', lightingType: 'low-key', scale: 'monumental', pace: 'static', texture: 'grainy' }
-      }
-    }
+        styleDNA: {
+          colorTemperature: 'cool',
+          saturation: 'low',
+          contrast: 'high',
+          compositionType: 'asymmetric',
+          lightingType: 'low-key',
+          scale: 'monumental',
+          pace: 'static',
+          texture: 'grainy',
+        },
+      },
+    },
   ];
 
   // 遍历预设模板，找到第一个匹配的
   for (const preset of presets) {
-    if (preset.keys.some(key => desc.includes(key))) {
+    if (preset.keys.some((key) => desc.includes(key))) {
       const result = { ...preset.template, source: 'local' };
       // 确保返回结构包含 id 和 name 字段（兼容规范要求）
       result.id = 'custom_' + preset.template.styleName;
@@ -1843,7 +2323,14 @@ function localParseStyle(description) {
     name: '自定义风格',
     styleName: '自定义风格',
     styleDesc: '基于用户描述生成的通用视觉风格',
-    colors: { primary: '#4a90d9', secondary: '#87ceeb', accent: '#ffd54f', bg: '#1a1a2e', text: '#e0e0e0', textLight: '#b0b0b0' },
+    colors: {
+      primary: '#4a90d9',
+      secondary: '#87ceeb',
+      accent: '#ffd54f',
+      bg: '#1a1a2e',
+      text: '#e0e0e0',
+      textLight: '#b0b0b0',
+    },
     promptCore: `cinematic style based on: ${description}, atmospheric, detailed, high quality`,
     negativePrompt: 'low quality, blurry, distorted',
     emotions: ['复杂', '感悟', '生活'],
@@ -1853,8 +2340,17 @@ function localParseStyle(description) {
     avatar: '🎨',
     tagline: '你的风格，由你定义',
     quotes: ['风格，是灵魂的签名。', '每一种表达，都值得被看见。', '创造，从定义开始。'],
-    styleDNA: { colorTemperature: 'neutral', saturation: 'medium', contrast: 'medium', compositionType: 'centered', lightingType: 'natural', scale: 'medium', pace: 'dynamic', texture: 'digital' },
-    source: 'local'
+    styleDNA: {
+      colorTemperature: 'neutral',
+      saturation: 'medium',
+      contrast: 'medium',
+      compositionType: 'centered',
+      lightingType: 'natural',
+      scale: 'medium',
+      pace: 'dynamic',
+      texture: 'digital',
+    },
+    source: 'local',
   };
 }
 
@@ -1963,10 +2459,7 @@ async function analyzeMovieStyle(movieName) {
 
   try {
     // 使用统一的 LLM 调用函数（火山引擎豆包）
-    const content = await callLLM(
-      [{ role: 'user', content: prompt }],
-      { temperature: 0.4, maxTokens: 1200 }
-    );
+    const content = await callLLM([{ role: 'user', content: prompt }], { temperature: 0.4, maxTokens: 1200 });
     const jsonStr = cleanJsonResponse(content);
     const result = JSON.parse(jsonStr);
     result.source = 'ai-text';
@@ -1995,7 +2488,14 @@ function localMovieStyle(movieName) {
       name: '科幻史诗',
       styleName: '科幻史诗',
       styleDesc: '冷峻宇宙美学，宏大时空叙事',
-      colors: { primary: '#0a1929', secondary: '#4fc3f7', accent: '#c0c0c0', bg: '#0d1b2a', text: '#e0e0e0', textLight: '#b0bec5' },
+      colors: {
+        primary: '#0a1929',
+        secondary: '#4fc3f7',
+        accent: '#c0c0c0',
+        bg: '#0d1b2a',
+        text: '#e0e0e0',
+        textLight: '#b0bec5',
+      },
       promptCore: 'sci-fi epic, cold space aesthetic, monumental scale, IMAX, philosophical, time and space',
       negativePrompt: 'warm colors, cartoon, small scale, cheerful',
       emotions: ['震撼', '沉思', '宿命'],
@@ -2005,10 +2505,19 @@ function localMovieStyle(movieName) {
       avatar: '🌌',
       tagline: '在宇宙面前，我们都是尘埃',
       quotes: ['不要试图理解它，去感受它。', '引力可以穿越维度。', '时间是我们最无法掌控的东西。'],
-      styleDNA: { colorTemperature: 'cool', saturation: 'low', contrast: 'high', compositionType: 'symmetric', lightingType: 'dramatic', scale: 'monumental', pace: 'dynamic', texture: 'digital' },
+      styleDNA: {
+        colorTemperature: 'cool',
+        saturation: 'low',
+        contrast: 'high',
+        compositionType: 'symmetric',
+        lightingType: 'dramatic',
+        scale: 'monumental',
+        pace: 'dynamic',
+        texture: 'digital',
+      },
       source: 'local',
       movieName: movieName,
-      sourceMovie: movieName
+      sourceMovie: movieName,
     };
   }
 
@@ -2018,8 +2527,16 @@ function localMovieStyle(movieName) {
       name: '都市暧昧',
       styleName: '都市暧昧',
       styleDesc: '霓虹光影下的都市孤独美学',
-      colors: { primary: '#3d7a5a', secondary: '#c9a36b', accent: '#ff6b6b', bg: '#1a2e1f', text: '#e8d5b7', textLight: '#c9a36b' },
-      promptCore: 'Wong Kar-wai style, neon green, intimate lighting, lonely urban night, motion blur, rain-soaked streets',
+      colors: {
+        primary: '#3d7a5a',
+        secondary: '#c9a36b',
+        accent: '#ff6b6b',
+        bg: '#1a2e1f',
+        text: '#e8d5b7',
+        textLight: '#c9a36b',
+      },
+      promptCore:
+        'Wong Kar-wai style, neon green, intimate lighting, lonely urban night, motion blur, rain-soaked streets',
       negativePrompt: 'bright daylight, vibrant colors, multiple subjects',
       emotions: ['暧昧', '孤独', '回忆'],
       keywords: ['霓虹', '暧昧', '独白'],
@@ -2028,10 +2545,19 @@ function localMovieStyle(movieName) {
       avatar: '🎞️',
       tagline: '那些消逝的岁月，隔着积灰的玻璃',
       quotes: ['念念不忘，必有回响。', '不如我们从头来过。', '如果记忆是一个罐头，我希望它永远不会过期。'],
-      styleDNA: { colorTemperature: 'cool', saturation: 'medium', contrast: 'high', compositionType: 'asymmetric', lightingType: 'low-key', scale: 'intimate', pace: 'static', texture: 'grainy' },
+      styleDNA: {
+        colorTemperature: 'cool',
+        saturation: 'medium',
+        contrast: 'high',
+        compositionType: 'asymmetric',
+        lightingType: 'low-key',
+        scale: 'intimate',
+        pace: 'static',
+        texture: 'grainy',
+      },
       source: 'local',
       movieName: movieName,
-      sourceMovie: movieName
+      sourceMovie: movieName,
     };
   }
 
@@ -2041,7 +2567,14 @@ function localMovieStyle(movieName) {
     name: '电影质感',
     styleName: '电影质感',
     styleDesc: '经典电影视觉风格，富有叙事张力',
-    colors: { primary: '#2c3e50', secondary: '#34495e', accent: '#e74c3c', bg: '#1a1a2e', text: '#ecf0f1', textLight: '#bdc3c7' },
+    colors: {
+      primary: '#2c3e50',
+      secondary: '#34495e',
+      accent: '#e74c3c',
+      bg: '#1a1a2e',
+      text: '#ecf0f1',
+      textLight: '#bdc3c7',
+    },
     promptCore: `cinematic film still, movie: ${movieName}, dramatic lighting, film grain, professional color grading, atmospheric`,
     negativePrompt: 'cartoon, anime, low quality, blurry',
     emotions: ['复杂', '感悟', '震撼'],
@@ -2051,10 +2584,19 @@ function localMovieStyle(movieName) {
     avatar: '🎬',
     tagline: '每一帧都是故事',
     quotes: ['电影是每秒24格的真理。', '好的故事，不需要解释。', '光影之间，人生百态。'],
-    styleDNA: { colorTemperature: 'neutral', saturation: 'medium', contrast: 'high', compositionType: 'centered', lightingType: 'dramatic', scale: 'medium', pace: 'dynamic', texture: 'grainy' },
+    styleDNA: {
+      colorTemperature: 'neutral',
+      saturation: 'medium',
+      contrast: 'high',
+      compositionType: 'centered',
+      lightingType: 'dramatic',
+      scale: 'medium',
+      pace: 'dynamic',
+      texture: 'grainy',
+    },
     source: 'local',
     movieName: movieName,
-    sourceMovie: movieName
+    sourceMovie: movieName,
   };
 }
 
@@ -2067,8 +2609,12 @@ async function blendStyles(styleA, styleB, ratio = 0.5) {
   function blendHex(hexA, hexB, r) {
     const a = parseInt(hexA.slice(1), 16);
     const b = parseInt(hexB.slice(1), 16);
-    const ar = (a >> 16) & 0xff, ag = (a >> 8) & 0xff, ab = a & 0xff;
-    const br = (b >> 16) & 0xff, bg = (b >> 8) & 0xff, bb = b & 0xff;
+    const ar = (a >> 16) & 0xff,
+      ag = (a >> 8) & 0xff,
+      ab = a & 0xff;
+    const br = (b >> 16) & 0xff,
+      bg = (b >> 8) & 0xff,
+      bb = b & 0xff;
     const r2 = Math.round(ar * r + br * (1 - r));
     const g2 = Math.round(ag * r + bg * (1 - r));
     const b2 = Math.round(ab * r + bb * (1 - r));
@@ -2085,7 +2631,7 @@ async function blendStyles(styleA, styleB, ratio = 0.5) {
     accent: blendHex(colorsA.accent || defaultColor, colorsB.accent || defaultColor, ratio),
     bg: blendHex(colorsA.bg || defaultColor, colorsB.bg || defaultColor, ratio),
     text: blendHex(colorsA.text || defaultColor, colorsB.text || defaultColor, ratio),
-    textLight: blendHex(colorsA.textLight || defaultColor, colorsB.textLight || defaultColor, ratio)
+    textLight: blendHex(colorsA.textLight || defaultColor, colorsB.textLight || defaultColor, ratio),
   };
 
   // AI 生成混合 Prompt
@@ -2106,10 +2652,7 @@ async function blendStyles(styleA, styleB, ratio = 0.5) {
   "styleName": "混合风格名称（中文4-8字）",
   "tagline": "一句话描述（中文）"
 }`;
-      const content = await callLLM(
-        [{ role: 'user', content: prompt }],
-        { temperature: 0.7, maxTokens: 600 }
-      );
+      const content = await callLLM([{ role: 'user', content: prompt }], { temperature: 0.7, maxTokens: 600 });
       const parsed = JSON.parse(cleanJsonResponse(content));
       blendedPrompt = parsed.promptCore;
       blendedNegative = parsed.negativePrompt;
@@ -2127,7 +2670,7 @@ async function blendStyles(styleA, styleB, ratio = 0.5) {
         styleDNA: styleA.styleDNA, // 以风格 A 的 DNA 为主
         source: 'blend',
         sourceStyles: [styleA.id, styleB.id],
-        blendRatio: ratio
+        blendRatio: ratio,
       };
     } catch (e) {
       logger.info('AI 混合失败，使用简单混合：', e.message);
@@ -2149,7 +2692,7 @@ async function blendStyles(styleA, styleB, ratio = 0.5) {
     styleDNA: styleA.styleDNA, // 以风格 A 的 DNA 为主
     source: 'blend',
     sourceStyles: [styleA.id, styleB.id],
-    blendRatio: ratio
+    blendRatio: ratio,
   };
 }
 
@@ -2165,7 +2708,7 @@ function recommendStyleByEmotion(emotion, allStyles) {
     lightingType: '光影',
     scale: '尺度',
     pace: '节奏',
-    texture: '质感'
+    texture: '质感',
   };
 
   // 根据情绪查找对应的风格 DNA 偏好
@@ -2173,36 +2716,40 @@ function recommendStyleByEmotion(emotion, allStyles) {
 
   // 没有匹配的情绪 DNA，返回前 3 个风格（通用推荐）
   if (!emotionDNA) {
-    return (allStyles || []).slice(0, 3).map(s => ({
+    return (allStyles || []).slice(0, 3).map((s) => ({
       style: s,
       matchScore: 50,
-      reason: '通用推荐，风格与情绪无特定匹配'
+      reason: '通用推荐，风格与情绪无特定匹配',
     }));
   }
 
   // 计算每个风格的风格 DNA 与情绪 DNA 的匹配度
-  return (allStyles || []).map(s => {
-    // 风格没有 styleDNA 字段，匹配度为 0
-    if (!s.styleDNA) {
-      return { style: s, matchScore: 0, reason: '风格DNA数据不足，无法精确匹配' };
-    }
-    let matches = 0;
-    let total = 0;
-    const matchedAttrs = [];
-    Object.keys(emotionDNA).forEach(key => {
-      total++;
-      if (s.styleDNA[key] === emotionDNA[key]) {
-        matches++;
-        matchedAttrs.push(dnaLabels[key] || key);
+  return (allStyles || [])
+    .map((s) => {
+      // 风格没有 styleDNA 字段，匹配度为 0
+      if (!s.styleDNA) {
+        return { style: s, matchScore: 0, reason: '风格DNA数据不足，无法精确匹配' };
       }
-    });
-    const matchScore = total > 0 ? Math.round((matches / total) * 100) : 0;
-    // 生成推荐理由
-    const reason = matchedAttrs.length > 0
-      ? `匹配维度：${matchedAttrs.join('、')}（${matches}/${total}项一致）`
-      : `风格DNA相似度较低（${matches}/${total}项一致）`;
-    return { style: s, matchScore, reason };
-  }).sort((a, b) => b.matchScore - a.matchScore).slice(0, 3);
+      let matches = 0;
+      let total = 0;
+      const matchedAttrs = [];
+      Object.keys(emotionDNA).forEach((key) => {
+        total++;
+        if (s.styleDNA[key] === emotionDNA[key]) {
+          matches++;
+          matchedAttrs.push(dnaLabels[key] || key);
+        }
+      });
+      const matchScore = total > 0 ? Math.round((matches / total) * 100) : 0;
+      // 生成推荐理由
+      const reason =
+        matchedAttrs.length > 0
+          ? `匹配维度：${matchedAttrs.join('、')}（${matches}/${total}项一致）`
+          : `风格DNA相似度较低（${matches}/${total}项一致）`;
+      return { style: s, matchScore, reason };
+    })
+    .sort((a, b) => b.matchScore - a.matchScore)
+    .slice(0, 3);
 }
 
 // ========== 电影风格 DNA 分析 ==========
@@ -2283,7 +2830,9 @@ Style description: ${movie.visualStyle || 'unknown'}`,
 
     const matchedDirectorIds = sortedMatches.map(([id]) => id);
     const topMatchScores = {};
-    sortedMatches.forEach(([id, score]) => { topMatchScores[id] = Math.round(score * 100) / 100; });
+    sortedMatches.forEach(([id, score]) => {
+      topMatchScores[id] = Math.round(score * 100) / 100;
+    });
 
     // 6. 生成 stylePrompt
     const stylePrompt = generateMoviePrompt(mergedDNA, movie);
@@ -2294,7 +2843,7 @@ Style description: ${movie.visualStyle || 'unknown'}`,
       matchedDirectorIds,
       matchScores: topMatchScores,
       stylePrompt,
-      analyzedAt: new Date().toISOString()
+      analyzedAt: new Date().toISOString(),
     };
   } catch (error) {
     logger.error('[DNA分析] 失败:', error.message);
@@ -2305,7 +2854,7 @@ Style description: ${movie.visualStyle || 'unknown'}`,
 // 本地降级：根据电影标题/风格关键词推断 DNA
 function localMovieDNA(movie) {
   if (movie.matchedDirectorIds && movie.matchedDirectorIds.length > 0) {
-    const director = (DIRECTORS || []).find(d => d.id === movie.matchedDirectorIds[0]);
+    const director = (DIRECTORS || []).find((d) => d.id === movie.matchedDirectorIds[0]);
     if (director && director.styleDNA) {
       // 从 DNA 推断默认色彩（director 仅有 styleDNA，无 colors/promptCore 字段）
       const colors = movie.colors || extractColorsFromStyle(director.styleDNA);
@@ -2317,25 +2866,50 @@ function localMovieDNA(movie) {
         matchScores: movie.matchScores || {},
         stylePrompt,
         analyzedAt: new Date().toISOString(),
-        fallback: true
+        fallback: true,
       };
     }
   }
 
   return {
-    styleDNA: { colorTemperature: 'neutral', saturation: 'medium', contrast: 'medium', compositionType: 'centered', lightingType: 'natural', scale: 'medium', pace: 'static', texture: 'smooth' },
-    colors: { primary: '#6a8caf', secondary: '#9db4c0', accent: '#c9b458', bg: '#1a2332', text: '#e8e0c8', textLight: '#b8a878' },
+    styleDNA: {
+      colorTemperature: 'neutral',
+      saturation: 'medium',
+      contrast: 'medium',
+      compositionType: 'centered',
+      lightingType: 'natural',
+      scale: 'medium',
+      pace: 'static',
+      texture: 'smooth',
+    },
+    colors: {
+      primary: '#6a8caf',
+      secondary: '#9db4c0',
+      accent: '#c9b458',
+      bg: '#1a2332',
+      text: '#e8e0c8',
+      textLight: '#b8a878',
+    },
     matchedDirectorIds: [],
     matchScores: {},
     stylePrompt: movie.stylePrompt || 'cinematic film still, dramatic lighting, professional composition',
     analyzedAt: new Date().toISOString(),
-    fallback: true
+    fallback: true,
   };
 }
 
 // 合并多个 DNA 结果（取众数）
 function mergeDNA(dnaList) {
-  const keys = ['colorTemperature', 'saturation', 'contrast', 'compositionType', 'lightingType', 'scale', 'pace', 'texture'];
+  const keys = [
+    'colorTemperature',
+    'saturation',
+    'contrast',
+    'compositionType',
+    'lightingType',
+    'scale',
+    'pace',
+    'texture',
+  ];
   const result = {};
   for (const key of keys) {
     const counts = {};
@@ -2351,12 +2925,38 @@ function mergeDNA(dnaList) {
 // 根据 DNA 生成电影风格 prompt
 function generateMoviePrompt(dna, movie) {
   const parts = [];
-  parts.push(dna.colorTemperature === 'warm' ? 'warm color palette' : dna.colorTemperature === 'cool' ? 'cool color palette' : 'neutral color palette');
-  parts.push(dna.saturation === 'high' ? 'high saturation' : dna.saturation === 'low' ? 'low saturation' : 'medium saturation');
+  parts.push(
+    dna.colorTemperature === 'warm'
+      ? 'warm color palette'
+      : dna.colorTemperature === 'cool'
+        ? 'cool color palette'
+        : 'neutral color palette'
+  );
+  parts.push(
+    dna.saturation === 'high' ? 'high saturation' : dna.saturation === 'low' ? 'low saturation' : 'medium saturation'
+  );
   parts.push(dna.contrast === 'high' ? 'high contrast' : dna.contrast === 'low' ? 'low contrast' : 'medium contrast');
-  parts.push(dna.lightingType === 'dramatic' ? 'dramatic lighting' : dna.lightingType === 'low-key' ? 'low-key lighting' : dna.lightingType === 'high-key' ? 'high-key lighting' : 'natural lighting');
-  parts.push(dna.scale === 'monumental' ? 'monumental scale' : dna.scale === 'intimate' ? 'intimate scale' : 'medium scale');
-  parts.push(dna.compositionType === 'symmetric' ? 'symmetric composition' : dna.compositionType === 'dynamic' ? 'dynamic composition' : dna.compositionType === 'centered' ? 'centered composition' : 'asymmetric composition');
+  parts.push(
+    dna.lightingType === 'dramatic'
+      ? 'dramatic lighting'
+      : dna.lightingType === 'low-key'
+        ? 'low-key lighting'
+        : dna.lightingType === 'high-key'
+          ? 'high-key lighting'
+          : 'natural lighting'
+  );
+  parts.push(
+    dna.scale === 'monumental' ? 'monumental scale' : dna.scale === 'intimate' ? 'intimate scale' : 'medium scale'
+  );
+  parts.push(
+    dna.compositionType === 'symmetric'
+      ? 'symmetric composition'
+      : dna.compositionType === 'dynamic'
+        ? 'dynamic composition'
+        : dna.compositionType === 'centered'
+          ? 'centered composition'
+          : 'asymmetric composition'
+  );
   if (movie.visualStyle) parts.push(movie.visualStyle);
   if (movie.styleKeywords && movie.styleKeywords.length > 0) parts.push(movie.styleKeywords.join(', '));
   return parts.join(', ') + ', cinematic film still, professional cinematography';
@@ -2364,7 +2964,16 @@ function generateMoviePrompt(dna, movie) {
 
 // 本地 DNA 相似度计算
 function calculateDNASimilarityLocal(dnaA, dnaB) {
-  const keys = ['colorTemperature', 'saturation', 'contrast', 'compositionType', 'lightingType', 'scale', 'pace', 'texture'];
+  const keys = [
+    'colorTemperature',
+    'saturation',
+    'contrast',
+    'compositionType',
+    'lightingType',
+    'scale',
+    'pace',
+    'texture',
+  ];
   let matches = 0;
   for (const key of keys) {
     if (dnaA[key] === dnaB[key]) matches++;
@@ -2375,11 +2984,32 @@ function calculateDNASimilarityLocal(dnaA, dnaB) {
 // 从 DNA 推断默认色彩
 function extractColorsFromStyle(dna) {
   if (dna.colorTemperature === 'warm') {
-    return { primary: '#c9a45c', secondary: '#3a2a1a', accent: '#ff6b35', bg: '#1a0f05', text: '#f0e0c0', textLight: '#c9a96e' };
+    return {
+      primary: '#c9a45c',
+      secondary: '#3a2a1a',
+      accent: '#ff6b35',
+      bg: '#1a0f05',
+      text: '#f0e0c0',
+      textLight: '#c9a96e',
+    };
   } else if (dna.colorTemperature === 'cool') {
-    return { primary: '#6a8caf', secondary: '#1a2a3a', accent: '#4a90d9', bg: '#0a0f1a', text: '#d0d8e0', textLight: '#8a9098' };
+    return {
+      primary: '#6a8caf',
+      secondary: '#1a2a3a',
+      accent: '#4a90d9',
+      bg: '#0a0f1a',
+      text: '#d0d8e0',
+      textLight: '#8a9098',
+    };
   }
-  return { primary: '#8a8a8a', secondary: '#2a2a2a', accent: '#c0c0c0', bg: '#0a0a0a', text: '#e0e0e0', textLight: '#a0a0a0' };
+  return {
+    primary: '#8a8a8a',
+    secondary: '#2a2a2a',
+    accent: '#c0c0c0',
+    bg: '#0a0a0a',
+    text: '#e0e0e0',
+    textLight: '#a0a0a0',
+  };
 }
 
 // 通过 TMDB ID 获取电影剧照
@@ -2391,7 +3021,7 @@ async function searchTMDBImagesById(tmdbId) {
     if (!resp.ok) return [];
     const data = await resp.json();
     const backdrops = (data.backdrops || []).slice(0, 4);
-    return backdrops.map(b => `https://image.tmdb.org/t/p/original${b.file_path}`);
+    return backdrops.map((b) => `https://image.tmdb.org/t/p/original${b.file_path}`);
   } catch (e) {
     logger.warn('[DNA分析] TMDB 剧照获取失败:', e.message);
     return [];
@@ -2525,6 +3155,6 @@ module.exports = {
     localParseStyle,
     localImageAnalysis,
     selfEvaluate,
-    executeAgentTool
-  }
+    executeAgentTool,
+  },
 };

@@ -33,7 +33,7 @@ import {
 } from './utils/constants.js';
 
 // 后端 API 基础地址
-const API_BASE = '';  // 同源访问，无需指定
+const API_BASE = ''; // 同源访问，无需指定
 
 // ========== 统一请求封装 ==========
 // 返回类型为 `T | null`：当响应体非合法 JSON 但 HTTP 状态正常时降级返回 null，
@@ -112,14 +112,20 @@ async function apiFetch<T = any>(url: string, options?: ApiFetchOptions): Promis
   // 解析响应体
   let data: T;
   try {
-    data = await response.json() as T;
+    data = (await response.json()) as T;
   } catch (parseErr) {
     if (!response.ok) {
-      logger.warn('[ai-client] 响应 JSON 解析失败（HTTP 错误状态）:', parseErr instanceof Error ? parseErr.message : String(parseErr));
+      logger.warn(
+        '[ai-client] 响应 JSON 解析失败（HTTP 错误状态）:',
+        parseErr instanceof Error ? parseErr.message : String(parseErr)
+      );
       throw new Error('服务器返回了无效响应');
     }
     // 响应体不是 JSON 但 HTTP 状态正常，降级返回 null，调用方应检查
-    logger.warn('[ai-client] 响应体非 JSON，降级返回 null:', parseErr instanceof Error ? parseErr.message : String(parseErr));
+    logger.warn(
+      '[ai-client] 响应体非 JSON，降级返回 null:',
+      parseErr instanceof Error ? parseErr.message : String(parseErr)
+    );
     return null;
   }
 
@@ -141,7 +147,11 @@ async function apiFetch<T = any>(url: string, options?: ApiFetchOptions): Promis
 }
 
 // ========== 情绪分析 ==========
-export async function analyzeEmotion(text: string, moodTagId?: string, signal?: AbortSignal): Promise<EmotionAnalysis | null> {
+export async function analyzeEmotion(
+  text: string,
+  moodTagId?: string,
+  signal?: AbortSignal
+): Promise<EmotionAnalysis | null> {
   return await apiFetch<EmotionAnalysis>('/api/analyze', {
     method: 'POST',
     body: { text, moodTagId },
@@ -165,15 +175,19 @@ export async function generateImage(options: GenerateImageOptions, signal?: Abor
     throw new Error('未收到图片数据');
   }
 
-  // 优先使用 imageUrl（减少 base64 网络传输），降级到 base64
-  if (result.imageUrl) {
+  // 优先使用 imageBase64（带正确的 MIME 类型），确保图片稳定显示
+  // 其次使用 imageUrl（本地文件路径）
+  if (result.imageBase64) {
+    // 根据格式确定 MIME 类型
+    const format = result.imageFormat || 'png';
+    const mimeType = format === 'jpg' ? 'jpeg' : format;
     return {
-      dataUrl: result.imageUrl,
+      dataUrl: `data:image/${mimeType};base64,${result.imageBase64}`,
       engine: result.engine,
     };
-  } else if (result.imageBase64) {
+  } else if (result.imageUrl) {
     return {
-      dataUrl: 'data:image/png;base64,' + result.imageBase64,
+      dataUrl: result.imageUrl,
       engine: result.engine,
     };
   }
@@ -194,7 +208,10 @@ export async function generateCopy(options: GenerateCopyOptions, signal?: AbortS
 
 // ========== 多平台适配文案生成 ==========
 // 一次生成微博/小红书/抖音/微信四版文案，复用 apiFetch 的统一错误处理
-export async function generatePlatformCopy(params: GeneratePlatformCopyOptions, signal?: AbortSignal): Promise<PlatformCopy | null> {
+export async function generatePlatformCopy(
+  params: GeneratePlatformCopyOptions,
+  signal?: AbortSignal
+): Promise<PlatformCopy | null> {
   const { text, directorId, emotion } = params;
   return await apiFetch<PlatformCopy>('/api/generate-platform-copy', {
     method: 'POST',
@@ -208,7 +225,7 @@ export async function generatePlatformCopy(params: GeneratePlatformCopyOptions, 
 export async function generateCopyStream(
   options: GenerateCopyOptions,
   callbacks: StreamCallbacks,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<void> {
   const { text, directorId, emotion, type } = options;
   const onToken = callbacks.onToken || (() => {});
@@ -262,7 +279,14 @@ export async function generateCopyStream(
     clearTimeout(timeoutId);
     cleanup?.();
     let errData: any;
-    try { errData = await response.json(); } catch (parseErr) { logger.warn('[ai-client] 解析错误响应 JSON 失败', parseErr instanceof Error ? parseErr.message : String(parseErr)); }
+    try {
+      errData = await response.json();
+    } catch (parseErr) {
+      logger.warn(
+        '[ai-client] 解析错误响应 JSON 失败',
+        parseErr instanceof Error ? parseErr.message : String(parseErr)
+      );
+    }
     onError(new Error(errData?.error || `请求失败 (${response.status})`));
     return;
   }
@@ -309,7 +333,10 @@ export async function generateCopyStream(
             }
           } catch (parseErr) {
             // SSE data 行可能是非 JSON 格式（如心跳/注释行），解析失败时跳过即可
-            logger.debug('[ai-client] SSE JSON 解析失败，跳过该行:', parseErr instanceof Error ? parseErr.message : String(parseErr));
+            logger.debug(
+              '[ai-client] SSE JSON 解析失败，跳过该行:',
+              parseErr instanceof Error ? parseErr.message : String(parseErr)
+            );
           }
           eventType = '';
         }
@@ -331,7 +358,14 @@ export async function generateCopyStream(
   } finally {
     clearTimeout(timeoutId);
     cleanup?.();
-    try { reader.releaseLock(); } catch (releaseErr) { logger.debug('[ai-client] 释放 SSE reader 失败（预期行为，流可能已关闭）:', releaseErr instanceof Error ? releaseErr.message : String(releaseErr)); }
+    try {
+      reader.releaseLock();
+    } catch (releaseErr) {
+      logger.debug(
+        '[ai-client] 释放 SSE reader 失败（预期行为，流可能已关闭）:',
+        releaseErr instanceof Error ? releaseErr.message : String(releaseErr)
+      );
+    }
   }
 }
 
@@ -357,7 +391,7 @@ export async function checkHealth(signal?: AbortSignal): Promise<HealthStatus | 
     clearTimeout(timeoutId);
     cleanup?.();
     if (response.ok) {
-      return await response.json() as HealthStatus;
+      return (await response.json()) as HealthStatus;
     }
   } catch (err) {
     clearTimeout(timeoutId);
@@ -432,7 +466,10 @@ export function imageToBase64(imgElement: HTMLImageElement): string | null {
     return canvas.toDataURL('image/png');
   } catch (err) {
     // canvas 可能被跨域图片污染，toDataURL 会抛出 SecurityError
-    logger.warn('[ai-client] 图片转 base64 失败（可能是跨域画布污染）:', err instanceof Error ? err.message : String(err));
+    logger.warn(
+      '[ai-client] 图片转 base64 失败（可能是跨域画布污染）:',
+      err instanceof Error ? err.message : String(err)
+    );
     return null;
   }
 }
@@ -458,7 +495,12 @@ export async function analyzeMovieStyle(movieName: string, signal?: AbortSignal)
 }
 
 // ========== 混搭两个风格 ==========
-export async function blendStyles(styleA: CustomStyle, styleB: CustomStyle, ratio: number, signal?: AbortSignal): Promise<CustomStyle | null> {
+export async function blendStyles(
+  styleA: CustomStyle,
+  styleB: CustomStyle,
+  ratio: number,
+  signal?: AbortSignal
+): Promise<CustomStyle | null> {
   return await apiFetch<CustomStyle>('/api/blend-styles', {
     method: 'POST',
     body: { styleA, styleB, ratio },
@@ -468,7 +510,11 @@ export async function blendStyles(styleA: CustomStyle, styleB: CustomStyle, rati
 }
 
 // ========== 根据情绪推荐风格 ==========
-export async function recommendStyleByEmotion(emotion: string, styles: CustomStyle[], signal?: AbortSignal): Promise<any> {
+export async function recommendStyleByEmotion(
+  emotion: string,
+  styles: CustomStyle[],
+  signal?: AbortSignal
+): Promise<any> {
   return await apiFetch('/api/recommend-style', {
     method: 'POST',
     body: { emotion, styles },
@@ -499,14 +545,20 @@ export async function analyzeMovieDNA(movieId: string, signal?: AbortSignal): Pr
   });
 }
 
-export async function generateMovieImage(options: GenerateMovieImageOptions, signal?: AbortSignal): Promise<ImageResult> {
-  return generateImage({
-    text: options.text,
-    directorId: 'movie-custom',
-    emotion: '',
-    engine: options.engine,
-    size: options.size,
-    stylePrompt: options.stylePrompt,
-    negativePrompt: options.negativePrompt,
-  }, signal);
+export async function generateMovieImage(
+  options: GenerateMovieImageOptions,
+  signal?: AbortSignal
+): Promise<ImageResult> {
+  return generateImage(
+    {
+      text: options.text,
+      directorId: 'movie-custom',
+      emotion: '',
+      engine: options.engine,
+      size: options.size,
+      stylePrompt: options.stylePrompt,
+      negativePrompt: options.negativePrompt,
+    },
+    signal
+  );
 }

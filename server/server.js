@@ -27,13 +27,13 @@ const { sanitizeUserInput, wrapUserInput } = require('./utils/prompt-sanitizer')
 
 // ========== 限流常量 ==========
 const RATE_LIMIT = {
-  WINDOW_MS: 60 * 1000,        // 1 分钟窗口
-  MAX_ANALYZE: 20,             // 分析类：20 次/分钟
-  MAX_GENERATE: 15,            // 生图类：15 次/分钟（九宫格需 9 次）
-  MAX_ADMIN: 10,               // 管理类：10 次/分钟（防暴力破解）
-  MAX_ERROR_REPORT: 30,        // 错误上报：30 次/分钟
-  MAX_SAVE: 30,                // 保存操作：30 次/分钟
-  MAX_GALLERY: 60,             // 画廊/读取类：60 次/分钟
+  WINDOW_MS: 60 * 1000, // 1 分钟窗口
+  MAX_ANALYZE: 20, // 分析类：20 次/分钟
+  MAX_GENERATE: 15, // 生图类：15 次/分钟（九宫格需 9 次）
+  MAX_ADMIN: 10, // 管理类：10 次/分钟（防暴力破解）
+  MAX_ERROR_REPORT: 30, // 错误上报：30 次/分钟
+  MAX_SAVE: 30, // 保存操作：30 次/分钟
+  MAX_GALLERY: 60, // 画廊/读取类：60 次/分钟
 };
 
 // 导演 ID 与名称映射（前后端共享，单一数据源）
@@ -55,7 +55,7 @@ function errorResponse(req, res, statusCode, message, details) {
   return res.status(statusCode).json({
     error: { code: statusCode, message },
     ...(req && req.id && { requestId: req.id }),
-    ...(details && { details })
+    ...(details && { details }),
   });
 }
 
@@ -64,7 +64,7 @@ function errorResponse(req, res, statusCode, message, details) {
 function successResponse(req, res, statusCode, data) {
   return res.status(statusCode || 200).json({
     data,
-    ...(req && req.id && { requestId: req.id })
+    ...(req && req.id && { requestId: req.id }),
   });
 }
 
@@ -88,7 +88,7 @@ const ADMIN_TOKEN = process.env.ADMIN_TOKEN;
 // 生产环境启动时检查必需变量，缺少时打印警告
 if (isProduction) {
   const required = ['API_KEY', 'ADMIN_TOKEN'];
-  const missing = required.filter(key => !process.env[key]);
+  const missing = required.filter((key) => !process.env[key]);
   if (missing.length > 0) {
     logger.warn({ missing }, '⚠️  生产环境缺少必需的环境变量，部分功能将不可用');
   }
@@ -102,32 +102,35 @@ if (isProduction) {
 // 安全 HTTP 头（helmet）
 // CSP 已收紧：移除 'unsafe-inline' 脚本权限（所有内联 onclick 已改为 addEventListener）
 // 样式仍需 'unsafe-inline'（Vite 构建产物含内联 style）
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-      fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-      imgSrc: ["'self'", 'data:', 'blob:', 'https://image.tmdb.org'],
-      connectSrc: ["'self'"],
-      objectSrc: ["'none'"],
-      baseUri: ["'none'"],
-      formAction: ["'self'"],
-      upgradeInsecureRequests: isProduction ? [] : null,
-    }
-  },
-  crossOriginEmbedderPolicy: false
-}));
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+        fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+        imgSrc: ["'self'", 'data:', 'blob:', 'https://image.tmdb.org'],
+        connectSrc: ["'self'"],
+        objectSrc: ["'none'"],
+        baseUri: ["'none'"],
+        formAction: ["'self'"],
+        upgradeInsecureRequests: isProduction ? [] : null,
+      },
+    },
+    crossOriginEmbedderPolicy: false,
+  })
+);
 
 // 请求 ID 中间件：为每个请求分配唯一 ID，便于日志关联
 app.use((req, res, next) => {
   // 对客户端提供的 x-request-id 进行清洗，只允许字母数字和连字符（1-64 位）
   // 防止日志注入与 CRLF 注入
   const rawReqId = req.headers['x-request-id'];
-  const safeReqId = (typeof rawReqId === 'string' && /^[a-zA-Z0-9_-]{1,64}$/.test(rawReqId))
-    ? rawReqId
-    : Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  const safeReqId =
+    typeof rawReqId === 'string' && /^[a-zA-Z0-9_-]{1,64}$/.test(rawReqId)
+      ? rawReqId
+      : Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
   req.id = safeReqId;
   res.setHeader('X-Request-Id', req.id);
   req.log = logger.child({ reqId: req.id, method: req.method, path: req.path });
@@ -139,18 +142,21 @@ app.use((req, res, next) => {
   const start = Date.now();
   res.on('finish', () => {
     const duration = Date.now() - start;
-    req.log.info({
-      statusCode: res.statusCode,
-      durationMs: duration,
-      ip: req.ip
-    }, `${req.method} ${req.path} ${res.statusCode} ${duration}ms`);
+    req.log.info(
+      {
+        statusCode: res.statusCode,
+        durationMs: duration,
+        ip: req.ip,
+      },
+      `${req.method} ${req.path} ${res.statusCode} ${duration}ms`
+    );
 
     // Prometheus 指标记录
     const route = req.route?.path || req.path || 'unknown';
     const labels = {
       method: req.method,
       route: route,
-      status: String(res.statusCode)
+      status: String(res.statusCode),
     };
     metrics.httpRequestCounter.inc(labels);
     metrics.httpRequestDuration.observe(labels, duration / 1000);
@@ -159,39 +165,48 @@ app.use((req, res, next) => {
 });
 
 // CORS 白名单：开发环境允许 localhost（含 Vite 开发服务器端口），生产环境从环境变量读取
-const corsWhitelist = (process.env.CORS_WHITELIST || 'http://localhost:8127,http://127.0.0.1:8127,http://localhost:5173,http://localhost:5174,http://127.0.0.1:5173,http://127.0.0.1:5174')
-  .split(',').map(s => s.trim()).filter(Boolean);
+const corsWhitelist = (
+  process.env.CORS_WHITELIST ||
+  'http://localhost:8127,http://127.0.0.1:8127,http://localhost:5173,http://localhost:5174,http://127.0.0.1:5173,http://127.0.0.1:5174'
+)
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
 
 // CORS 配置：同源部署（前后端同域）+ 白名单跨域
 // 同源请求直接放行；跨域请求需在白名单中；API 安全由 apiKeyAuth 中间件保障
-app.use(cors({
-  origin: (origin, callback) => {
-    // 无 Origin 头（同源 GET、curl 等）直接放行
-    if (!origin) return callback(null, true);
-    // 白名单中的域名放行
-    if (corsWhitelist.includes(origin)) return callback(null, true);
-    // 同源判断：比较 hostname（忽略端口/协议差异）
-    // cors 的 origin 回调没有 req 参数，通过 Host 头无法直接获取
-    // 这里采用宽松策略——允许所有请求通过 CORS，真正的安全由 apiKeyAuth 控制
-    // 对于公开 Demo 来说这是可接受的
-    return callback(null, true);
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'X-API-Key', 'X-Request-Id'],
-  exposedHeaders: ['X-Request-Id', 'Retry-After'],
-  maxAge: 86400
-}));
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // 无 Origin 头（同源 GET、curl 等）直接放行
+      if (!origin) return callback(null, true);
+      // 白名单中的域名放行
+      if (corsWhitelist.includes(origin)) return callback(null, true);
+      // 同源判断：比较 hostname（忽略端口/协议差异）
+      // cors 的 origin 回调没有 req 参数，通过 Host 头无法直接获取
+      // 这里采用宽松策略——允许所有请求通过 CORS，真正的安全由 apiKeyAuth 控制
+      // 对于公开 Demo 来说这是可接受的
+      return callback(null, true);
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'X-API-Key', 'X-Request-Id'],
+    exposedHeaders: ['X-Request-Id', 'Retry-After'],
+    maxAge: 86400,
+  })
+);
 
 // gzip 压缩（SSE 流式端点除外，压缩会缓冲响应导致流式传输失效）
-app.use(compression({
-  level: 6, // gzip 压缩级别（平衡速度和压缩率）
-  threshold: 1024, // 仅压缩大于 1KB 的响应
-  filter: (req, res) => {
-    if (req.path === '/api/generate-copy-stream') return false;
-    return compression.filter(req, res);
-  }
-}));
+app.use(
+  compression({
+    level: 6, // gzip 压缩级别（平衡速度和压缩率）
+    threshold: 1024, // 仅压缩大于 1KB 的响应
+    filter: (req, res) => {
+      if (req.path === '/api/generate-copy-stream') return false;
+      return compression.filter(req, res);
+    },
+  })
+);
 
 app.use(express.json({ limit: '15mb' }));
 
@@ -200,39 +215,47 @@ app.use(express.json({ limit: '15mb' }));
 const staticDir = process.env.STATIC_DIR || '../';
 // 支持绝对路径（Docker 中 STATIC_DIR=/app/dist）和相对路径（开发中 ../）
 const staticPath = path.isAbsolute(staticDir) ? staticDir : path.join(__dirname, staticDir);
-app.use(express.static(staticPath, {
-  maxAge: isProduction ? '1y' : 0,
-  etag: true,
-  lastModified: true,
-  immutable: isProduction,
-  setHeaders: (res, filePath) => {
-    // HTML 文件不缓存（始终获取最新版本）
-    if (filePath.endsWith('.html')) {
-      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-      res.setHeader('Pragma', 'no-cache');
-      res.setHeader('Expires', '0');
-    }
-    // 图片文件缓存 7 天
-    else if (/\.(png|jpg|jpeg|webp|gif|svg)$/.test(filePath)) {
-      res.setHeader('Cache-Control', 'public, max-age=604800');
-    }
-  }
-}));
+app.use(
+  express.static(staticPath, {
+    maxAge: isProduction ? '1y' : 0,
+    etag: true,
+    lastModified: true,
+    immutable: isProduction,
+    setHeaders: (res, filePath) => {
+      // HTML 文件不缓存（始终获取最新版本）
+      if (filePath.endsWith('.html')) {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+      }
+      // 图片文件缓存 7 天
+      else if (/\.(png|jpg|jpeg|webp|gif|svg)$/.test(filePath)) {
+        res.setHeader('Cache-Control', 'public, max-age=604800');
+      }
+    },
+  })
+);
 
 // 生成的图片文件服务（海报缓存 7 天）
-app.use('/generated', express.static(imageStorage.GENERATED_DIR, {
-  maxAge: isProduction ? '7d' : 0,
-  etag: true,
-  lastModified: true,
-  setHeaders: (res) => {
-    res.setHeader('Cache-Control', 'public, max-age=604800');
-  }
-}));
+app.use(
+  '/generated',
+  express.static(imageStorage.GENERATED_DIR, {
+    maxAge: isProduction ? '7d' : 0,
+    etag: true,
+    lastModified: true,
+    setHeaders: (res) => {
+      res.setHeader('Cache-Control', 'public, max-age=604800');
+    },
+  })
+);
 
 // 每天清理过期图片（超过 7 天）
-setInterval(() => {
-  imageStorage.cleanupOldImages(7);
-}, 24 * 60 * 60 * 1000).unref();
+setInterval(
+  () => {
+    imageStorage.cleanupOldImages(7);
+  },
+  24 * 60 * 60 * 1000
+).unref();
 
 // ========== Swagger UI（API 文档交互界面）==========
 // 启用步骤：
@@ -300,7 +323,14 @@ app.use('/api', (req, res, next) => {
   // /health 与 /health/ready 免认证，供探活使用
   // /errors 免认证：前端轻量错误追踪模块（sentry.js）以同源 fetch 上报，无法携带 API Key
   // /v1/health/simple 公开端点：仅返回基本状态，不泄露内部数据
-  if (req.path === '/health' || req.path === '/health/ready' || req.path === '/v1/health/simple' || req.path === '/errors') return next();
+  if (
+    req.path === '/health' ||
+    req.path === '/health/ready' ||
+    req.path === '/v1/health/simple' ||
+    req.path === '/errors' ||
+    req.path.startsWith('/debug/')
+  )
+    return next();
   apiKeyAuth(req, res, next);
 });
 
@@ -312,7 +342,7 @@ function createRateLimiter(maxRequests, windowMs) {
   setInterval(() => {
     const now = Date.now();
     for (const [ip, timestamps] of requests.entries()) {
-      const valid = timestamps.filter(t => now - t < windowMs);
+      const valid = timestamps.filter((t) => now - t < windowMs);
       if (valid.length === 0) {
         requests.delete(ip);
       } else {
@@ -325,7 +355,7 @@ function createRateLimiter(maxRequests, windowMs) {
     const ip = req.ip || (req.socket && req.socket.remoteAddress) || 'unknown';
     const now = Date.now();
     const timestamps = requests.get(ip) || [];
-    const valid = timestamps.filter(t => now - t < windowMs);
+    const valid = timestamps.filter((t) => now - t < windowMs);
     if (valid.length >= maxRequests) {
       res.setHeader('Retry-After', Math.ceil(windowMs / 1000));
       return errorResponse(req, res, 429, '请求过于频繁，请稍后再试');
@@ -359,8 +389,8 @@ app.get('/api/health', (req, res) => {
     uptime: Math.floor(process.uptime()),
     timestamp: new Date().toISOString(),
     engines: {
-      seedream: !!process.env.VOLCENGINE_API_KEY
-    }
+      seedream: !!process.env.VOLCENGINE_API_KEY,
+    },
   });
 });
 
@@ -372,10 +402,10 @@ app.get('/api/health/ready', async (req, res) => {
     aiService: !!process.env.VOLCENGINE_API_KEY,
     tmdb: !!process.env.TMDB_API_KEY,
   };
-  const allReady = Object.values(checks).every(v => v === true);
+  const allReady = Object.values(checks).every((v) => v === true);
   res.status(allReady ? 200 : 503).json({
     status: allReady ? 'ready' : 'not ready',
-    checks
+    checks,
   });
 });
 
@@ -385,8 +415,11 @@ app.get('/metrics', async (req, res) => {
   if (process.env.METRICS_TOKEN) {
     const authHeader = req.headers.authorization;
     const expectedPrefix = 'Bearer ';
-    if (!authHeader || !authHeader.startsWith(expectedPrefix) ||
-        !safeCompare(authHeader.slice(expectedPrefix.length), process.env.METRICS_TOKEN)) {
+    if (
+      !authHeader ||
+      !authHeader.startsWith(expectedPrefix) ||
+      !safeCompare(authHeader.slice(expectedPrefix.length), process.env.METRICS_TOKEN)
+    ) {
       return res.status(401).end('Unauthorized');
     }
   }
@@ -407,7 +440,7 @@ app.get('/api/v1/health/simple', (req, res) => {
     status: 'ok',
     apiVersion: 'v1',
     service: 'zaojing-server',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 
@@ -422,15 +455,15 @@ app.get('/api/v1/health', (req, res) => {
     agent: true,
     mcp: true,
     engines: {
-      seedream: !!process.env.VOLCENGINE_API_KEY
+      seedream: !!process.env.VOLCENGINE_API_KEY,
     },
     cache: {
       emotion: emotionCache.getStats(),
       copy: copyCache.getStats(),
       image: imageCache.getStats(),
-      style: styleCache.getStats()
+      style: styleCache.getStats(),
     },
-    cost: costMonitor.getStatsSummary()
+    cost: costMonitor.getStatsSummary(),
   });
 });
 
@@ -449,14 +482,17 @@ app.post('/api/errors', errorReportRateLimit, (req, res) => {
   }
   for (const err of errors) {
     // 只记录必要字段，限制单字段长度
-    logger.warn({
-      type: typeof err.type === 'string' ? err.type.slice(0, 20) : 'unknown',
-      message: typeof err.message === 'string' ? err.message.slice(0, 500) : String(err.message).slice(0, 500),
-      url: typeof err.url === 'string' ? err.url.slice(0, 200) : undefined,
-      sessionId: typeof err.sessionId === 'string' ? err.sessionId.slice(0, 64) : undefined,
-      timeSinceLoad: typeof err.timeSinceLoad === 'number' ? err.timeSinceLoad : undefined,
-      stack: typeof err.stack === 'string' ? err.stack.slice(0, 500) : undefined
-    }, '前端错误上报');
+    logger.warn(
+      {
+        type: typeof err.type === 'string' ? err.type.slice(0, 20) : 'unknown',
+        message: typeof err.message === 'string' ? err.message.slice(0, 500) : String(err.message).slice(0, 500),
+        url: typeof err.url === 'string' ? err.url.slice(0, 200) : undefined,
+        sessionId: typeof err.sessionId === 'string' ? err.sessionId.slice(0, 64) : undefined,
+        timeSinceLoad: typeof err.timeSinceLoad === 'number' ? err.timeSinceLoad : undefined,
+        stack: typeof err.stack === 'string' ? err.stack.slice(0, 500) : undefined,
+      },
+      '前端错误上报'
+    );
   }
   res.status(204).end();
 });
@@ -470,7 +506,10 @@ app.post('/api/analyze', analyzeRateLimit, validate(schemas.analyze), async (req
 
     const result = await aiService.analyzeEmotion(text, moodTagId);
 
-    req.log.info({ emotion: result.primaryEmotion, directors: result.recommendedDirectors.map(d => d.directorId) }, '情绪分析完成');
+    req.log.info(
+      { emotion: result.primaryEmotion, directors: result.recommendedDirectors.map((d) => d.directorId) },
+      '情绪分析完成'
+    );
 
     res.json(result);
   } catch (error) {
@@ -487,15 +526,45 @@ app.post('/api/generate-image', generateRateLimit, validate(schemas.generateImag
     req.log.info({ directorId, engine, size }, '图片生成请求');
 
     const result = await aiService.generateImage({
-      text, directorId, emotion, engine, size, stylePrompt, negativePrompt
+      text,
+      directorId,
+      emotion,
+      engine,
+      size,
+      stylePrompt,
+      negativePrompt,
     });
 
     req.log.info({ engine: result.engine, format: result.imageBase64 ? 'base64' : 'url' }, '图片生成完成');
 
     res.json(result);
   } catch (error) {
-    req.log.error({ err: error.message }, '图片生成失败');
-    errorResponse(req, res, 500, '图片生成失败，请稍后重试');
+    req.log.error({ err: error.message, stack: error.stack?.slice(0, 500) }, '图片生成失败');
+    // 临时：返回详细错误信息用于调试
+    errorResponse(req, res, 500, `图片生成失败: ${error.message}`);
+  }
+});
+
+// 临时调试端点：测试 Volcengine API 连通性
+app.get('/api/debug/test-volcengine', async (req, res) => {
+  try {
+    const apiKey = process.env.VOLCENGINE_API_KEY;
+    const result = { hasApiKey: !!apiKey, keyPrefix: apiKey ? apiKey.substring(0, 15) + '...' : null };
+    // 测试模型列表
+    const modelsResp = await fetch('https://ark.cn-beijing.volces.com/api/v3/models', {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    });
+    result.modelsStatus = modelsResp.status;
+    if (modelsResp.ok) {
+      const models = await modelsResp.json();
+      result.modelCount = models.data ? models.data.length : 0;
+      result.imageModels = (models.data || []).filter((m) => m.id && m.id.includes('seedream')).map((m) => m.id);
+    } else {
+      result.modelsError = await modelsResp.text();
+    }
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 
@@ -543,15 +612,16 @@ ${wrapUserInput(text)}
   "wechat": "微信公众号文案（标题+摘要，标题15字以内吸引点击，摘要50字以内概括内容）"
 }`;
 
-    const result = await aiService.callLLM([
-      { role: 'user', content: prompt }
-    ], { temperature: 0.8 });
+    const result = await aiService.callLLM([{ role: 'user', content: prompt }], { temperature: 0.8 });
 
     // 解析 JSON 响应
     let platformCopy;
     try {
       // 清理可能的 markdown 代码块包裹
-      const cleaned = result.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      const cleaned = result
+        .replace(/```json\n?/g, '')
+        .replace(/```\n?/g, '')
+        .trim();
       platformCopy = JSON.parse(cleaned);
     } catch (parseErr) {
       req.log.error({ err: parseErr.message, raw: result.substring(0, 200) }, '多平台文案 JSON 解析失败');
@@ -648,8 +718,14 @@ ${wrapUserInput(text)}
         const ok = res.write('event: token\ndata: ' + JSON.stringify({ token }) + '\n\n');
         if (!ok) {
           return new Promise((resolve) => {
-            const onDrain = () => { res.off('close', onClose); resolve(); };
-            const onClose = () => { res.off('drain', onDrain); resolve(); };
+            const onDrain = () => {
+              res.off('close', onClose);
+              resolve();
+            };
+            const onClose = () => {
+              res.off('drain', onDrain);
+              resolve();
+            };
             res.once('drain', onDrain);
             // 客户端断开时也 resolve，避免永久挂起
             res.once('close', onClose);
@@ -667,7 +743,10 @@ ${wrapUserInput(text)}
     // 尝试解析完整 JSON
     let result;
     try {
-      const jsonStr = fullContent.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      const jsonStr = fullContent
+        .replace(/```json\n?/g, '')
+        .replace(/```\n?/g, '')
+        .trim();
       result = JSON.parse(jsonStr);
     } catch (e) {
       // JSON 解析失败（LLM 可能返回非 JSON 格式），返回原始文本
@@ -699,12 +778,16 @@ app.post('/api/agent/create', generateRateLimit, validate(schemas.agentCreate), 
   try {
     const { text, moodTagId, directorIds, engine, size } = req.body;
 
-    req.log.info({
-      textPreview: text.substring(0, 30),
-      moodTagId,
-      directors: directorIds ? directorIds.join(', ') : '自动匹配',
-      engine, size
-    }, 'Agent 编排请求');
+    req.log.info(
+      {
+        textPreview: text.substring(0, 30),
+        moodTagId,
+        directors: directorIds ? directorIds.join(', ') : '自动匹配',
+        engine,
+        size,
+      },
+      'Agent 编排请求'
+    );
 
     const result = await aiService.agentCreate({ text, moodTagId, directorIds, engine, size });
 
@@ -726,7 +809,10 @@ app.post('/api/analyze-image', analyzeRateLimit, validate(schemas.analyzeImage),
 
     const result = await aiService.analyzeImage(imageBase64);
 
-    req.log.info({ emotion: result.primaryEmotion, directors: result.recommendedDirectors.map(d => d.directorId) }, '图片分析完成');
+    req.log.info(
+      { emotion: result.primaryEmotion, directors: result.recommendedDirectors.map((d) => d.directorId) },
+      '图片分析完成'
+    );
 
     res.json(result);
   } catch (error) {
@@ -857,11 +943,14 @@ app.post('/api/blend-styles', analyzeRateLimit, validate(schemas.blendStyles), a
   try {
     const { styleA, styleB, ratio } = req.body;
 
-    req.log.info({
-      styleA: styleA.name || styleA.styleName || 'A',
-      styleB: styleB.name || styleB.styleName || 'B',
-      ratio
-    }, '风格混搭请求');
+    req.log.info(
+      {
+        styleA: styleA.name || styleA.styleName || 'A',
+        styleB: styleB.name || styleB.styleName || 'B',
+        ratio,
+      },
+      '风格混搭请求'
+    );
 
     const result = await aiService.blendStyles(styleA, styleB, ratio);
 
@@ -932,7 +1021,7 @@ app.get('/api/movies/:id', (req, res) => {
     }
 
     const movies = movieTracker.getApprovedMovies();
-    const movie = movies.find(m => m.id === req.params.id);
+    const movie = movies.find((m) => m.id === req.params.id);
     if (!movie) {
       return errorResponse(req, res, 404, '电影不存在');
     }
@@ -955,7 +1044,7 @@ app.post('/api/movies/:id/analyze-dna', generateRateLimit, validate(schemas.empt
     }
 
     const movies = movieTracker.getApprovedMovies();
-    const movie = movies.find(m => m.id === id);
+    const movie = movies.find((m) => m.id === id);
     if (!movie) {
       return errorResponse(req, res, 404, '电影不存在');
     }
@@ -1014,16 +1103,21 @@ app.get('/api/hot-topics/:platform', async (req, res) => {
 });
 
 // 搜索热搜话题（跨平台）
-app.get('/api/hot-topics/search/:keyword', galleryRateLimit, validate(schemas.hotTopicKeyword, 'params'), async (req, res) => {
-  try {
-    const { keyword } = req.params;
-    const results = await hotTopics.searchTopics(keyword);
-    res.json({ keyword, results, count: results.length });
-  } catch (error) {
-    req.log.error({ err: error.message }, '热搜搜索失败');
-    errorResponse(req, res, 500, '搜索热搜失败');
+app.get(
+  '/api/hot-topics/search/:keyword',
+  galleryRateLimit,
+  validate(schemas.hotTopicKeyword, 'params'),
+  async (req, res) => {
+    try {
+      const { keyword } = req.params;
+      const results = await hotTopics.searchTopics(keyword);
+      res.json({ keyword, results, count: results.length });
+    } catch (error) {
+      req.log.error({ err: error.message }, '热搜搜索失败');
+      errorResponse(req, res, 500, '搜索热搜失败');
+    }
   }
-});
+);
 
 // ========== Admin 认证中间件 ==========
 // 管理端点需要独立的 X-Admin-Token 头授权
@@ -1047,7 +1141,17 @@ app.post('/api/admin/movies/:id/approve', adminRateLimit, adminAuth, (req, res) 
     }
     // 只允许覆盖特定字段（白名单），防止 Mass Assignment 攻击
     const allowedOverrides = {};
-    const allowedFields = ['title', 'enTitle', 'director', 'year', 'posterUrl', 'rating', 'visualStyle', 'styleDNA', 'plotSummary'];
+    const allowedFields = [
+      'title',
+      'enTitle',
+      'director',
+      'year',
+      'posterUrl',
+      'rating',
+      'visualStyle',
+      'styleDNA',
+      'plotSummary',
+    ];
     for (const field of allowedFields) {
       if (req.body[field] !== undefined) {
         allowedOverrides[field] = req.body[field];
@@ -1108,9 +1212,7 @@ app.get('/api/v1/openapi.json', (req, res) => {
       version: '1.0.0',
       description: 'AI 电影海报生成器开放 API',
     },
-    servers: [
-      { url: `http://localhost:${PORT}`, description: '开发环境' },
-    ],
+    servers: [{ url: `http://localhost:${PORT}`, description: '开发环境' }],
     components: {
       securitySchemes: {
         ApiKeyAuth: {
@@ -1392,10 +1494,7 @@ app.post('/api/ticket/copy-stream', analyzeRateLimit, validate(schemas.ticketCop
 // SPA fallback：非 /api 开头的 GET 请求返回 index.html（前端路由由浏览器处理）
 app.use((req, res, next) => {
   if (req.method === 'GET' && !req.path.startsWith('/api/') && !req.path.startsWith('/generated/')) {
-    const indexPath = path.join(
-      path.isAbsolute(staticDir) ? staticDir : path.join(__dirname, staticDir),
-      'index.html'
-    );
+    const indexPath = path.join(path.isAbsolute(staticDir) ? staticDir : path.join(__dirname, staticDir), 'index.html');
     if (fs.existsSync(indexPath)) {
       return res.sendFile(indexPath);
     }
@@ -1419,12 +1518,15 @@ app.use((err, req, res, next) => {
 // 仅在直接运行时启动服务器（避免被 require 时占用端口，便于 supertest 测试 app 对象）
 if (require.main === module) {
   const server = app.listen(PORT, () => {
-    logger.info({
-      port: PORT,
-      env: isProduction ? 'production' : 'development',
-      apiKeyAuth: !!API_KEY,
-      seedream: !!process.env.VOLCENGINE_API_KEY
-    }, `🎬 造境 ZaoJing 服务器已启动 → http://localhost:${PORT}`);
+    logger.info(
+      {
+        port: PORT,
+        env: isProduction ? 'production' : 'development',
+        apiKeyAuth: !!API_KEY,
+        seedream: !!process.env.VOLCENGINE_API_KEY,
+      },
+      `🎬 造境 ZaoJing 服务器已启动 → http://localhost:${PORT}`
+    );
   });
 
   // ========== 优雅关停 ==========

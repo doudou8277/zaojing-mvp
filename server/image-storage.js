@@ -35,11 +35,45 @@ function ensureDirSync() {
 ensureDirSync();
 
 /**
+ * 从 base64 字符串检测图片格式（通过魔数/magic bytes）
+ * @param {string} base64Data - 纯 base64 字符串（不含 data: 前缀）
+ * @returns {string} 格式：'jpg'/'png'/'webp'/'gif'
+ */
+function detectImageFormatFromBase64(base64Data) {
+  if (!base64Data) return 'png';
+  try {
+    // 解码前几个字节来检测魔数
+    const header = Buffer.from(base64Data.substring(0, 30), 'base64');
+    // JPEG: FF D8 FF
+    if (header[0] === 0xff && header[1] === 0xd8 && header[2] === 0xff) {
+      return 'jpg';
+    }
+    // PNG: 89 50 4E 47
+    if (header[0] === 0x89 && header[1] === 0x50 && header[2] === 0x4e && header[3] === 0x47) {
+      return 'png';
+    }
+    // WEBP: RIFF....WEBP
+    if (header[0] === 0x52 && header[1] === 0x49 && header[2] === 0x46 && header[3] === 0x46) {
+      if (header[8] === 0x57 && header[9] === 0x45 && header[10] === 0x42 && header[11] === 0x50) {
+        return 'webp';
+      }
+    }
+    // GIF: GIF8
+    if (header[0] === 0x47 && header[1] === 0x49 && header[2] === 0x46) {
+      return 'gif';
+    }
+  } catch (e) {
+    logger.warn({ err: e.message }, '图片格式检测失败');
+  }
+  return 'png';
+}
+
+/**
  * 将 Base64 图片保存为文件
  * 支持传入带 data:image 前缀的完整 dataURL，或纯 base64 字符串
  * @param {string} data - 不含 data:image 前缀的 base64 字符串，或完整 dataURL
  * @param {string} [format] - 图片格式，如 'png'/'webp'/'jpg'；若传入 dataURL 则自动检测
- * @returns {string} 图片的 URL 路径
+ * @returns {{ url: string, format: string }} 图片的 URL 路径和格式
  */
 function saveBase64Image(data, format) {
   ensureDirSync();
@@ -54,6 +88,11 @@ function saveBase64Image(data, format) {
     base64Data = dataUrlMatch[2];
   }
 
+  // 如果没有指定格式，从 base64 内容检测
+  if (!detectedFormat) {
+    detectedFormat = detectImageFormatFromBase64(base64Data);
+  }
+
   const finalFormat = detectedFormat || 'png';
 
   // 生成唯一文件名：基于内容 hash
@@ -63,7 +102,7 @@ function saveBase64Image(data, format) {
 
   // 如果文件已存在（相同内容），直接返回 URL
   if (fs.existsSync(filepath)) {
-    return `/generated/${filename}`;
+    return { url: `/generated/${filename}`, format: finalFormat };
   }
 
   // 写入文件
@@ -72,13 +111,13 @@ function saveBase64Image(data, format) {
 
   logger.info({ filename, sizeKB: Math.round(buffer.length / 1024), format: finalFormat }, '图片已保存为文件');
 
-  return `/generated/${filename}`;
+  return { url: `/generated/${filename}`, format: finalFormat };
 }
 
 /**
  * 从 URL 下载图片并保存为文件
  * @param {string} imageUrl - 远程图片 URL
- * @returns {Promise<string>} 本地图片的 URL 路径
+ * @returns {Promise<{url: string, format: string}>} 本地图片的 URL 路径和格式
  */
 async function downloadAndSaveImage(imageUrl) {
   try {
@@ -92,9 +131,12 @@ async function downloadAndSaveImage(imageUrl) {
 
     // 从 Content-Type 或 URL 推断格式
     const contentType = response.headers.get('content-type') || '';
-    let format = 'png';
-    if (contentType.includes('jpeg') || contentType.includes('jpg')) format = 'jpg';
+    let format = 'jpg';
+    if (contentType.includes('png')) format = 'png';
     else if (contentType.includes('webp')) format = 'webp';
+    else if (contentType.includes('gif')) format = 'gif';
+    else if (buffer[0] === 0xff && buffer[1] === 0xd8) format = 'jpg';
+    else if (buffer[0] === 0x89 && buffer[1] === 0x50) format = 'png';
 
     ensureDirSync();
 
@@ -105,14 +147,14 @@ async function downloadAndSaveImage(imageUrl) {
 
     // 如果文件已存在，直接返回
     if (fs.existsSync(filepath)) {
-      return `/generated/${filename}`;
+      return { url: `/generated/${filename}`, format };
     }
 
     fs.writeFileSync(filepath, buffer);
 
     logger.info({ filename, sizeKB: Math.round(buffer.length / 1024) }, '远程图片已下载保存');
 
-    return `/generated/${filename}`;
+    return { url: `/generated/${filename}`, format };
   } catch (error) {
     logger.error({ err: error.message, url: imageUrl }, '下载图片失败');
     throw error;
@@ -151,5 +193,6 @@ module.exports = {
   saveBase64Image,
   downloadAndSaveImage,
   cleanupOldImages,
-  GENERATED_DIR
+  detectImageFormatFromBase64,
+  GENERATED_DIR,
 };
