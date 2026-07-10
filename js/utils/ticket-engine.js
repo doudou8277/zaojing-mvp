@@ -203,6 +203,9 @@ export async function renderTicket(canvas, options) {
     width, height, photoHeight, colors, fmt,
     destination, date, moodText, ticketNumber, styleId, emotion,
   });
+
+  // 5. 纸张质感叠加（细微噪点颗粒，增加实体感）
+  drawPaperTexture(ctx, width, height, colors);
 }
 
 // ========== 内部工具：图片加载与绘制 ==========
@@ -570,4 +573,83 @@ function drawBottomNotches(ctx, width, height, colors, radius) {
     ctx.arc(startX + i * spacing, cy, radius, 0, Math.PI * 2);
     ctx.fill();
   }
+}
+
+// ========== 内部绘制：纸张质感纹理 ==========
+
+/** 纹理 Canvas 缓存，避免每次重新生成噪点 */
+let _textureCache = null;
+let _textureCacheW = 0;
+let _textureCacheH = 0;
+
+/**
+ * 在整张票根上叠加极细微的纸张噪点纹理
+ * 使用 ImageData 逐像素添加随机透明度，模拟相纸/胶片颗粒感
+ * 使用缓存避免重复计算
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {number} width
+ * @param {number} height
+ * @param {Object} colors
+ */
+function drawPaperTexture(ctx, width, height, colors) {
+  // 仅在信息区叠加纹理（照片区不叠加，保持照片清晰度）
+  // 但为了性能，用小尺寸canvas缩放绘制
+  const texScale = 0.25; // 用1/4尺寸生成纹理再放大，性能更好
+  const tw = Math.round(width * texScale);
+  const th = Math.round(height * texScale);
+
+  if (!_textureCache || _textureCacheW !== tw || _textureCacheH !== th) {
+    const texCanvas = document.createElement('canvas');
+    texCanvas.width = tw;
+    texCanvas.height = th;
+    const texCtx = texCanvas.getContext('2d');
+    const imgData = texCtx.createImageData(tw, th);
+    const data = imgData.data;
+
+    // 生成噪点：大部分像素透明，少数像素为深色/浅色微颗粒
+    for (let i = 0; i < data.length; i += 4) {
+      const r = Math.random();
+      if (r < 0.03) {
+        // 深色颗粒（印刷网点感）
+        data[i] = 0;
+        data[i + 1] = 0;
+        data[i + 2] = 0;
+        data[i + 3] = Math.floor(Math.random() * 18 + 6); // alpha 6-24
+      } else if (r < 0.05) {
+        // 浅色颗粒（纸张纤维感）
+        data[i] = 255;
+        data[i + 1] = 255;
+        data[i + 2] = 255;
+        data[i + 3] = Math.floor(Math.random() * 12 + 4);
+      } else {
+        data[i + 3] = 0; // 完全透明
+      }
+    }
+    texCtx.putImageData(imgData, 0, 0);
+    _textureCache = texCanvas;
+    _textureCacheW = tw;
+    _textureCacheH = th;
+  }
+
+  // 使用 multiply 混合模式叠加，让噪点融入底色而非浮在上面
+  ctx.save();
+  ctx.globalCompositeOperation = 'multiply';
+  ctx.globalAlpha = 0.5;
+  ctx.drawImage(_textureCache, 0, 0, width, height);
+  ctx.globalAlpha = 0.3;
+  ctx.globalCompositeOperation = 'screen';
+  ctx.drawImage(_textureCache, 0, 0, width, height);
+  ctx.restore();
+
+  // 添加极淡的边缘阴影/暗角效果，增加立体感
+  ctx.save();
+  const vignette = ctx.createRadialGradient(
+    width / 2, height / 2, Math.min(width, height) * 0.3,
+    width / 2, height / 2, Math.max(width, height) * 0.7
+  );
+  vignette.addColorStop(0, 'rgba(0,0,0,0)');
+  vignette.addColorStop(1, 'rgba(0,0,0,0.06)');
+  ctx.fillStyle = vignette;
+  ctx.fillRect(0, 0, width, height);
+  ctx.restore();
 }

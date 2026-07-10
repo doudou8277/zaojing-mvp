@@ -601,8 +601,34 @@ async function init() {
   });
 
   initInputPage({ initDirectorsPage: initDirectorsPageWithCallbacks });
-  // navigateTo 内部已调用 lazyLoadAll 扫描待懒加载的图片
-  navigateTo('input');
+
+  // 根据初始 hash 路由（支持直接URL访问，如 #ticket、#wall 等）
+  const initialHash = window.location.hash.replace('#', '');
+  const validPages = ['input', 'directors', 'result', 'wall', 'ticket', 'cocreate', 'movies', 'batch', 'hot-topics'];
+  const startPage = (initialHash && validPages.includes(initialHash)) ? initialHash : 'input';
+
+  // 如果是直接访问ticket/wall等页面，需要先确保input页初始化（它是入口），但显示目标页面
+  if (startPage !== 'input' && startPage !== 'directors' && startPage !== 'generating' && startPage !== 'result') {
+    // 对于非核心流程页面（ticket等），先确保模块加载再导航
+    navigateTo(startPage);
+    if (startPage === 'ticket') {
+      ensurePageInit('ticket').then((mod) => mod.initTicketPage());
+    }
+  } else {
+    // navigateTo 内部已调用 lazyLoadAll 扫描待懒加载的图片
+    navigateTo(startPage === 'ticket' ? 'input' : startPage);
+  }
+
+  // 监听浏览器前进/后退
+  window.addEventListener('popstate', () => {
+    const hash = window.location.hash.replace('#', '');
+    if (hash && validPages.includes(hash) && hash !== 'generating') {
+      navigateTo(hash);
+      if (hash === 'ticket') {
+        ensurePageInit('ticket').then((mod) => mod.initTicketPage());
+      }
+    }
+  });
 
   // 加载自定义风格（从 localStorage 恢复并添加到导演列表）
   try {

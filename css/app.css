@@ -7382,36 +7382,74 @@ textarea:focus-visible,
   border-color: var(--accent, #c87f2e);
 }
 
+/* 心情文案展示 */
+.ticket-mood-text {
+  font-family: var(--font-serif, 'Noto Serif SC', serif);
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: var(--text, #333);
+  padding: 10px 14px;
+  background: var(--bg-alt, #f9f7f4);
+  border-radius: 8px;
+  border-left: 3px solid var(--accent, #c87f2e);
+  margin: 4px 0;
+  word-break: break-word;
+}
+.ticket-mood-actions {
+  display: flex;
+  gap: 8px;
+}
+
 /* 上传区 */
 .ticket-upload-zone {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 240px;
+  min-height: 280px;
   border: 2px dashed var(--border, #ddd);
-  border-radius: 16px;
+  border-radius: 20px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
   padding: 40px;
+  background: linear-gradient(135deg, rgba(200,127,46,0.02) 0%, rgba(100,140,100,0.02) 100%);
+  position: relative;
+  overflow: hidden;
+}
+.ticket-upload-zone::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 30% 40%, rgba(200,127,46,0.06) 0%, transparent 50%),
+              radial-gradient(circle at 70% 60%, rgba(100,140,100,0.05) 0%, transparent 50%);
+  pointer-events: none;
 }
 .ticket-upload-zone:hover,
 .ticket-upload-zone.drag-over {
   border-color: var(--accent, #c87f2e);
-  background: rgba(200, 127, 46, 0.04);
+  background: linear-gradient(135deg, rgba(200,127,46,0.06) 0%, rgba(100,140,100,0.04) 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(200,127,46,0.1);
+}
+.ticket-upload-zone:hover::before,
+.ticket-upload-zone.drag-over::before {
+  opacity: 1.5;
 }
 .ticket-upload-icon {
-  font-size: 3rem;
-  margin-bottom: 12px;
+  font-size: 3.2rem;
+  margin-bottom: 16px;
+  filter: drop-shadow(0 2px 8px rgba(200,127,46,0.15));
 }
 .ticket-upload-text {
-  font-size: 1.05rem;
-  font-weight: 500;
-  margin-bottom: 4px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--text, #333);
 }
 .ticket-upload-hint {
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   color: var(--text-muted, #888);
+  line-height: 1.6;
 }
 
 /* 已选照片 */
@@ -7502,12 +7540,17 @@ textarea:focus-visible,
 /* 票根画布 */
 .ticket-canvas-wrap {
   text-align: center;
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  position: relative;
 }
 .ticket-canvas-wrap canvas {
-  max-width: 100%;
+  width: 100%;
   height: auto;
   border-radius: 8px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+  display: block;
 }
 
 /* 控制面板 */
@@ -7609,11 +7652,20 @@ textarea:focus-visible,
 /* 操作按钮 */
 .ticket-actions {
   display: flex;
-  gap: 12px;
+  flex-direction: column;
+  gap: 10px;
   margin-top: 8px;
 }
-.ticket-actions .btn {
+.ticket-actions .btn-primary {
+  width: 100%;
+}
+.ticket-actions-row {
+  display: flex;
+  gap: 8px;
+}
+.ticket-actions-row .btn {
   flex: 1;
+  font-size: 0.85rem;
 }
 
 /* 票根墙 */
@@ -7704,19 +7756,41 @@ textarea:focus-visible,
 .ticket-image-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.85);
+  background: rgba(0,0,0,0.88);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999;
   cursor: pointer;
-  animation: ticket-fade-in 0.2s ease;
+  animation: ticket-fade-in 0.25s ease;
 }
 .ticket-image-overlay img {
   max-width: 90%;
-  max-height: 90%;
+  max-height: 85vh;
   border-radius: 8px;
-  box-shadow: 0 16px 48px rgba(0,0,0,0.3);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.4);
+  object-fit: contain;
+}
+.ticket-overlay-close {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+  font-size: 1.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+  line-height: 1;
+}
+.ticket-overlay-close:hover {
+  background: rgba(255,255,255,0.3);
 }
 @keyframes ticket-fade-in {
   from { opacity: 0; }

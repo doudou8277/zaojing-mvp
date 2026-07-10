@@ -712,6 +712,10 @@
               <button class="ticket-style-chip" data-style="chazelle">查泽雷</button>
               <button class="ticket-style-chip" data-style="lee">李安</button>
               <button class="ticket-style-chip" data-style="coppola">科波拉</button>
+              <button class="ticket-style-chip" data-style="chow">周星驰</button>
+              <button class="ticket-style-chip" data-style="jia">贾樟柯</button>
+              <button class="ticket-style-chip" data-style="kurosawa">黑泽明</button>
+              <button class="ticket-style-chip" data-style="tarantino">昆汀</button>
             </div>
           </div>
 
@@ -728,15 +732,22 @@
           <!-- 文案编辑 -->
           <div class="ticket-control-group">
             <label class="ticket-control-label">心情文案</label>
-            <button class="btn btn-ghost btn-sm" id="ticket-regen-copy">换一句</button>
-            <button class="btn btn-ghost btn-sm" id="ticket-edit-copy">编辑</button>
-            <input type="text" id="ticket-mood-input" class="ticket-text-input" style="display:none" placeholder="输入你的文案" maxlength="30">
+            <p class="ticket-mood-text" id="ticket-mood-display"></p>
+            <div class="ticket-mood-actions">
+              <button class="btn btn-ghost btn-sm" id="ticket-regen-copy">换一句</button>
+              <button class="btn btn-ghost btn-sm" id="ticket-edit-copy">编辑</button>
+            </div>
+            <input type="text" id="ticket-mood-input" class="ticket-text-input" style="display:none" placeholder="输入你的文案（30字内）" maxlength="30">
           </div>
 
           <!-- 操作按钮 -->
           <div class="ticket-actions">
-            <button class="btn btn-primary" id="ticket-save-btn">💾 保存到票根墙</button>
-            <button class="btn btn-ghost" id="ticket-download-btn">⬇️ 下载</button>
+            <button class="btn btn-primary" id="ticket-save-btn">保存到票根墙</button>
+            <div class="ticket-actions-row">
+              <button class="btn btn-ghost" id="ticket-regenerate-btn">再做一张</button>
+              <button class="btn btn-ghost" id="ticket-copy-btn">复制图片</button>
+              <button class="btn btn-ghost" id="ticket-download-btn">下载</button>
+            </div>
           </div>
         </div>
       </div>
@@ -752,6 +763,7 @@
       <div class="ticket-wall-empty" id="ticket-wall-empty">
         <div class="ticket-wall-empty-icon">🎫</div>
         <p>还没有票根，去创建第一张吧！</p>
+        <button class="btn btn-primary" id="ticket-wall-create" style="margin-top:16px">创建第一张票根</button>
       </div>
     </div>
 
