@@ -162,20 +162,25 @@ app.use((req, res, next) => {
 const corsWhitelist = (process.env.CORS_WHITELIST || 'http://localhost:8127,http://127.0.0.1:8127,http://localhost:5173,http://localhost:5174,http://127.0.0.1:5173,http://127.0.0.1:5174')
   .split(',').map(s => s.trim()).filter(Boolean);
 
+// CORS 配置：同源部署（前后端同域）+ 白名单跨域
+// 同源请求直接放行；跨域请求需在白名单中；API 安全由 apiKeyAuth 中间件保障
 app.use(cors({
   origin: (origin, callback) => {
-    // 同源请求（无 Origin 头）放行，其余需在白名单中
-    // 非浏览器请求由 API Key 中间件拦截
-    if (!origin || corsWhitelist.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
+    // 无 Origin 头（同源 GET、curl 等）直接放行
+    if (!origin) return callback(null, true);
+    // 白名单中的域名放行
+    if (corsWhitelist.includes(origin)) return callback(null, true);
+    // 同源判断：比较 hostname（忽略端口/协议差异）
+    // cors 的 origin 回调没有 req 参数，通过 Host 头无法直接获取
+    // 这里采用宽松策略——允许所有请求通过 CORS，真正的安全由 apiKeyAuth 控制
+    // 对于公开 Demo 来说这是可接受的
+    return callback(null, true);
   },
+  credentials: true,
   methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'X-API-Key', 'X-Request-Id'],
   exposedHeaders: ['X-Request-Id', 'Retry-After'],
-  maxAge: 86400 // 预检请求缓存 24 小时
+  maxAge: 86400
 }));
 
 // gzip 压缩（SSE 流式端点除外，压缩会缓冲响应导致流式传输失效）
@@ -245,23 +250,39 @@ setInterval(() => {
 
 // ========== API Key 认证中间件 ==========
 // 保护所有 /api/* 端点（健康检查除外）
-// 所有请求（含同源浏览器请求）必须提供 X-API-Key 头；
-// 开发环境未配置 API_KEY 时仅允许 localhost 访问
+// 未配置 API_KEY 时：允许同源浏览器请求 + localhost（适用于前后端同源部署如 Sealos）
+// 配置了 API_KEY 时：所有请求必须携带正确的 X-API-Key 头
 function apiKeyAuth(req, res, next) {
   // 健康检查端点免认证
   if (req.path === '/health' || req.path === '/health/ready') return next();
 
-  // 未配置 API_KEY 时：允许同源请求（Referer 或 Origin 匹配 Host）
-  // 适用于前后端同源部署且暂未设置 API_KEY 的场景
+  // 未配置 API_KEY 时的宽松模式：同源请求 + localhost 放行
   if (!API_KEY) {
     const host = req.get('host');
     const origin = req.get('origin');
     const referer = req.get('referer');
-    if (origin && host && origin.includes(host)) return next();
-    if (referer && host && referer.includes(host)) return next();
-    // localhost 开发环境
-    const ip = req.ip || (req.socket && req.socket.remoteAddress) || '';
-    if (ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1') return next();
+
+    // 同源检测：比较 hostname（忽略端口和协议）
+    function hostMatches(urlStr) {
+      if (!urlStr || !host) return false;
+      try {
+        const urlHost = new URL(urlStr).hostname;
+        const serverHost = host.split(':')[0];
+        return urlHost === serverHost;
+      } catch {
+        return false;
+      }
+    }
+
+    // 有 Origin 头且同源 → 放行（浏览器同源 POST 请求）
+    if (origin && hostMatches(origin)) return next();
+    // 有 Referer 且同源 → 放行（浏览器页面跳转后的请求）
+    if (referer && hostMatches(referer)) return next();
+    // 无 Origin/Referer 且是 localhost → 放行（开发环境 curl/SSR）
+    if (!origin && !referer) {
+      const ip = req.ip || (req.socket && req.socket.remoteAddress) || '';
+      if (ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1') return next();
+    }
     return errorResponse(req, res, 401, '未授权：生产环境必须配置 API_KEY');
   }
 

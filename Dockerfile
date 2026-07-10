@@ -52,6 +52,7 @@ COPY --from=frontend-builder /app/dist /app/dist
 ENV NODE_ENV=production
 ENV PORT=8127
 ENV STATIC_DIR=/app/dist
+ENV TRUST_PROXY_HOPS=1
 
 # 创建数据目录并设置正确权限（必须在 USER node 之前执行）
 RUN mkdir -p generated gallery data && chown -R node:node generated gallery data
