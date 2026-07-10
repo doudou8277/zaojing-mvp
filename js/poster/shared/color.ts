@@ -6,9 +6,13 @@
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } {
   const cleaned = hex.replace('#', '');
-  const full = cleaned.length === 3
-    ? cleaned.split('').map(c => c + c).join('')
-    : cleaned;
+  const full =
+    cleaned.length === 3
+      ? cleaned
+          .split('')
+          .map((c) => c + c)
+          .join('')
+      : cleaned;
   return {
     r: parseInt(full.substring(0, 2), 16),
     g: parseInt(full.substring(2, 4), 16),

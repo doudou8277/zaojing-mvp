@@ -204,9 +204,14 @@ export function loadPresetFont(fontId) {
 export async function loadFontFromFile(file) {
   // 校验文件类型
   const validTypes = [
-    'font/ttf', 'font/otf', 'font/woff', 'font/woff2',
-    'application/font-ttf', 'application/font-otf',
-    'application/font-woff', 'application/font-woff2',
+    'font/ttf',
+    'font/otf',
+    'font/woff',
+    'font/woff2',
+    'application/font-ttf',
+    'application/font-otf',
+    'application/font-woff',
+    'application/font-woff2',
   ];
   const ext = file.name.split('.').pop().toLowerCase();
   const validExts = ['ttf', 'otf', 'woff', 'woff2'];
@@ -333,12 +338,12 @@ export function getEffectiveFontFamily(config) {
  */
 export function getCategoryLabel(category) {
   const labels = {
-    'serif': '衬线',
+    serif: '衬线',
     'sans-serif': '无衬线',
-    'handwriting': '手写',
-    'brush': '毛笔',
-    'display': '展示',
-    'mono': '等宽',
+    handwriting: '手写',
+    brush: '毛笔',
+    display: '展示',
+    mono: '等宽',
   };
   return labels[category] || '其他';
 }

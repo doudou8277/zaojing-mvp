@@ -19,18 +19,21 @@ function getObserver() {
     return null;
   }
 
-  observer = new IntersectionObserver((entries) => {
-    for (const entry of entries) {
-      if (entry.isIntersecting) {
-        const el = entry.target;
-        loadImage(el);
-        observer.unobserve(el);
+  observer = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) {
+          const el = entry.target;
+          loadImage(el);
+          observer.unobserve(el);
+        }
       }
+    },
+    {
+      rootMargin: '200px', // 提前 200px 开始加载
+      threshold: 0.01,
     }
-  }, {
-    rootMargin: '200px', // 提前 200px 开始加载
-    threshold: 0.01
-  });
+  );
 
   return observer;
 }
@@ -46,10 +49,14 @@ function loadImage(el) {
     el.src = src;
     el.removeAttribute('data-src');
     el.addEventListener('load', () => el.classList.add('loaded'), { once: true });
-    el.addEventListener('error', () => {
-      el.classList.add('load-error');
-      logger.warn('[LazyLoad] 图片加载失败:', src);
-    }, { once: true });
+    el.addEventListener(
+      'error',
+      () => {
+        el.classList.add('load-error');
+        logger.warn('[LazyLoad] 图片加载失败:', src);
+      },
+      { once: true }
+    );
   } else {
     // 背景图模式
     el.style.backgroundImage = `url(${src})`;

@@ -93,9 +93,7 @@ describe('BatchQueue', () => {
     });
 
     it('所有任务状态应为 done', async () => {
-      queue.addAll([
-        { id: 't1', text: 'a', directorId: 'miyazaki' },
-      ]);
+      queue.addAll([{ id: 't1', text: 'a', directorId: 'miyazaki' }]);
       await queue.start(async () => 'ok');
       expect(queue.tasks[0].status).toBe('done');
       expect(queue.tasks[0].result).toBe('ok');

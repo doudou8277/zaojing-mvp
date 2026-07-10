@@ -42,12 +42,12 @@ export function setupGeneratingPage({ getPosterEngine, getMovieModule, showResul
 
 // ========== 阶段定义 ==========
 const PHASES = {
-  prepare:  { label: '导演正在为你选景…', progress: 5,  dots: 0 },
-  analyze:  { label: '正在分析你的文字…', progress: 15, dots: 1 },
-  select:   { label: '正在匹配导演风格…', progress: 30, dots: 2 },
+  prepare: { label: '导演正在为你选景…', progress: 5, dots: 0 },
+  analyze: { label: '正在分析你的文字…', progress: 15, dots: 1 },
+  select: { label: '正在匹配导演风格…', progress: 30, dots: 2 },
   generate: { label: 'AI 正在拍摄…', subtext: '这可能需要 10-30 秒', progress: 70, dots: 4, indeterminate: true },
-  compose:  { label: '正在绘制海报…', progress: 90, dots: 5 },
-  done:     { label: '完成！', progress: 100, dots: 6 },
+  compose: { label: '正在绘制海报…', progress: 90, dots: 5 },
+  done: { label: '完成！', progress: 100, dots: 6 },
 };
 
 /** 取消标志 — 由取消按钮或外部设置 */
@@ -155,7 +155,7 @@ function _addReasoningEntry({ tool, thought, observation, isError }) {
       const spinner = entryEl.querySelector('.reasoning-spinner');
       if (spinner) spinner.remove();
       entry.pending = false;
-    }
+    },
   };
 }
 
@@ -188,8 +188,9 @@ function _resetGeneratingUI() {
   if (cancelBtn) cancelBtn.style.display = 'none';
   // 恢复步骤点（错误时会被替换为重试按钮）
   if (stepsEl && stepsEl.querySelector('#btn-retry-gen')) {
-    stepsEl.innerHTML = Array.from({ length: 6 }, (_, i) =>
-      `<div class="gen-step-dot${i === 0 ? ' active' : ''}"></div>`
+    stepsEl.innerHTML = Array.from(
+      { length: 6 },
+      (_, i) => `<div class="gen-step-dot${i === 0 ? ' active' : ''}"></div>`
     ).join('');
   }
   // 重新查询步骤点（innerHTML 已可能重建 DOM）
@@ -303,7 +304,7 @@ export async function runEmotionAnalysis({ text, moodTagId, initDirectorsPage, l
   // 推理链：情绪分析开始
   const analysisEntry = _addReasoningEntry({
     tool: 'analyze_emotion',
-    thought: `理解用户输入的情绪：「${text.slice(0, 30)}${text.length > 30 ? '…' : ''}」${moodTagId ? `，心情标签：${moodTagId}` : ''}`
+    thought: `理解用户输入的情绪：「${text.slice(0, 30)}${text.length > 30 ? '…' : ''}」${moodTagId ? `，心情标签：${moodTagId}` : ''}`,
   });
 
   try {
@@ -335,7 +336,7 @@ export async function runEmotionAnalysis({ text, moodTagId, initDirectorsPage, l
     _addReasoningEntry({
       tool: 'match_directors',
       thought: '根据情绪分析结果匹配最适合的导演风格',
-      observation: `已推荐 ${state.emotionAnalysis?.recommendedDirectors?.length || 2} 位导演，请选择你喜欢的风格`
+      observation: `已推荐 ${state.emotionAnalysis?.recommendedDirectors?.length || 2} 位导演，请选择你喜欢的风格`,
     });
 
     if (typeof initDirectorsPage === 'function') {
@@ -369,7 +370,9 @@ export async function runEmotionAnalysis({ text, moodTagId, initDirectorsPage, l
 export async function startGeneration() {
   // 释放上一轮海报的 Blob URL，避免内存泄漏
   if (state.posterResults && state.posterResults.length) {
-    state.posterResults.forEach(r => { safeRevokeUrl(r.dataUrl); });
+    state.posterResults.forEach((r) => {
+      safeRevokeUrl(r.dataUrl);
+    });
   }
 
   _cancelled = false;
@@ -385,10 +388,16 @@ export async function startGeneration() {
 
   try {
     // ---- 阶段 1: 准备 + 加载 PosterEngine ----
-    _setPhase('prepare', { subtext: isGrid9 ? '准备九宫格合成' : isMulti ? `准备 ${state.selectedDirectorIds.length} 位导演的拍摄` : '准备拍摄' });
+    _setPhase('prepare', {
+      subtext: isGrid9
+        ? '准备九宫格合成'
+        : isMulti
+          ? `准备 ${state.selectedDirectorIds.length} 位导演的拍摄`
+          : '准备拍摄',
+    });
     const prepEntry = _addReasoningEntry({
       tool: 'init_session',
-      thought: `收到创作请求："${_truncateObs(state.inputText, 40)}"。模式：${isGrid9 ? '九宫格' : isMulti ? `${state.selectedDirectorIds.length}位导演系列` : '单导演'}。初始化创作会话…`
+      thought: `收到创作请求："${_truncateObs(state.inputText, 40)}"。模式：${isGrid9 ? '九宫格' : isMulti ? `${state.selectedDirectorIds.length}位导演系列` : '单导演'}。初始化创作会话…`,
     });
     const PosterEngine = await _getPosterEngine();
     prepEntry.updateObservation(`会话初始化完成，海报引擎已就绪`);
@@ -401,25 +410,34 @@ export async function startGeneration() {
       tool: 'analyze_emotion',
       thought: emotion
         ? `已有情绪分析结果：主情绪「${emotion.primaryEmotion}」，强度 ${emotion.emotionIntensity}/10。关键词：${(emotion.keywords || []).slice(0, 3).join('、')}`
-        : '未进行情绪分析，将直接使用导演风格创作'
+        : '未进行情绪分析，将直接使用导演风格创作',
     });
     await sleep(100);
-    analyzeEntry.updateObservation(emotion
-      ? `情绪识别：${emotion.primaryEmotion}，推荐导演 ${(emotion.recommendedDirectors || []).slice(0, 3).map(d => d.directorId).join('、')}`
-      : '跳过情绪分析');
+    analyzeEntry.updateObservation(
+      emotion
+        ? `情绪识别：${emotion.primaryEmotion}，推荐导演 ${(emotion.recommendedDirectors || [])
+            .slice(0, 3)
+            .map((d) => d.directorId)
+            .join('、')}`
+        : '跳过情绪分析'
+    );
     if (_cancelled) return;
 
     _setPhase('select');
-    const directorNames = state.selectedDirectorIds.map(id => {
-      const d = DIRECTORS.find(dd => dd.id === id);
-      return d ? d.name : id;
-    }).join('、');
+    const directorNames = state.selectedDirectorIds
+      .map((id) => {
+        const d = DIRECTORS.find((dd) => dd.id === id);
+        return d ? d.name : id;
+      })
+      .join('、');
     const selectEntry = _addReasoningEntry({
       tool: 'select_directors',
-      thought: `根据用户选择${emotion ? '与情绪匹配' : ''}，确定创作导演：${directorNames}`
+      thought: `根据用户选择${emotion ? '与情绪匹配' : ''}，确定创作导演：${directorNames}`,
     });
     await sleep(100);
-    selectEntry.updateObservation(`目标导演：${state.selectedDirectorIds.join(', ')}（共 ${state.selectedDirectorIds.length} 位）`);
+    selectEntry.updateObservation(
+      `目标导演：${state.selectedDirectorIds.join(', ')}（共 ${state.selectedDirectorIds.length} 位）`
+    );
     if (_cancelled) return;
 
     // ---- 阶段 3: AI 拍摄 + Canvas 绘制（核心耗时阶段，使用 indeterminate） ----
@@ -430,13 +448,13 @@ export async function startGeneration() {
       // 九宫格合集
       const gridEntry = _addReasoningEntry({
         tool: 'generate_grid9',
-        thought: `九宫格模式：将 ${state.selectedDirectorIds.length} 位导演的画面合成为一张网格海报`
+        thought: `九宫格模式：将 ${state.selectedDirectorIds.length} 位导演的画面合成为一张网格海报`,
       });
       const gridResult = await PosterEngine.generateGrid9({
         text: state.inputText,
         directorIds: state.selectedDirectorIds,
         moodTagId: state.moodTagId,
-        showQuote: state.showQuote
+        showQuote: state.showQuote,
       });
       results = [gridResult];
       gridEntry.updateObservation(`九宫格合成完成，尺寸 ${gridResult.width}×${gridResult.height}`);
@@ -447,67 +465,73 @@ export async function startGeneration() {
       for (let i = 0; i < directorIds.length; i += BATCH_SIZE) {
         if (_cancelled) return;
         const batch = directorIds.slice(i, i + BATCH_SIZE);
-        const batchResults = await Promise.all(batch.map(async (directorId) => {
-          const director = DIRECTORS.find(d => d.id === directorId);
-          const dirLabel = director ? director.name : directorId;
+        const batchResults = await Promise.all(
+          batch.map(async (directorId) => {
+            const director = DIRECTORS.find((d) => d.id === directorId);
+            const dirLabel = director ? director.name : directorId;
 
-          // 图片生成
-          let aiImageUrl = null;
-          if (state.useAI && state.aiHealthStatus) {
-            if (!director) {
-              logger.warn(`[Generating] 未找到导演: ${directorId}，跳过该导演`);
-              return null;
-            }
-            const imgEntry = _addReasoningEntry({
-              tool: 'generate_image',
-              thought: `调用 ${dirLabel} 风格的图片生成，情绪基调：${emotion ? emotion.primaryEmotion : '默认'}`
-            });
-            const aiResult = await posterBoundary.run(
-              () => AIClient.generateImage({
-                text: state.inputText,
-                directorId: directorId,
-                emotion: emotion ? emotion.primaryEmotion : null,
-                engine: state.aiEngine,
-                size: state.posterFormat
-              }, abortController.signal),
-              (err) => {
-                const msg = _getErrMsg(err);
-                logger.warn(`AI 生图失败 (${directorId})，降级为 Canvas:`, msg);
-                imgEntry.updateObservation(`AI 生图失败，降级为 Canvas 绘制：${_truncateObs(msg, 60)}`, true);
+            // 图片生成
+            let aiImageUrl = null;
+            if (state.useAI && state.aiHealthStatus) {
+              if (!director) {
+                logger.warn(`[Generating] 未找到导演: ${directorId}，跳过该导演`);
                 return null;
               }
-            );
-            aiImageUrl = aiResult ? aiResult.dataUrl : null;
-            if (aiResult) {
-              imgEntry.updateObservation(`${dirLabel} 风格图片生成成功（引擎：${aiResult.engine}）`);
+              const imgEntry = _addReasoningEntry({
+                tool: 'generate_image',
+                thought: `调用 ${dirLabel} 风格的图片生成，情绪基调：${emotion ? emotion.primaryEmotion : '默认'}`,
+              });
+              const aiResult = await posterBoundary.run(
+                () =>
+                  AIClient.generateImage(
+                    {
+                      text: state.inputText,
+                      directorId: directorId,
+                      emotion: emotion ? emotion.primaryEmotion : null,
+                      engine: state.aiEngine,
+                      size: state.posterFormat,
+                    },
+                    abortController.signal
+                  ),
+                (err) => {
+                  const msg = _getErrMsg(err);
+                  logger.warn(`AI 生图失败 (${directorId})，降级为 Canvas:`, msg);
+                  imgEntry.updateObservation(`AI 生图失败，降级为 Canvas 绘制：${_truncateObs(msg, 60)}`, true);
+                  return null;
+                }
+              );
+              aiImageUrl = aiResult ? aiResult.dataUrl : null;
+              if (aiResult) {
+                imgEntry.updateObservation(`${dirLabel} 风格图片生成成功（引擎：${aiResult.engine}）`);
+              }
             }
-          }
 
-          // Canvas 海报绘制
-          const composeEntry = _addReasoningEntry({
-            tool: 'compose_poster',
-            thought: `在 ${dirLabel} 风格背景上排版标题、金句与装饰元素…`
-          });
-          const result = await PosterEngine.generate({
-            text: state.inputText,
-            directorId: directorId,
-            movieId: selectedMovie ? selectedMovie.id : undefined,
-            customDNA: selectedMovie ? (movieModule.state.customDNA || undefined) : undefined,
-            customColors: selectedMovie ? (movieModule.state.customColors || undefined) : undefined,
-            customPrompt: selectedMovie ? (movieModule.state.customPrompt || undefined) : undefined,
-            swapLabel: selectedMovie ? (movieModule.state.swapLabel || undefined) : undefined,
-            moodTagId: state.moodTagId,
-            format: state.posterFormat,
-            showQuote: state.showQuote,
-            aiImageUrl: aiImageUrl,
-            emotion: emotion ? emotion.primaryEmotion : null,
-            customFontFamily: _getCustomFontFamily(),
-            customTitleWeight: _getCustomTitleWeight(),
-          });
-          composeEntry.updateObservation(`${dirLabel} 海报绘制完成：「${_truncateObs(result.title, 20)}」`);
-          return result;
-        }));
-        results.push(...batchResults.filter(r => r !== null));
+            // Canvas 海报绘制
+            const composeEntry = _addReasoningEntry({
+              tool: 'compose_poster',
+              thought: `在 ${dirLabel} 风格背景上排版标题、金句与装饰元素…`,
+            });
+            const result = await PosterEngine.generate({
+              text: state.inputText,
+              directorId: directorId,
+              movieId: selectedMovie ? selectedMovie.id : undefined,
+              customDNA: selectedMovie ? movieModule.state.customDNA || undefined : undefined,
+              customColors: selectedMovie ? movieModule.state.customColors || undefined : undefined,
+              customPrompt: selectedMovie ? movieModule.state.customPrompt || undefined : undefined,
+              swapLabel: selectedMovie ? movieModule.state.swapLabel || undefined : undefined,
+              moodTagId: state.moodTagId,
+              format: state.posterFormat,
+              showQuote: state.showQuote,
+              aiImageUrl: aiImageUrl,
+              emotion: emotion ? emotion.primaryEmotion : null,
+              customFontFamily: _getCustomFontFamily(),
+              customTitleWeight: _getCustomTitleWeight(),
+            });
+            composeEntry.updateObservation(`${dirLabel} 海报绘制完成：「${_truncateObs(result.title, 20)}」`);
+            return result;
+          })
+        );
+        results.push(...batchResults.filter((r) => r !== null));
         // 系列海报时更新子文字提示批次进度
         if (directorIds.length > 1) {
           const subtextEl = $('gen-subtext');
@@ -523,7 +547,7 @@ export async function startGeneration() {
 
     const composeEntry = _addReasoningEntry({
       tool: 'finalize',
-      thought: `所有导演创作完成，共 ${results.length} 张海报。生成备选标题并保存结果…`
+      thought: `所有导演创作完成，共 ${results.length} 张海报。生成备选标题并保存结果…`,
     });
 
     state.posterResults = results;
@@ -534,9 +558,11 @@ export async function startGeneration() {
     state.currentTitle = results[0].title;
 
     // 保存到历史
-    results.forEach(r => _saveToHistory(r));
+    results.forEach((r) => _saveToHistory(r));
 
-    composeEntry.updateObservation(`结果已保存，主标题「${_truncateObs(results[0].title, 20)}」，备选标题 ${state.altTitles.length} 个`);
+    composeEntry.updateObservation(
+      `结果已保存，主标题「${_truncateObs(results[0].title, 20)}」，备选标题 ${state.altTitles.length} 个`
+    );
 
     await sleep(200);
     if (_cancelled) return;
@@ -546,7 +572,7 @@ export async function startGeneration() {
     _addReasoningEntry({
       tool: 'finish',
       thought: '创作流程全部完成，准备展示结果',
-      observation: `共生成 ${results.length} 张电影海报，可以滑动浏览`
+      observation: `共生成 ${results.length} 张电影海报，可以滑动浏览`,
     });
     await sleep(300);
 
@@ -561,7 +587,7 @@ export async function startGeneration() {
       tool: 'error',
       thought: '创作过程中遇到错误',
       observation: _truncateObs(errMsg, 100),
-      isError: true
+      isError: true,
     });
     // 显示错误状态
     const progressBar = $('gen-progress-bar');
@@ -576,7 +602,8 @@ export async function startGeneration() {
     // 替换步骤点为重试按钮
     const stepsEl = $('gen-steps');
     if (stepsEl) {
-      stepsEl.innerHTML = '<button class="btn btn-primary btn-sm" id="btn-retry-gen" style="margin-top:12px">重试</button>';
+      stepsEl.innerHTML =
+        '<button class="btn btn-primary btn-sm" id="btn-retry-gen" style="margin-top:12px">重试</button>';
       const retryBtn = $('btn-retry-gen');
       if (retryBtn) retryBtn.onclick = () => startGeneration();
     }

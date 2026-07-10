@@ -155,9 +155,7 @@ export async function smartSet(key: string, value: unknown): Promise<void> {
  * - 先查 localStorage（快速路径，兼容旧数据）
  * - 未命中再查 IndexedDB
  */
-export async function smartGet<T = unknown>(
-  key: string,
-): Promise<T | string | null> {
+export async function smartGet<T = unknown>(key: string): Promise<T | string | null> {
   // 先查 localStorage
   const lsVal = localStorage.getItem(key);
   if (lsVal !== null) {

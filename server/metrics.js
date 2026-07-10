@@ -12,7 +12,7 @@ const register = new promClient.Registry();
 promClient.collectDefaultMetrics({
   register,
   prefix: 'zaojing_',
-  labels: { app: 'zaojing-server' }
+  labels: { app: 'zaojing-server' },
 });
 
 // ========== 自定义指标 ==========
@@ -22,7 +22,7 @@ const httpRequestCounter = new promClient.Counter({
   name: 'zaojing_http_requests_total',
   help: 'HTTP 请求总数',
   labelNames: ['method', 'route', 'status'],
-  registers: [register]
+  registers: [register],
 });
 
 // HTTP 请求延迟
@@ -31,7 +31,7 @@ const httpRequestDuration = new promClient.Histogram({
   help: 'HTTP 请求延迟（秒）',
   labelNames: ['method', 'route', 'status'],
   buckets: [0.01, 0.05, 0.1, 0.3, 0.5, 1, 2, 5, 10],
-  registers: [register]
+  registers: [register],
 });
 
 // AI 调用计数
@@ -39,7 +39,7 @@ const aiCallCounter = new promClient.Counter({
   name: 'zaojing_ai_calls_total',
   help: 'AI API 调用总数',
   labelNames: ['service', 'model', 'status'],
-  registers: [register]
+  registers: [register],
 });
 
 // AI 调用延迟
@@ -48,7 +48,7 @@ const aiCallDuration = new promClient.Histogram({
   help: 'AI API 调用延迟（秒）',
   labelNames: ['service', 'model'],
   buckets: [0.5, 1, 2, 5, 10, 30, 60],
-  registers: [register]
+  registers: [register],
 });
 
 // 缓存命中/未命中
@@ -56,14 +56,14 @@ const cacheCounter = new promClient.Counter({
   name: 'zaojing_cache_operations_total',
   help: '缓存操作总数',
   labelNames: ['type', 'result'],
-  registers: [register]
+  registers: [register],
 });
 
 // 当前活跃连接数
 const activeConnections = new promClient.Gauge({
   name: 'zaojing_active_connections',
   help: '当前活跃连接数',
-  registers: [register]
+  registers: [register],
 });
 
 // 图片生成计数
@@ -71,7 +71,7 @@ const imageGeneratedCounter = new promClient.Counter({
   name: 'zaojing_images_generated_total',
   help: '图片生成总数',
   labelNames: ['engine', 'director'],
-  registers: [register]
+  registers: [register],
 });
 
 module.exports = {
@@ -82,5 +82,5 @@ module.exports = {
   aiCallDuration,
   cacheCounter,
   activeConnections,
-  imageGeneratedCounter
+  imageGeneratedCounter,
 };

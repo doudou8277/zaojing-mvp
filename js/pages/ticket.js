@@ -6,16 +6,16 @@
 import { navigate, toast, escapeHtml } from '../shared.js';
 import { logger } from '../utils/logger.js';
 import { renderTicket, getStyleColors, getFormatSize, canvasToDataUrl } from '../utils/ticket-engine.js';
-import { saveTicket, getAllTickets, deleteTicket } from '../utils/ticket-storage.js';
+import { saveTicket, getAllTickets, deleteTicket, getTicketCount } from '../utils/ticket-storage.js';
 
 // ========== 状态 ==========
-let currentPhoto = null;       // { dataUrl, file }
-let analysisResult = null;     // AI 分析结果
+let currentPhoto = null; // { dataUrl, file }
+let analysisResult = null; // AI 分析结果
 let currentStyle = 'miyazaki';
 let currentFormat = 'vertical';
 let currentMoodText = '';
 let isGenerating = false;
-let ticketCount = 0;           // 缓存票根数量
+let ticketCount = 0; // 缓存票根数量
 
 // 导演风格列表（与渲染引擎 STYLE_COLORS 保持一致）
 const STYLES = [
@@ -41,7 +41,9 @@ const FORMATS = [
 ];
 
 // ========== DOM 工具 ==========
-function $(id) { return document.getElementById(id); }
+function $(id) {
+  return document.getElementById(id);
+}
 
 // ========== 页面初始化 ==========
 function setupTicketPage() {
@@ -95,7 +97,7 @@ function setupTicketPage() {
       // 默认填充今天日期
       const dateInput = $('ticket-date-input');
       if (dateInput && !dateInput.value) {
-        dateInput.value = formatDate(new Date());
+        dateInput.value = todayISO();
       }
     });
   }
@@ -107,9 +109,9 @@ function setupTicketPage() {
   }
 
   // 风格切换
-  document.querySelectorAll('.ticket-style-chip').forEach(chip => {
+  document.querySelectorAll('.ticket-style-chip').forEach((chip) => {
     chip.addEventListener('click', () => {
-      document.querySelectorAll('.ticket-style-chip').forEach(c => c.classList.remove('active'));
+      document.querySelectorAll('.ticket-style-chip').forEach((c) => c.classList.remove('active'));
       chip.classList.add('active');
       currentStyle = chip.dataset.style;
       if (analysisResult && currentPhoto) {
@@ -119,9 +121,9 @@ function setupTicketPage() {
   });
 
   // 版式切换
-  document.querySelectorAll('.ticket-format-chip').forEach(chip => {
+  document.querySelectorAll('.ticket-format-chip').forEach((chip) => {
     chip.addEventListener('click', () => {
-      document.querySelectorAll('.ticket-format-chip').forEach(c => c.classList.remove('active'));
+      document.querySelectorAll('.ticket-format-chip').forEach((c) => c.classList.remove('active'));
       chip.classList.add('active');
       currentFormat = chip.dataset.format;
       updateCanvasWrapRatio();
@@ -146,6 +148,14 @@ function setupTicketPage() {
       if (currentPhoto && !isGenerating) {
         await handleGenerate();
       }
+    });
+  }
+
+  // 换张照片
+  const newPhotoBtn = $('ticket-newphoto-btn');
+  if (newPhotoBtn) {
+    newPhotoBtn.addEventListener('click', () => {
+      resetToUpload();
     });
   }
 
@@ -266,10 +276,9 @@ function setupTicketPage() {
 // ========== 页面入口 ==========
 async function initTicketPage() {
   resetToUpload();
-  // 预加载票根数量
+  // 使用 await 确保票根计数准确，避免编号竞态
   try {
-    const tickets = await getAllTickets();
-    ticketCount = tickets.length;
+    ticketCount = await getTicketCount();
   } catch {
     ticketCount = 0;
   }
@@ -279,9 +288,9 @@ async function initTicketPage() {
 // ========== 区段切换 ==========
 function showSection(section) {
   const sections = ['upload', 'generating', 'result', 'wall'];
-  sections.forEach(s => {
+  sections.forEach((s) => {
     const el = $(`ticket-${s}-section`);
-    if (el) el.style.display = (s === section) ? 'block' : 'none';
+    if (el) el.style.display = s === section ? 'block' : 'none';
   });
 }
 
@@ -338,8 +347,8 @@ function handleFileSelect(file) {
     toast('请选择图片文件', 3000);
     return;
   }
-  if (file.size > 15 * 1024 * 1024) {
-    toast('图片不能超过 15MB', 3000);
+  if (file.size > 10 * 1024 * 1024) {
+    toast('图片不能超过 10MB', 3000);
     return;
   }
 
@@ -383,7 +392,7 @@ async function handleGenerate() {
 
     if (isManualMode) {
       destination = ($('ticket-destination-input')?.value || '').trim();
-      date = ($('ticket-date-input')?.value || '').trim();
+      date = getDateInputValue();
     }
 
     // 1. 调用 AI 分析
@@ -418,30 +427,20 @@ async function handleGenerate() {
 
     updateGenProgress('正在生成诗意文案...', 2);
 
-    // 2. 流式生成文案（手动模式下如果用户没填目的地，也走AI文案；智能模式始终AI生成）
-    const needsAICopy = !isManualMode || !destination;
-    if (needsAICopy) {
-      try {
-        await generateMoodText(destination, date);
-      } catch (copyErr) {
-        logger.warn({ err: copyErr.message }, '文案流式生成失败，使用分析结果文案');
-        currentMoodText = result.moodText || '旅途中的好时光';
-      }
-    } else {
+    // 2. 始终流式生成文案（保证文案长度和风格一致，15-30字）
+    try {
+      await generateMoodText(destination, date);
+    } catch (copyErr) {
+      logger.warn({ err: copyErr.message }, '文案流式生成失败，使用分析结果文案');
       currentMoodText = result.moodText || '旅途中的好时光';
-    }
-
-    // 如果手动模式有用户输入的目的地，使用它
-    if (isManualMode && destination) {
-      // 用户指定的目的地会在渲染时使用
     }
 
     updateGenProgress('正在匹配导演风格...', 3);
 
     // 自动选择 AI 推荐的风格
-    if (result.recommendedStyle && STYLES.find(s => s.id === result.recommendedStyle)) {
+    if (result.recommendedStyle && STYLES.find((s) => s.id === result.recommendedStyle)) {
       currentStyle = result.recommendedStyle;
-      document.querySelectorAll('.ticket-style-chip').forEach(c => {
+      document.querySelectorAll('.ticket-style-chip').forEach((c) => {
         c.classList.toggle('active', c.dataset.style === currentStyle);
       });
     }
@@ -459,7 +458,6 @@ async function handleGenerate() {
     showSection('result');
     fillResultInfo(destination, date);
     updateMoodDisplay();
-
   } catch (error) {
     logger.error({ err: error.message }, '票根生成失败');
     toast('票根生成失败: ' + error.message, 4000);
@@ -482,86 +480,92 @@ async function generateMoodText(destination, date) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        imageBase64: currentPhoto.dataUrl,
         destination,
         date,
         emotion: analysisResult?.emotion?.primary,
         sceneType: analysisResult?.emotion?.sceneType,
       }),
       signal: controller.signal,
-    }).then(response => {
-      clearTimeout(timeoutId);
-      if (!response.ok) throw new Error(`文案生成失败: ${response.status}`);
-      if (!response.body) throw new Error('无响应流');
+    })
+      .then((response) => {
+        clearTimeout(timeoutId);
+        if (!response.ok) throw new Error(`文案生成失败: ${response.status}`);
+        if (!response.body) throw new Error('无响应流');
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
-      let moodText = '';
-      let eventType = '';
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let moodText = '';
+        let eventType = '';
 
-      function processChunk() {
-        reader.read().then(({ done, value }) => {
-          if (done) {
-            if (!currentMoodText) currentMoodText = moodText;
-            resolve();
-            return;
-          }
-
-          buffer += decoder.decode(value, { stream: true });
-          // SSE 格式：event: xxx\ndata: xxx\n\n
-          // 按 \n\n 分割完整事件
-          const events = buffer.split('\n\n');
-          buffer = events.pop() || '';
-
-          for (const eventBlock of events) {
-            const lines = eventBlock.split('\n');
-            let evType = '';
-            let evData = '';
-            for (const line of lines) {
-              if (line.startsWith('event: ')) evType = line.slice(7).trim();
-              else if (line.startsWith('data: ')) evData += line.slice(6);
-            }
-            if (evType === 'token' && evData) {
-              try {
-                const data = JSON.parse(evData);
-                if (data.token) {
-                  moodText += data.token;
-                  if (moodDisplay) moodDisplay.textContent = moodText;
-                }
-              } catch { /* 忽略解析失败的token */ }
-            } else if (evType === 'done') {
-              currentMoodText = moodText;
-              resolve();
-              return;
-            } else if (evType === 'error') {
-              try {
-                const data = JSON.parse(evData);
-                reject(new Error(data.error || '文案生成失败'));
-              } catch {
-                reject(new Error('文案生成失败'));
+        function processChunk() {
+          reader
+            .read()
+            .then(({ done, value }) => {
+              if (done) {
+                if (!currentMoodText) currentMoodText = moodText;
+                resolve();
+                return;
               }
-              return;
-            }
-          }
 
-          processChunk();
-        }).catch((err) => {
-          clearTimeout(timeoutId);
-          if (err.name === 'AbortError') {
-            currentMoodText = moodText || '旅途时光';
-            resolve();
-          } else {
-            reject(err);
-          }
-        });
-      }
+              buffer += decoder.decode(value, { stream: true });
+              // SSE 格式：event: xxx\ndata: xxx\n\n
+              // 按 \n\n 分割完整事件
+              const events = buffer.split('\n\n');
+              buffer = events.pop() || '';
 
-      processChunk();
-    }).catch((err) => {
-      clearTimeout(timeoutId);
-      reject(err);
-    });
+              for (const eventBlock of events) {
+                const lines = eventBlock.split('\n');
+                let evType = '';
+                let evData = '';
+                for (const line of lines) {
+                  if (line.startsWith('event: ')) evType = line.slice(7).trim();
+                  else if (line.startsWith('data: ')) evData += line.slice(6);
+                }
+                if (evType === 'token' && evData) {
+                  try {
+                    const data = JSON.parse(evData);
+                    if (data.token) {
+                      moodText += data.token;
+                      if (moodDisplay) moodDisplay.textContent = moodText;
+                    }
+                  } catch {
+                    /* 忽略解析失败的token */
+                  }
+                } else if (evType === 'done') {
+                  currentMoodText = moodText;
+                  resolve();
+                  return;
+                } else if (evType === 'error') {
+                  try {
+                    const data = JSON.parse(evData);
+                    reject(new Error(data.error || '文案生成失败'));
+                  } catch {
+                    reject(new Error('文案生成失败'));
+                  }
+                  return;
+                }
+              }
+
+              processChunk();
+            })
+            .catch((err) => {
+              clearTimeout(timeoutId);
+              if (err.name === 'AbortError') {
+                currentMoodText = moodText || '旅途时光';
+                resolve();
+              } else {
+                reject(err);
+              }
+            });
+        }
+
+        processChunk();
+      })
+      .catch((err) => {
+        clearTimeout(timeoutId);
+        reject(err);
+      });
   });
 }
 
@@ -584,7 +588,7 @@ async function renderCurrentTicket() {
 
   if (isManualMode) {
     destination = ($('ticket-destination-input')?.value || '').trim();
-    date = ($('ticket-date-input')?.value || '').trim();
+    date = getDateInputValue();
   }
   if (!destination) destination = analysisResult.emotion?.sceneType || '旅途';
   if (!date) date = formatDate(new Date());
@@ -623,11 +627,13 @@ function fillResultInfo(destination, date) {
 
   const emotionEl = $('ticket-result-emotion');
   if (emotionEl) {
-    const tags = analysisResult?.emotion?.tags || [];
+    // 创建副本而非直接 mutate 原数组
+    const apiTags = analysisResult?.emotion?.tags || [];
+    const tags = [...apiTags];
     if (tags.length === 0 && analysisResult?.emotion?.primary) {
       tags.push(analysisResult.emotion.primary);
     }
-    emotionEl.innerHTML = tags.map(t => `<span class="ticket-emotion-tag">${escapeHtml(t)}</span>`).join('');
+    emotionEl.innerHTML = tags.map((t) => `<span class="ticket-emotion-tag">${escapeHtml(t)}</span>`).join('');
   }
 
   const sceneEl = $('ticket-result-scene');
@@ -639,13 +645,31 @@ async function handleSave() {
   const canvas = $('ticket-canvas');
   if (!canvas || !analysisResult) return;
 
+  const saveBtn = $('ticket-save-btn');
+  if (saveBtn.disabled) return; // 防重复点击
+
+  saveBtn.disabled = true;
+  const originalText = saveBtn.textContent;
+  saveBtn.textContent = '保存中...';
+
   try {
     const ticketDataUrl = canvasToDataUrl(canvas);
     const isManualMode = $('ticket-mode-manual')?.classList.contains('active');
-    const destination = (isManualMode ? $('ticket-destination-input')?.value : '')?.trim()
-      || analysisResult?.emotion?.sceneType || '旅途';
-    const date = (isManualMode ? $('ticket-date-input')?.value : '')?.trim()
-      || formatDate(new Date());
+    const destination =
+      (isManualMode ? $('ticket-destination-input')?.value : '')?.trim() ||
+      analysisResult?.emotion?.sceneType ||
+      '旅途';
+    const date = getDateInputValue() || formatDate(new Date());
+
+    // 深拷贝 emotion 对象，避免保存后修改原数据
+    const emotionCopy = analysisResult.emotion
+      ? {
+          primary: analysisResult.emotion.primary || '',
+          intensity: analysisResult.emotion.intensity || 0,
+          tags: [...(analysisResult.emotion.tags || [])],
+          sceneType: analysisResult.emotion.sceneType || '',
+        }
+      : { primary: '', intensity: 0, tags: [], sceneType: '' };
 
     const ticket = {
       id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
@@ -655,20 +679,21 @@ async function handleSave() {
       moodText: currentMoodText || analysisResult.moodText || '',
       styleId: currentStyle,
       format: currentFormat,
-      emotion: analysisResult.emotion,
+      emotion: emotionCopy,
       animationType: analysisResult.animationType || 'none',
       ticketDataUrl,
-      photoDataUrl: currentPhoto?.dataUrl || '',
       styleReason: analysisResult.styleReason || '',
     };
 
     await saveTicket(ticket);
     ticketCount++;
     toast('票根已保存到票根墙！', 2000);
-
   } catch (error) {
     logger.error({ err: error.message }, '保存票根失败');
-    toast('保存失败: ' + error.message, 3000);
+    toast('保存失败: ' + (error.message || '存储可能已满，请删除旧票根后重试'), 4000);
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.textContent = originalText;
   }
 }
 
@@ -689,26 +714,38 @@ async function handleCopy() {
   const canvas = $('ticket-canvas');
   if (!canvas) return;
 
+  const copyBlob = (type, quality) =>
+    new Promise((resolve, reject) => {
+      canvas.toBlob(
+        (blob) => {
+          if (blob) resolve(blob);
+          else reject(new Error('toBlob failed'));
+        },
+        type,
+        quality
+      );
+    });
+
   try {
-    canvas.toBlob(async (blob) => {
-      if (!blob) {
-        toast('复制失败', 2000);
-        return;
-      }
-      try {
-        await navigator.clipboard.write([
-          new ClipboardItem({ 'image/webp': blob })
-        ]);
-        toast('票根已复制到剪贴板', 2000);
-      } catch {
-        // 降级：复制文案
-        await navigator.clipboard.writeText(currentMoodText);
-        toast('文案已复制（浏览器不支持图片复制）', 2000);
-      }
-    }, 'image/webp', 0.92);
+    // 优先尝试 WebP，失败/不支持时回退 PNG
+    let blob;
+    try {
+      blob = await copyBlob('image/webp', 0.92);
+      await navigator.clipboard.write([new ClipboardItem({ 'image/webp': blob })]);
+    } catch {
+      // Safari 等不支持 WebP 剪贴板的浏览器，尝试 PNG
+      blob = await copyBlob('image/png');
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+    }
+    toast('票根已复制到剪贴板', 2000);
   } catch (error) {
-    logger.warn({ err: error.message }, '复制票根失败');
-    toast('复制失败', 2000);
+    // 最终降级：复制文案
+    try {
+      await navigator.clipboard.writeText(currentMoodText);
+      toast('文案已复制（浏览器不支持图片复制）', 2000);
+    } catch {
+      toast('复制失败，请长按图片保存', 3000);
+    }
   }
 }
 
@@ -724,8 +761,8 @@ async function handleRegenCopy() {
 
   try {
     const isManualMode = $('ticket-mode-manual')?.classList.contains('active');
-    const destination = isManualMode ? ($('ticket-destination-input')?.value || '') : '';
-    const date = isManualMode ? ($('ticket-date-input')?.value || '') : '';
+    const destination = isManualMode ? ($('ticket-destination-input')?.value || '').trim() : '';
+    const date = isManualMode ? getDateInputValue() : '';
     await generateMoodText(destination, date);
     await renderCurrentTicket();
     updateMoodDisplay();
@@ -757,7 +794,9 @@ async function loadTicketWall() {
     }
 
     if (emptyEl) emptyEl.style.display = 'none';
-    grid.innerHTML = tickets.map(t => `
+    grid.innerHTML = tickets
+      .map(
+        (t) => `
       <div class="ticket-wall-item" data-id="${t.id}">
         <img src="${t.ticketDataUrl}" alt="${escapeHtml(t.destination)}" loading="lazy">
         <div class="ticket-wall-info">
@@ -766,30 +805,35 @@ async function loadTicketWall() {
         </div>
         <button class="ticket-wall-delete" data-id="${t.id}" title="删除">×</button>
       </div>
-    `).join('');
+    `
+      )
+      .join('');
 
     // 删除事件
-    grid.querySelectorAll('.ticket-wall-delete').forEach(btn => {
+    grid.querySelectorAll('.ticket-wall-delete').forEach((btn) => {
       btn.addEventListener('click', async (e) => {
         e.stopPropagation();
         const id = btn.dataset.id;
         if (confirm('确定删除这张票根吗？')) {
-          await deleteTicket(id);
-          ticketCount--;
-          loadTicketWall();
-          toast('已删除', 2000);
+          try {
+            await deleteTicket(id);
+            ticketCount--;
+            loadTicketWall();
+            toast('已删除', 2000);
+          } catch (err) {
+            toast('删除失败: ' + (err.message || '请重试'), 3000);
+          }
         }
       });
     });
 
     // 点击查看大图
-    grid.querySelectorAll('.ticket-wall-item').forEach(item => {
+    grid.querySelectorAll('.ticket-wall-item').forEach((item) => {
       item.addEventListener('click', () => {
         const img = item.querySelector('img');
         if (img) showImageOverlay(img.src);
       });
     });
-
   } catch (error) {
     logger.error({ err: error.message }, '加载票根墙失败');
     toast('加载票根墙失败', 3000);
@@ -805,13 +849,34 @@ function showImageOverlay(src) {
     <button class="ticket-overlay-close" title="关闭">×</button>
   `;
   document.body.appendChild(overlay);
+
+  // 阻止 body 滚动
+  const prevOverflow = document.body.style.overflow;
+  document.body.style.overflow = 'hidden';
+
+  const close = () => {
+    overlay.remove();
+    document.body.style.overflow = prevOverflow;
+    document.removeEventListener('keydown', escHandler);
+  };
+
+  const escHandler = (e) => {
+    if (e.key === 'Escape') close();
+  };
+  document.addEventListener('keydown', escHandler);
+
   const closeBtn = overlay.querySelector('.ticket-overlay-close');
   if (closeBtn) {
     closeBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      overlay.remove();
+      close();
     });
   }
+
+  // 点击遮罩背景关闭（点击图片不关闭）
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) close();
+  });
 }
 
 // ========== 辅助函数 ==========
@@ -831,13 +896,35 @@ function formatDate(d) {
   return `${y}.${m}.${day}`;
 }
 
+/**
+ * 获取日期输入框的值，自动将 ISO 格式(YYYY-MM-DD)转为显示格式(YYYY.MM.DD)
+ * @returns {string}
+ */
+function getDateInputValue() {
+  const val = ($('ticket-date-input')?.value || '').trim();
+  if (!val) return '';
+  // type="date" 返回 YYYY-MM-DD，转为 YYYY.MM.DD
+  if (val.includes('-')) {
+    return val.replace(/-/g, '.');
+  }
+  return val;
+}
+
+/**
+ * 获取今天日期的 ISO 格式（用于设置 type=date 的默认值）
+ * @returns {string} YYYY-MM-DD
+ */
+function todayISO() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 // ========== 导出 ==========
-export {
-  setupTicketPage,
-  initTicketPage,
-  loadTicketWall,
-};
+export { setupTicketPage, initTicketPage, loadTicketWall };

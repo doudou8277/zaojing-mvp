@@ -81,7 +81,7 @@ async function analyzeCocreate() {
 
   const fields = inputsEl.querySelectorAll('.cocreate-input-field');
   const texts = [];
-  fields.forEach(f => {
+  fields.forEach((f) => {
     const t = f.value.trim();
     if (t) texts.push(t);
   });
@@ -116,7 +116,7 @@ async function analyzeCocreate() {
       primaryEmotion: randomEmotion,
       intensity: Math.floor(Math.random() * 4) + 6,
       keywords: config.keywords,
-      summary: `这是 ${texts.length} 位创作者的情绪融合。${randomEmotion}是主导情绪，交织着${config.keywords.join('、')}的意象。每个人的故事在这里相遇，汇成一部共同的电影。`
+      summary: `这是 ${texts.length} 位创作者的情绪融合。${randomEmotion}是主导情绪，交织着${config.keywords.join('、')}的意象。每个人的故事在这里相遇，汇成一部共同的电影。`,
     };
   }
 
@@ -127,14 +127,15 @@ async function analyzeCocreate() {
   const keywordsEl = $('cocreate-keywords');
   keywordsEl.innerHTML = '';
   const keywords = analysis.keywords || [];
-  keywords.forEach(kw => {
+  keywords.forEach((kw) => {
     const tag = document.createElement('span');
     tag.className = 'summary-keyword';
     tag.textContent = kw;
     keywordsEl.appendChild(tag);
   });
 
-  $('cocreate-text').textContent = analysis.summary || `${texts.length} 位创作者的情绪已融合，主导情绪为${analysis.primaryEmotion}。`;
+  $('cocreate-text').textContent =
+    analysis.summary || `${texts.length} 位创作者的情绪已融合，主导情绪为${analysis.primaryEmotion}。`;
 
   $('cocreate-summary').style.display = 'block';
   $('btn-cocreate-generate').style.display = 'inline-flex';
@@ -155,7 +156,7 @@ function generateCocreatePoster() {
   const inputsEl = $('cocreate-inputs');
   const fields = inputsEl.querySelectorAll('.cocreate-input-field');
   const texts = [];
-  fields.forEach(f => {
+  fields.forEach((f) => {
     const t = f.value.trim();
     if (t) texts.push(t);
   });

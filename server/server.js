@@ -1439,9 +1439,15 @@ app.post('/api/ticket/analyze', analyzeRateLimit, validate(schemas.ticketAnalyze
 
 // 票根文案流式生成（SSE）
 app.post('/api/ticket/copy-stream', analyzeRateLimit, validate(schemas.ticketCopy), async (req, res) => {
+  const ac = new AbortController();
+
+  // 客户端断开时中止 LLM 流
+  req.on('close', () => {
+    ac.abort();
+  });
+
   try {
-    const { imageBase64, destination, date, emotion, sceneType } = req.body;
-    const base64Data = imageBase64.includes(',') ? imageBase64.split(',')[1] : imageBase64;
+    const { destination, date, emotion, sceneType } = req.body;
 
     const safeDestination = sanitizeUserInput(destination || '某个地方');
     const safeDate = sanitizeUserInput(date || '某天');
@@ -1472,13 +1478,26 @@ app.post('/api/ticket/copy-stream', analyzeRateLimit, validate(schemas.ticketCop
 
     const messages = [{ role: 'user', content: prompt }];
 
-    await aiService.callLLMStream(messages, { temperature: 0.85, maxTokens: 200 }, async (token) => {
-      res.write(`event: token\ndata: ${JSON.stringify({ token })}\n\n`);
-    });
+    await aiService.callLLMStream(
+      messages,
+      { temperature: 0.85, maxTokens: 200 },
+      (token) => {
+        if (ac.signal.aborted) return false;
+        const ok = res.write(`event: token\ndata: ${JSON.stringify({ token })}\n\n`);
+        return ok;
+      },
+      ac.signal
+    );
 
-    res.write('event: done\ndata: {}\n\n');
-    res.end();
+    if (!ac.signal.aborted) {
+      res.write('event: done\ndata: {}\n\n');
+      res.end();
+    }
   } catch (error) {
+    if (error.name === 'AbortError' || ac.signal.aborted) {
+      req.log.info('票根文案流被客户端中止');
+      return;
+    }
     req.log.error({ err: error.message }, '票根文案生成失败');
     if (!res.headersSent) {
       errorResponse(req, res, 500, '文案生成失败');

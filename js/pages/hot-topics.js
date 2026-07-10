@@ -4,13 +4,7 @@
  */
 
 import { $, state, toast, escapeHtml, logger, navigate } from '../shared.js';
-import {
-  HOT_PLATFORMS,
-  fetchHotTopics,
-  formatHotValue,
-  getCategoryColor,
-  topicToPrompt,
-} from '../utils/hot-topics.js';
+import { HOT_PLATFORMS, fetchHotTopics, formatHotValue, getCategoryColor, topicToPrompt } from '../utils/hot-topics.js';
 
 // ========== 依赖注入 ==========
 let _onTopicSelect = null;
@@ -61,13 +55,15 @@ function renderPlatformTabs() {
   const tabsEl = $('hot-topics-tabs');
   if (!tabsEl) return;
 
-  tabsEl.innerHTML = HOT_PLATFORMS.map((p) => `
+  tabsEl.innerHTML = HOT_PLATFORMS.map(
+    (p) => `
     <button class="hot-platform-tab ${p.id === _currentPlatform ? 'active' : ''}"
             data-platform="${p.id}"
             style="${p.id === _currentPlatform ? `border-color:${p.color};color:${p.color}` : ''}">
       ${p.icon} ${p.label}
     </button>
-  `).join('');
+  `
+  ).join('');
 
   // 绑定切换
   tabsEl.querySelectorAll('.hot-platform-tab').forEach((tab) => {
@@ -118,10 +114,11 @@ function renderTopicList() {
     return;
   }
 
-  listEl.innerHTML = topics.map((topic, i) => {
-    const rankColor = i < 3 ? ['#e74c3c', '#e67e22', '#f1c40f'][i] : '#95a5a6';
-    const catColor = getCategoryColor(topic.category);
-    return `
+  listEl.innerHTML = topics
+    .map((topic, i) => {
+      const rankColor = i < 3 ? ['#e74c3c', '#e67e22', '#f1c40f'][i] : '#95a5a6';
+      const catColor = getCategoryColor(topic.category);
+      return `
       <div class="hot-topic-item" data-index="${i}">
         <div class="hot-topic-rank" style="color:${rankColor}">${topic.rank || i + 1}</div>
         <div class="hot-topic-content">
@@ -134,7 +131,8 @@ function renderTopicList() {
         <button class="hot-topic-use" data-index="${i}">选用</button>
       </div>
     `;
-  }).join('');
+    })
+    .join('');
 
   // 绑定选用按钮
   listEl.querySelectorAll('.hot-topic-use').forEach((btn) => {

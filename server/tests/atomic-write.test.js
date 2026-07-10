@@ -15,7 +15,11 @@ const TMP_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'zaojing-atomic-test-'));
 afterEach(() => {
   // 清理每个测试产生的文件
   for (const f of fs.readdirSync(TMP_DIR)) {
-    try { fs.unlinkSync(path.join(TMP_DIR, f)); } catch (_) { /* ignore */ }
+    try {
+      fs.unlinkSync(path.join(TMP_DIR, f));
+    } catch (_) {
+      /* ignore */
+    }
   }
 });
 

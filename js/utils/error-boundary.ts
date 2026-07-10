@@ -36,7 +36,11 @@ export function getErrorMessage(error: unknown): string {
     if (typeof e.message === 'string') return e.message;
     if (typeof e.msg === 'string') return e.msg;
     if (e.error instanceof Error) return e.error.message;
-    try { return JSON.stringify(error).slice(0, 200); } catch { return String(error); }
+    try {
+      return JSON.stringify(error).slice(0, 200);
+    } catch {
+      return String(error);
+    }
   }
   return String(error ?? '未知错误');
 }
@@ -87,6 +91,6 @@ export function createModuleBoundary(moduleName: string): ModuleBoundary {
     },
     runSync<T>(fn: () => T, fallback?: T | ((error: Error) => T)): T {
       return safeSync(fn, { module: moduleName, fallback });
-    }
+    },
   };
 }

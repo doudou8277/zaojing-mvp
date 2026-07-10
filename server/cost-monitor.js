@@ -14,14 +14,18 @@ const STATS_FILE = path.join(__dirname, 'data', 'cost-stats.json');
 // 确保数据目录存在
 const STATS_DIR = path.dirname(STATS_FILE);
 if (!fs.existsSync(STATS_DIR)) {
-  try { fs.mkdirSync(STATS_DIR, { recursive: true }); } catch (e) { logger.debug({ err: e.message }, '成本监控数据目录创建失败（可能已存在）'); }
+  try {
+    fs.mkdirSync(STATS_DIR, { recursive: true });
+  } catch (e) {
+    logger.debug({ err: e.message }, '成本监控数据目录创建失败（可能已存在）');
+  }
 }
 
 // 各模型的价格（每 1K Token，单位：美元）
 const PRICING = {
   'doubao-1.5-pro-32k-250115': { input: 0.0008, output: 0.002 },
   'doubao-1.5-vision-pro-32k-250115': { input: 0.003, output: 0.009 },
-  'doubao-seedream-4-0-250828': { perImage: 0.02 }
+  'doubao-seedream-4-0-250828': { perImage: 0.02 },
 };
 
 // 成本统计（按天）
@@ -30,7 +34,7 @@ const dailyStats = {
   totalCost: 0,
   totalTokens: 0,
   calls: 0,
-  byModel: {}
+  byModel: {},
 };
 
 // 历史记录（最近 30 天）
@@ -72,7 +76,7 @@ function writeStatsToFile() {
     const data = {
       current: { ...dailyStats },
       history: history.slice(-30),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     };
     writeJsonAtomic(STATS_FILE, data);
   } catch (e) {
@@ -118,7 +122,7 @@ function rolloverDay() {
       totalCost: dailyStats.totalCost,
       totalTokens: dailyStats.totalTokens,
       calls: dailyStats.calls,
-      byModel: { ...dailyStats.byModel }
+      byModel: { ...dailyStats.byModel },
     });
     // 只保留最近 30 天
     if (history.length > 30) history = history.slice(-30);
@@ -170,19 +174,25 @@ function recordLLMCall(model, inputTokens, outputTokens) {
   dailyStats.byModel[model].tokens += totalTokens;
   dailyStats.byModel[model].cost += cost;
 
-  logger.info({
-    model,
-    inputTokens,
-    outputTokens,
-    cost: cost.toFixed(4)
-  }, 'AI 调用成本');
+  logger.info(
+    {
+      model,
+      inputTokens,
+      outputTokens,
+      cost: cost.toFixed(4),
+    },
+    'AI 调用成本'
+  );
 
   // 费用告警：单日超过 $10
   if (dailyStats.totalCost > 10) {
-    logger.warn({
-      totalCost: dailyStats.totalCost.toFixed(2),
-      calls: dailyStats.calls
-    }, '⚠️ AI 单日费用超过 $10');
+    logger.warn(
+      {
+        totalCost: dailyStats.totalCost.toFixed(2),
+        calls: dailyStats.calls,
+      },
+      '⚠️ AI 单日费用超过 $10'
+    );
   }
 
   // 防抖持久化
@@ -209,13 +219,13 @@ function getStatsSummary() {
       model,
       calls: s.calls,
       tokens: s.tokens,
-      cost: '$' + s.cost.toFixed(4)
+      cost: '$' + s.cost.toFixed(4),
     })),
-    history: history.slice(-7).map(h => ({
+    history: history.slice(-7).map((h) => ({
       date: h.date,
       cost: '$' + h.totalCost.toFixed(4),
-      calls: h.calls
-    }))
+      calls: h.calls,
+    })),
   };
 }
 
@@ -227,5 +237,5 @@ module.exports = {
   recordImageCall,
   getStatsSummary,
   flush,
-  PRICING
+  PRICING,
 };

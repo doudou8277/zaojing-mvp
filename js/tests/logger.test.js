@@ -135,11 +135,7 @@ describe('logger.error', () => {
   it('应支持多个参数（如错误对象）', () => {
     const err = new Error('测试错误');
     logger.error('[Module] 出错了:', err.message);
-    expect(errorSpy).toHaveBeenCalledWith(
-      '[ZaoJing]',
-      '[Module] 出错了:',
-      err.message
-    );
+    expect(errorSpy).toHaveBeenCalledWith('[ZaoJing]', '[Module] 出错了:', err.message);
   });
 });
 

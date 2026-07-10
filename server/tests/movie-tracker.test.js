@@ -13,11 +13,13 @@ let _mtime = 100;
 beforeEach(() => {
   _mtime++;
   statSyncSpy = vi.spyOn(fs, 'statSync').mockReturnValue({ mtimeMs: _mtime });
-  readFileSyncSpy = vi.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify({
-    movies: [],
-    lastFetch: null,
-    pendingReview: []
-  }));
+  readFileSyncSpy = vi.spyOn(fs, 'readFileSync').mockReturnValue(
+    JSON.stringify({
+      movies: [],
+      lastFetch: null,
+      pendingReview: [],
+    })
+  );
   existsSyncSpy = vi.spyOn(fs, 'existsSync').mockReturnValue(true);
   writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync');
   renameSyncSpy = vi.spyOn(fs, 'renameSync');
@@ -31,9 +33,13 @@ afterEach(() => {
 describe('movie-tracker', () => {
   describe('loadData', () => {
     it('应从文件加载电影数据', () => {
-      readFileSyncSpy.mockReturnValue(JSON.stringify({
-        movies: [{ id: 'm1' }], lastFetch: '2024-01-01', pendingReview: []
-      }));
+      readFileSyncSpy.mockReturnValue(
+        JSON.stringify({
+          movies: [{ id: 'm1' }],
+          lastFetch: '2024-01-01',
+          pendingReview: [],
+        })
+      );
 
       const data = movieTracker.loadData();
       expect(data.movies).toHaveLength(1);
@@ -41,7 +47,9 @@ describe('movie-tracker', () => {
     });
 
     it('文件不存在时应返回默认空结构', () => {
-      readFileSyncSpy.mockImplementation(() => { throw new Error('ENOENT'); });
+      readFileSyncSpy.mockImplementation(() => {
+        throw new Error('ENOENT');
+      });
 
       const data = movieTracker.loadData();
       expect(data.movies).toEqual([]);
@@ -50,14 +58,22 @@ describe('movie-tracker', () => {
     });
 
     it('缓存未过期时应直接返回缓存', () => {
-      readFileSyncSpy.mockReturnValue(JSON.stringify({
-        movies: [{ id: 'cached' }], lastFetch: null, pendingReview: []
-      }));
+      readFileSyncSpy.mockReturnValue(
+        JSON.stringify({
+          movies: [{ id: 'cached' }],
+          lastFetch: null,
+          pendingReview: [],
+        })
+      );
 
       movieTracker.loadData();
-      readFileSyncSpy.mockReturnValue(JSON.stringify({
-        movies: [{ id: 'changed' }], lastFetch: null, pendingReview: []
-      }));
+      readFileSyncSpy.mockReturnValue(
+        JSON.stringify({
+          movies: [{ id: 'changed' }],
+          lastFetch: null,
+          pendingReview: [],
+        })
+      );
 
       const data = movieTracker.loadData();
       expect(data.movies[0].id).toBe('cached');
@@ -66,10 +82,16 @@ describe('movie-tracker', () => {
 
   describe('getApprovedMovies', () => {
     it('应返回已审核的电影列表', () => {
-      readFileSyncSpy.mockReturnValue(JSON.stringify({
-        movies: [{ id: 'm1', title: '电影A' }, { id: 'm2', title: '电影B' }],
-        lastFetch: null, pendingReview: []
-      }));
+      readFileSyncSpy.mockReturnValue(
+        JSON.stringify({
+          movies: [
+            { id: 'm1', title: '电影A' },
+            { id: 'm2', title: '电影B' },
+          ],
+          lastFetch: null,
+          pendingReview: [],
+        })
+      );
 
       const movies = movieTracker.getApprovedMovies();
       expect(movies).toHaveLength(2);
@@ -86,10 +108,13 @@ describe('movie-tracker', () => {
 
   describe('getPendingMovies', () => {
     it('应返回待审核的电影列表', () => {
-      readFileSyncSpy.mockReturnValue(JSON.stringify({
-        movies: [], lastFetch: null,
-        pendingReview: [{ id: 'p1', title: '待审核电影' }]
-      }));
+      readFileSyncSpy.mockReturnValue(
+        JSON.stringify({
+          movies: [],
+          lastFetch: null,
+          pendingReview: [{ id: 'p1', title: '待审核电影' }],
+        })
+      );
 
       const pending = movieTracker.getPendingMovies();
       expect(pending).toHaveLength(1);
@@ -99,25 +124,31 @@ describe('movie-tracker', () => {
 
   describe('approveMovie', () => {
     it('应将待审核电影移至已审核列表', async () => {
-      readFileSyncSpy.mockReturnValue(JSON.stringify({
-        movies: [], lastFetch: null,
-        pendingReview: [{ id: 'p1', title: '待审核', approved: false }]
-      }));
+      readFileSyncSpy.mockReturnValue(
+        JSON.stringify({
+          movies: [],
+          lastFetch: null,
+          pendingReview: [{ id: 'p1', title: '待审核', approved: false }],
+        })
+      );
 
       const result = movieTracker.approveMovie('p1');
       expect(result).toBeTruthy();
       expect(result.approved).toBe(true);
       expect(result.approvedAt).toBeTruthy();
       // saveData 异步写入（_writeQueue.then），需等待微任务完成
-      await new Promise(r => setTimeout(r, 10));
+      await new Promise((r) => setTimeout(r, 10));
       expect(writeFileSyncSpy).toHaveBeenCalled();
     });
 
     it('应支持覆盖字段', () => {
-      readFileSyncSpy.mockReturnValue(JSON.stringify({
-        movies: [], lastFetch: null,
-        pendingReview: [{ id: 'p1', title: '原名', approved: false }]
-      }));
+      readFileSyncSpy.mockReturnValue(
+        JSON.stringify({
+          movies: [],
+          lastFetch: null,
+          pendingReview: [{ id: 'p1', title: '原名', approved: false }],
+        })
+      );
 
       const result = movieTracker.approveMovie('p1', { title: '新名', featured: true });
       expect(result.title).toBe('新名');
@@ -125,9 +156,13 @@ describe('movie-tracker', () => {
     });
 
     it('审核不存在的电影应返回 null', () => {
-      readFileSyncSpy.mockReturnValue(JSON.stringify({
-        movies: [], lastFetch: null, pendingReview: [{ id: 'p1' }]
-      }));
+      readFileSyncSpy.mockReturnValue(
+        JSON.stringify({
+          movies: [],
+          lastFetch: null,
+          pendingReview: [{ id: 'p1' }],
+        })
+      );
 
       const result = movieTracker.approveMovie('nonexistent');
       expect(result).toBeNull();
@@ -136,22 +171,29 @@ describe('movie-tracker', () => {
 
   describe('rejectMovie', () => {
     it('应从待审核列表中移除电影', async () => {
-      readFileSyncSpy.mockReturnValue(JSON.stringify({
-        movies: [], lastFetch: null,
-        pendingReview: [{ id: 'p1' }, { id: 'p2' }]
-      }));
+      readFileSyncSpy.mockReturnValue(
+        JSON.stringify({
+          movies: [],
+          lastFetch: null,
+          pendingReview: [{ id: 'p1' }, { id: 'p2' }],
+        })
+      );
 
       const result = movieTracker.rejectMovie('p1');
       expect(result).toBe(true);
       // saveData 异步写入（_writeQueue.then），需等待微任务完成
-      await new Promise(r => setTimeout(r, 10));
+      await new Promise((r) => setTimeout(r, 10));
       expect(writeFileSyncSpy).toHaveBeenCalled();
     });
 
     it('拒绝不存在的电影也应返回 true', () => {
-      readFileSyncSpy.mockReturnValue(JSON.stringify({
-        movies: [], lastFetch: null, pendingReview: []
-      }));
+      readFileSyncSpy.mockReturnValue(
+        JSON.stringify({
+          movies: [],
+          lastFetch: null,
+          pendingReview: [],
+        })
+      );
 
       const result = movieTracker.rejectMovie('nonexistent');
       expect(result).toBe(true);
@@ -160,10 +202,13 @@ describe('movie-tracker', () => {
 
   describe('updateMovie', () => {
     it('应更新已审核电影的字段', () => {
-      readFileSyncSpy.mockReturnValue(JSON.stringify({
-        movies: [{ id: 'm1', title: '原名', heatScore: 50 }],
-        lastFetch: null, pendingReview: []
-      }));
+      readFileSyncSpy.mockReturnValue(
+        JSON.stringify({
+          movies: [{ id: 'm1', title: '原名', heatScore: 50 }],
+          lastFetch: null,
+          pendingReview: [],
+        })
+      );
 
       const result = movieTracker.updateMovie('m1', { heatScore: 90, featured: true });
       expect(result).toBeTruthy();
@@ -173,9 +218,13 @@ describe('movie-tracker', () => {
     });
 
     it('更新不存在的电影应返回 null', () => {
-      readFileSyncSpy.mockReturnValue(JSON.stringify({
-        movies: [{ id: 'm1' }], lastFetch: null, pendingReview: []
-      }));
+      readFileSyncSpy.mockReturnValue(
+        JSON.stringify({
+          movies: [{ id: 'm1' }],
+          lastFetch: null,
+          pendingReview: [],
+        })
+      );
 
       const result = movieTracker.updateMovie('nonexistent', { heatScore: 99 });
       expect(result).toBeNull();
@@ -184,14 +233,17 @@ describe('movie-tracker', () => {
 
   describe('getRanking', () => {
     it('应按票房降序排列', () => {
-      readFileSyncSpy.mockReturnValue(JSON.stringify({
-        movies: [
-          { id: 'm1', title: 'A', boxOffice: 100, socialMentions: 50 },
-          { id: 'm2', title: 'B', boxOffice: 500, socialMentions: 30 },
-          { id: 'm3', title: 'C', boxOffice: 300, socialMentions: 100 }
-        ],
-        lastFetch: null, pendingReview: []
-      }));
+      readFileSyncSpy.mockReturnValue(
+        JSON.stringify({
+          movies: [
+            { id: 'm1', title: 'A', boxOffice: 100, socialMentions: 50 },
+            { id: 'm2', title: 'B', boxOffice: 500, socialMentions: 30 },
+            { id: 'm3', title: 'C', boxOffice: 300, socialMentions: 100 },
+          ],
+          lastFetch: null,
+          pendingReview: [],
+        })
+      );
 
       const ranking = movieTracker.getRanking();
       expect(ranking.boxOfficeRank).toHaveLength(3);
@@ -201,14 +253,17 @@ describe('movie-tracker', () => {
     });
 
     it('应按社交热度降序排列', () => {
-      readFileSyncSpy.mockReturnValue(JSON.stringify({
-        movies: [
-          { id: 'm1', title: 'A', boxOffice: 0, socialMentions: 50 },
-          { id: 'm2', title: 'B', boxOffice: 0, socialMentions: 300 },
-          { id: 'm3', title: 'C', boxOffice: 0, socialMentions: 100 }
-        ],
-        lastFetch: null, pendingReview: []
-      }));
+      readFileSyncSpy.mockReturnValue(
+        JSON.stringify({
+          movies: [
+            { id: 'm1', title: 'A', boxOffice: 0, socialMentions: 50 },
+            { id: 'm2', title: 'B', boxOffice: 0, socialMentions: 300 },
+            { id: 'm3', title: 'C', boxOffice: 0, socialMentions: 100 },
+          ],
+          lastFetch: null,
+          pendingReview: [],
+        })
+      );
 
       const ranking = movieTracker.getRanking();
       expect(ranking.socialRank[0].id).toBe('m2');
@@ -217,13 +272,16 @@ describe('movie-tracker', () => {
     });
 
     it('票房为 0 的电影不应出现在票房榜', () => {
-      readFileSyncSpy.mockReturnValue(JSON.stringify({
-        movies: [
-          { id: 'm1', title: 'A', boxOffice: 0, socialMentions: 100 },
-          { id: 'm2', title: 'B', boxOffice: 500, socialMentions: 50 }
-        ],
-        lastFetch: null, pendingReview: []
-      }));
+      readFileSyncSpy.mockReturnValue(
+        JSON.stringify({
+          movies: [
+            { id: 'm1', title: 'A', boxOffice: 0, socialMentions: 100 },
+            { id: 'm2', title: 'B', boxOffice: 500, socialMentions: 50 },
+          ],
+          lastFetch: null,
+          pendingReview: [],
+        })
+      );
 
       const ranking = movieTracker.getRanking();
       expect(ranking.boxOfficeRank).toHaveLength(1);
@@ -231,10 +289,13 @@ describe('movie-tracker', () => {
     });
 
     it('排行榜应包含 rank、id、title、value 字段', () => {
-      readFileSyncSpy.mockReturnValue(JSON.stringify({
-        movies: [{ id: 'm1', title: 'A', boxOffice: 500, socialMentions: 100 }],
-        lastFetch: null, pendingReview: []
-      }));
+      readFileSyncSpy.mockReturnValue(
+        JSON.stringify({
+          movies: [{ id: 'm1', title: 'A', boxOffice: 500, socialMentions: 100 }],
+          lastFetch: null,
+          pendingReview: [],
+        })
+      );
 
       const ranking = movieTracker.getRanking();
       expect(ranking.boxOfficeRank[0]).toHaveProperty('rank', 1);
@@ -245,7 +306,10 @@ describe('movie-tracker', () => {
 
     it('排行榜最多返回 10 条', () => {
       const movies = Array.from({ length: 15 }, (_, i) => ({
-        id: `m${i}`, title: `电影${i}`, boxOffice: 1000 - i * 10, socialMentions: 500 - i * 5
+        id: `m${i}`,
+        title: `电影${i}`,
+        boxOffice: 1000 - i * 10,
+        socialMentions: 500 - i * 5,
       }));
       readFileSyncSpy.mockReturnValue(JSON.stringify({ movies, lastFetch: null, pendingReview: [] }));
 

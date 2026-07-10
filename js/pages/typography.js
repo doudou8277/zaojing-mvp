@@ -80,7 +80,8 @@ function renderFontGrid() {
   const gridEl = $('typography-font-grid');
   if (!gridEl) return;
 
-  gridEl.innerHTML = PRESET_FONTS.map((font) => `
+  gridEl.innerHTML = PRESET_FONTS.map(
+    (font) => `
     <div class="typography-font-card ${_currentConfig.fontId === font.id ? 'selected' : ''}"
          data-font-id="${font.id}">
       <div class="typography-font-preview" style="font-family: ${font.fontFamily}">
@@ -90,7 +91,8 @@ function renderFontGrid() {
       <div class="typography-font-cat">${escapeHtml(getCategoryLabel(font.category))}</div>
       <div class="typography-font-desc">${escapeHtml(font.description)}</div>
     </div>
-  `).join('');
+  `
+  ).join('');
 
   // 绑定点击
   gridEl.querySelectorAll('.typography-font-card').forEach((card) => {
@@ -130,16 +132,18 @@ function renderTypographyControls() {
   // 字重选择
   const weightSelect = $('typography-title-weight');
   if (weightSelect) {
-    weightSelect.innerHTML = FONT_WEIGHTS.map((w) =>
-      `<option value="${w.value}" ${w.value === _currentConfig.titleWeight ? 'selected' : ''}>${w.label}</option>`
+    weightSelect.innerHTML = FONT_WEIGHTS.map(
+      (w) =>
+        `<option value="${w.value}" ${w.value === _currentConfig.titleWeight ? 'selected' : ''}>${w.label}</option>`
     ).join('');
   }
 
   // 字间距选择
   const spacingSelect = $('typography-letter-spacing');
   if (spacingSelect) {
-    spacingSelect.innerHTML = LETTER_SPACING_OPTIONS.map((s) =>
-      `<option value="${s.value}" ${s.value === _currentConfig.letterSpacing ? 'selected' : ''}>${s.label}</option>`
+    spacingSelect.innerHTML = LETTER_SPACING_OPTIONS.map(
+      (s) =>
+        `<option value="${s.value}" ${s.value === _currentConfig.letterSpacing ? 'selected' : ''}>${s.label}</option>`
     ).join('');
   }
 
@@ -179,13 +183,17 @@ function renderCustomFontsList() {
     return;
   }
 
-  listEl.innerHTML = customFonts.map((f) => `
+  listEl.innerHTML = customFonts
+    .map(
+      (f) => `
     <div class="typography-custom-font-item">
       <span class="typography-custom-font-name" style="font-family: '${f.family}'">${escapeHtml(f.name)}</span>
       <button class="btn btn-ghost btn-sm typography-custom-font-use" data-family="${escapeHtml(f.family)}">使用</button>
       <button class="btn btn-ghost btn-sm typography-custom-font-remove" data-family="${escapeHtml(f.family)}">移除</button>
     </div>
-  `).join('');
+  `
+    )
+    .join('');
 
   // 绑定使用按钮
   listEl.querySelectorAll('.typography-custom-font-use').forEach((btn) => {

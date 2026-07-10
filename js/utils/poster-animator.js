@@ -21,10 +21,7 @@ export const ANIMATION_PRESETS = [
 export function isAnimationSupported() {
   if (typeof MediaRecorder === 'undefined') return false;
   try {
-    return (
-      MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ||
-      MediaRecorder.isTypeSupported('video/webm')
-    );
+    return MediaRecorder.isTypeSupported('video/webm;codecs=vp9') || MediaRecorder.isTypeSupported('video/webm');
   } catch (e) {
     // 某些浏览器可能不支持 isTypeSupported 或在特定 codec 下抛出异常，视为不支持
     logger.debug('[poster-animator] MediaRecorder.isTypeSupported 检测异常，视为不支持:', e.message);
@@ -55,9 +52,7 @@ export async function animatePoster({ dataUrl, effect = 'zoom', duration = 5000,
 
   // 设置 MediaRecorder
   const stream = canvas.captureStream(30); // 30 FPS
-  const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
-    ? 'video/webm;codecs=vp9'
-    : 'video/webm';
+  const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm';
   const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 5000000 });
 
   const chunks = [];
@@ -166,12 +161,7 @@ function renderLightFrame(ctx, img, canvas, t) {
   const lightWidth = canvas.width * 0.3;
 
   // 光带渐变
-  const gradient = ctx.createLinearGradient(
-    lightX - lightWidth / 2,
-    0,
-    lightX + lightWidth / 2,
-    0
-  );
+  const gradient = ctx.createLinearGradient(lightX - lightWidth / 2, 0, lightX + lightWidth / 2, 0);
   gradient.addColorStop(0, 'rgba(255,240,200,0)');
   gradient.addColorStop(0.5, `rgba(255,240,200,${0.15 * Math.sin(t * Math.PI)})`);
   gradient.addColorStop(1, 'rgba(255,240,200,0)');

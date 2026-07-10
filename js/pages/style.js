@@ -29,7 +29,7 @@ let _initDirectorsPage = null;
  */
 export function setupStylePage({ drawDNARadar, initDirectorsPage }) {
   // 风格编辑器 Tab 切换
-  document.querySelectorAll('.style-editor-tab').forEach(btn => {
+  document.querySelectorAll('.style-editor-tab').forEach((btn) => {
     btn.onclick = () => switchStyleTab(btn.dataset.styleTab);
   });
   // zj:close 事件清理
@@ -49,9 +49,9 @@ export function setupStylePage({ drawDNARadar, initDirectorsPage }) {
 
 // ========== 风格来源切换 ==========
 function initStyleSourceTabs() {
-  document.querySelectorAll('.source-tab').forEach(tab => {
+  document.querySelectorAll('.source-tab').forEach((tab) => {
     tab.onclick = () => {
-      document.querySelectorAll('.source-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.source-tab').forEach((t) => t.classList.remove('active'));
       tab.classList.add('active');
       state.styleSource = tab.dataset.source;
       // 切换面板显示
@@ -73,10 +73,10 @@ function initDirectorSearch() {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
       const query = searchInput.value.trim().toLowerCase();
-      document.querySelectorAll('.director-card').forEach(card => {
+      document.querySelectorAll('.director-card').forEach((card) => {
         const name = card.querySelector('.name')?.textContent.toLowerCase() || '';
         const tagline = card.querySelector('.tagline')?.textContent.toLowerCase() || '';
-        card.style.display = (!query || name.includes(query) || tagline.includes(query)) ? '' : 'none';
+        card.style.display = !query || name.includes(query) || tagline.includes(query) ? '' : 'none';
       });
     }, 200);
   };
@@ -85,7 +85,7 @@ function initDirectorSearch() {
 // ========== 自定义风格面板初始化 ==========
 function initCustomStylePanel() {
   // 预设风格芯片点击（用 onclick 避免重复绑定）
-  document.querySelectorAll('.style-preset-chip').forEach(chip => {
+  document.querySelectorAll('.style-preset-chip').forEach((chip) => {
     chip.onclick = () => {
       const input = $('custom-style-input');
       if (input) input.value = chip.dataset.preset;
@@ -97,7 +97,10 @@ function initCustomStylePanel() {
   if (btnParseInline) {
     btnParseInline.onclick = async () => {
       const input = $('custom-style-input');
-      if (!input || !input.value.trim()) { toast('请输入风格描述'); return; }
+      if (!input || !input.value.trim()) {
+        toast('请输入风格描述');
+        return;
+      }
       openStyleCreateModal();
       $('style-description-input').value = input.value;
       await parseCustomStyle();
@@ -112,7 +115,10 @@ function initMovieStylePanel() {
   if (btnAnalyze) {
     btnAnalyze.onclick = async () => {
       const input = $('movie-name-input-inline');
-      if (!input || !input.value.trim()) { toast('请输入电影名称'); return; }
+      if (!input || !input.value.trim()) {
+        toast('请输入电影名称');
+        return;
+      }
       openMovieStyleModal();
       $('movie-name-input').value = input.value;
       await analyzeMovieStyle();
@@ -126,9 +132,10 @@ function initBlendStylePanel() {
   const inlineA = $('blend-director-a-inline');
   const inlineB = $('blend-director-b-inline');
   if (inlineA && inlineA.children.length <= 1) {
-    DIRECTORS.forEach(d => {
+    DIRECTORS.forEach((d) => {
       const optA = document.createElement('option');
-      optA.value = d.id; optA.textContent = d.name;
+      optA.value = d.id;
+      optA.textContent = d.name;
       inlineA.appendChild(optA);
       const optB = optA.cloneNode(true);
       inlineB.appendChild(optB);
@@ -157,7 +164,7 @@ function loadCustomStyles() {
     if (saved) {
       state.customStyles = JSON.parse(saved);
     }
-  } catch(e) {
+  } catch (e) {
     logger.warn('加载自定义风格失败:', e);
   }
 }
@@ -171,7 +178,7 @@ function renderSavedStyles() {
     listEl.innerHTML = '<p style="font-size:.8rem;color:var(--ink-faint);padding:8px 0">暂无保存的风格</p>';
     return;
   }
-  state.customStyles.forEach(s => {
+  state.customStyles.forEach((s) => {
     const el = document.createElement('div');
     el.className = 'saved-style-item';
     el.innerHTML = `
@@ -190,10 +197,10 @@ function renderSavedStyles() {
     });
     el.querySelector('.saved-style-delete').addEventListener('click', (e) => {
       e.stopPropagation();
-      state.customStyles = state.customStyles.filter(cs => cs.id !== s.id);
+      state.customStyles = state.customStyles.filter((cs) => cs.id !== s.id);
       try {
         localStorage.setItem('zaojing_custom_styles', JSON.stringify(state.customStyles));
-      } catch(err) {
+      } catch (err) {
         logger.warn('删除风格后保存失败:', err);
       }
       renderSavedStyles();
@@ -214,8 +221,8 @@ function renderStyleRecommendations() {
   const container = $('style-recommendations');
   if (!container) return;
   container.innerHTML = '';
-  state.emotionAnalysis.recommendedDirectors.forEach(rec => {
-    const director = DIRECTORS.find(d => d.id === rec.directorId);
+  state.emotionAnalysis.recommendedDirectors.forEach((rec) => {
+    const director = DIRECTORS.find((d) => d.id === rec.directorId);
     if (!director) return;
     const el = document.createElement('div');
     el.className = 'recommendation-item';
@@ -245,10 +252,10 @@ function openStyleEditor(tab) {
 }
 
 function switchStyleTab(tab) {
-  document.querySelectorAll('.style-editor-tab').forEach(btn => {
+  document.querySelectorAll('.style-editor-tab').forEach((btn) => {
     btn.classList.toggle('active', btn.dataset.styleTab === tab);
   });
-  document.querySelectorAll('.style-editor-panel').forEach(panel => {
+  document.querySelectorAll('.style-editor-panel').forEach((panel) => {
     panel.classList.toggle('active', panel.dataset.stylePanel === tab);
   });
 }
@@ -266,7 +273,10 @@ function openStyleCreateModal() {
 // 解析自定义风格
 async function parseCustomStyle() {
   const desc = $('style-description-input').value.trim();
-  if (!desc) { showToast('请输入风格描述'); return; }
+  if (!desc) {
+    showToast('请输入风格描述');
+    return;
+  }
 
   $('style-loading').style.display = 'block';
   $('style-preview').style.display = 'none';
@@ -281,7 +291,15 @@ async function parseCustomStyle() {
       }
     );
     state.currentCustomStyle = result;
-    showStylePreview(result, 'style-preview', 'preview-name', 'preview-desc', 'preview-keywords', 'preview-colors', 'preview-dna-radar');
+    showStylePreview(
+      result,
+      'style-preview',
+      'preview-name',
+      'preview-desc',
+      'preview-keywords',
+      'preview-colors',
+      'preview-dna-radar'
+    );
   } finally {
     $('style-loading').style.display = 'none';
   }
@@ -293,39 +311,132 @@ function localParseStyle(desc) {
   let colors, keywords, styleDNA, name, styleDesc;
 
   if (lower.includes('赛博') || lower.includes('neon') || lower.includes('霓虹')) {
-    colors = { primary: '#e91e63', secondary: '#00e5ff', accent: '#e040fb', bg: '#0a0a1a', text: '#e6e6fa', textLight: '#9e9eae' };
+    colors = {
+      primary: '#e91e63',
+      secondary: '#00e5ff',
+      accent: '#e040fb',
+      bg: '#0a0a1a',
+      text: '#e6e6fa',
+      textLight: '#9e9eae',
+    };
     keywords = ['霓虹', '雨夜', '未来'];
-    styleDNA = { colorTemperature: 'cool', saturation: 'high', contrast: 'high', compositionType: 'asymmetric', lightingType: 'dramatic', scale: 'monumental', pace: 'dynamic', texture: 'grainy' };
-    name = '赛博朋克'; styleDesc = '霓虹灯与雨夜的未来都市美学';
+    styleDNA = {
+      colorTemperature: 'cool',
+      saturation: 'high',
+      contrast: 'high',
+      compositionType: 'asymmetric',
+      lightingType: 'dramatic',
+      scale: 'monumental',
+      pace: 'dynamic',
+      texture: 'grainy',
+    };
+    name = '赛博朋克';
+    styleDesc = '霓虹灯与雨夜的未来都市美学';
   } else if (lower.includes('复古') || lower.includes('retro') || lower.includes('怀旧')) {
-    colors = { primary: '#d4a843', secondary: '#8b6914', accent: '#c0392b', bg: '#2d1f0f', text: '#f0e0c0', textLight: '#c9a96e' };
+    colors = {
+      primary: '#d4a843',
+      secondary: '#8b6914',
+      accent: '#c0392b',
+      bg: '#2d1f0f',
+      text: '#f0e0c0',
+      textLight: '#c9a96e',
+    };
     keywords = ['复古', '暖黄', '胶片'];
-    styleDNA = { colorTemperature: 'warm', saturation: 'medium', contrast: 'medium', compositionType: 'centered', lightingType: 'natural', scale: 'intimate', pace: 'static', texture: 'grainy' };
-    name = '复古胶片'; styleDesc = '温暖胶片质感的怀旧美学';
+    styleDNA = {
+      colorTemperature: 'warm',
+      saturation: 'medium',
+      contrast: 'medium',
+      compositionType: 'centered',
+      lightingType: 'natural',
+      scale: 'intimate',
+      pace: 'static',
+      texture: 'grainy',
+    };
+    name = '复古胶片';
+    styleDesc = '温暖胶片质感的怀旧美学';
   } else if (lower.includes('极简') || lower.includes('minimal') || lower.includes('简约')) {
-    colors = { primary: '#ffffff', secondary: '#e0e0e0', accent: '#333333', bg: '#f5f5f5', text: '#212121', textLight: '#757575' };
+    colors = {
+      primary: '#ffffff',
+      secondary: '#e0e0e0',
+      accent: '#333333',
+      bg: '#f5f5f5',
+      text: '#212121',
+      textLight: '#757575',
+    };
     keywords = ['极简', '留白', '纯粹'];
-    styleDNA = { colorTemperature: 'neutral', saturation: 'low', contrast: 'medium', compositionType: 'symmetric', lightingType: 'natural', scale: 'medium', pace: 'static', texture: 'smooth' };
-    name = '极简主义'; styleDesc = '少即是多的克制美学';
+    styleDNA = {
+      colorTemperature: 'neutral',
+      saturation: 'low',
+      contrast: 'medium',
+      compositionType: 'symmetric',
+      lightingType: 'natural',
+      scale: 'medium',
+      pace: 'static',
+      texture: 'smooth',
+    };
+    name = '极简主义';
+    styleDesc = '少即是多的克制美学';
   } else if (lower.includes('水彩') || lower.includes('watercolor') || lower.includes('水墨')) {
-    colors = { primary: '#7fc4ab', secondary: '#a8c8b5', accent: '#e8c5c5', bg: '#f5f0e8', text: '#3d4e37', textLight: '#6d7a5a' };
+    colors = {
+      primary: '#7fc4ab',
+      secondary: '#a8c8b5',
+      accent: '#e8c5c5',
+      bg: '#f5f0e8',
+      text: '#3d4e37',
+      textLight: '#6d7a5a',
+    };
     keywords = ['水彩', '晕染', '意境'];
-    styleDNA = { colorTemperature: 'warm', saturation: 'medium', contrast: 'low', compositionType: 'asymmetric', lightingType: 'natural', scale: 'medium', pace: 'static', texture: 'smooth' };
-    name = '水彩意境'; styleDesc = '水墨晕染的东方写意美学';
+    styleDNA = {
+      colorTemperature: 'warm',
+      saturation: 'medium',
+      contrast: 'low',
+      compositionType: 'asymmetric',
+      lightingType: 'natural',
+      scale: 'medium',
+      pace: 'static',
+      texture: 'smooth',
+    };
+    name = '水彩意境';
+    styleDesc = '水墨晕染的东方写意美学';
   } else {
     // 通用风格
-    colors = { primary: '#6a8caf', secondary: '#9db4c0', accent: '#c9b458', bg: '#1a2332', text: '#e8e0c8', textLight: '#b8a878' };
-    keywords = desc.slice(0, 10).split(/[，,、\s]+/).filter(k => k).slice(0, 5);
-    styleDNA = { colorTemperature: 'cool', saturation: 'medium', contrast: 'medium', compositionType: 'asymmetric', lightingType: 'natural', scale: 'medium', pace: 'dynamic', texture: 'smooth' };
-    name = '自定义风格'; styleDesc = desc.slice(0, 30);
+    colors = {
+      primary: '#6a8caf',
+      secondary: '#9db4c0',
+      accent: '#c9b458',
+      bg: '#1a2332',
+      text: '#e8e0c8',
+      textLight: '#b8a878',
+    };
+    keywords = desc
+      .slice(0, 10)
+      .split(/[，,、\s]+/)
+      .filter((k) => k)
+      .slice(0, 5);
+    styleDNA = {
+      colorTemperature: 'cool',
+      saturation: 'medium',
+      contrast: 'medium',
+      compositionType: 'asymmetric',
+      lightingType: 'natural',
+      scale: 'medium',
+      pace: 'dynamic',
+      texture: 'smooth',
+    };
+    name = '自定义风格';
+    styleDesc = desc.slice(0, 30);
   }
 
   return {
-    name, styleDesc, colors, keywords, styleDNA,
+    name,
+    styleDesc,
+    colors,
+    keywords,
+    styleDNA,
     promptCore: `${desc}, cinematic style, high quality`,
     negativePrompt: 'low quality, blurry, distorted',
     emotions: [],
-    quotes: ['风格即态度，每一帧都是表达。']
+    quotes: ['风格即态度，每一帧都是表达。'],
   };
 }
 
@@ -339,7 +450,7 @@ function showStylePreview(style, previewId, nameId, descId, keywordsId, colorsId
   const keywordsEl = $(keywordsId);
   if (keywordsEl) {
     keywordsEl.innerHTML = '';
-    (style.keywords || []).forEach(kw => {
+    (style.keywords || []).forEach((kw) => {
       const tag = document.createElement('span');
       tag.className = 'preview-keyword';
       tag.textContent = kw;
@@ -352,7 +463,7 @@ function showStylePreview(style, previewId, nameId, descId, keywordsId, colorsId
   if (colorsEl) {
     colorsEl.innerHTML = '';
     const colors = style.colors || {};
-    ['primary', 'secondary', 'accent', 'bg', 'text', 'textLight'].forEach(key => {
+    ['primary', 'secondary', 'accent', 'bg', 'text', 'textLight'].forEach((key) => {
       if (colors[key]) {
         const swatch = document.createElement('div');
         swatch.className = 'preview-color-swatch';
@@ -394,7 +505,7 @@ function saveAndUseCustomStyle() {
   state.customStyles.push(style);
   try {
     localStorage.setItem('zaojing_custom_styles', JSON.stringify(state.customStyles));
-  } catch(e) {
+  } catch (e) {
     logger.warn('自定义风格保存失败:', e);
     toast('存储空间不足，无法保存风格');
   }
@@ -425,7 +536,10 @@ function openMovieStyleModal() {
 // 分析电影风格
 async function analyzeMovieStyle() {
   const movieName = $('movie-name-input').value.trim();
-  if (!movieName) { showToast('请输入电影名称'); return; }
+  if (!movieName) {
+    showToast('请输入电影名称');
+    return;
+  }
 
   $('movie-style-loading').style.display = 'block';
   $('movie-preview').style.display = 'none';
@@ -443,7 +557,15 @@ async function analyzeMovieStyle() {
     state.currentCustomStyle = result;
 
     $('preview-movie-name').textContent = `基于电影《${movieName}》`;
-    showStylePreview(result, 'movie-preview', 'movie-preview-name', 'movie-preview-desc', 'movie-preview-keywords', 'movie-preview-colors', 'movie-preview-dna-radar');
+    showStylePreview(
+      result,
+      'movie-preview',
+      'movie-preview-name',
+      'movie-preview-desc',
+      'movie-preview-keywords',
+      'movie-preview-colors',
+      'movie-preview-dna-radar'
+    );
   } finally {
     $('movie-style-loading').style.display = 'none';
   }
@@ -455,41 +577,123 @@ function localAnalyzeMovie(movieName) {
   let colors, keywords, styleDNA, styleDesc;
 
   if (name.includes('银翼') || name.includes('blade')) {
-    colors = { primary: '#ff6a00', secondary: '#0097a7', accent: '#ff9100', bg: '#1a0a00', text: '#ffe0b2', textLight: '#ffab40' };
+    colors = {
+      primary: '#ff6a00',
+      secondary: '#0097a7',
+      accent: '#ff9100',
+      bg: '#1a0a00',
+      text: '#ffe0b2',
+      textLight: '#ffab40',
+    };
     keywords = ['橙黄雾气', '赛博都市', '全息投影'];
-    styleDNA = { colorTemperature: 'warm', saturation: 'medium', contrast: 'high', compositionType: 'symmetric', lightingType: 'dramatic', scale: 'monumental', pace: 'static', texture: 'smooth' };
+    styleDNA = {
+      colorTemperature: 'warm',
+      saturation: 'medium',
+      contrast: 'high',
+      compositionType: 'symmetric',
+      lightingType: 'dramatic',
+      scale: 'monumental',
+      pace: 'static',
+      texture: 'smooth',
+    };
     styleDesc = '橙黄雾气中的赛博废墟美学';
   } else if (name.includes('花样') || name.includes('2046')) {
-    colors = { primary: '#3d7a5a', secondary: '#c9a36b', accent: '#ff6b6b', bg: '#1a2e1f', text: '#e8d5b7', textLight: '#c9a36b' };
+    colors = {
+      primary: '#3d7a5a',
+      secondary: '#c9a36b',
+      accent: '#ff6b6b',
+      bg: '#1a2e1f',
+      text: '#e8d5b7',
+      textLight: '#c9a36b',
+    };
     keywords = ['旗袍', '霓虹绿', '暧昧'];
-    styleDNA = { colorTemperature: 'cool', saturation: 'medium', contrast: 'high', compositionType: 'asymmetric', lightingType: 'low-key', scale: 'intimate', pace: 'static', texture: 'grainy' };
+    styleDNA = {
+      colorTemperature: 'cool',
+      saturation: 'medium',
+      contrast: 'high',
+      compositionType: 'asymmetric',
+      lightingType: 'low-key',
+      scale: 'intimate',
+      pace: 'static',
+      texture: 'grainy',
+    };
     styleDesc = '暧昧霓虹光影下的都市孤独';
   } else if (name.includes('寄生') || name.includes('parasite')) {
-    colors = { primary: '#5d4037', secondary: '#8d6e63', accent: '#ffab00', bg: '#262019', text: '#efebe9', textLight: '#bcaaa4' };
+    colors = {
+      primary: '#5d4037',
+      secondary: '#8d6e63',
+      accent: '#ffab00',
+      bg: '#262019',
+      text: '#efebe9',
+      textLight: '#bcaaa4',
+    };
     keywords = ['阶级', '半地下', '暴雨'];
-    styleDNA = { colorTemperature: 'warm', saturation: 'low', contrast: 'high', compositionType: 'asymmetric', lightingType: 'natural', scale: 'medium', pace: 'dynamic', texture: 'grainy' };
+    styleDNA = {
+      colorTemperature: 'warm',
+      saturation: 'low',
+      contrast: 'high',
+      compositionType: 'asymmetric',
+      lightingType: 'natural',
+      scale: 'medium',
+      pace: 'dynamic',
+      texture: 'grainy',
+    };
     styleDesc = '阶级寓言中的暗黑社会美学';
   } else if (name.includes('盗梦') || name.includes('inception')) {
-    colors = { primary: '#0a1929', secondary: '#c0c0c0', accent: '#4fc3f7', bg: '#0d1b2a', text: '#e0e0e0', textLight: '#b0bec5' };
+    colors = {
+      primary: '#0a1929',
+      secondary: '#c0c0c0',
+      accent: '#4fc3f7',
+      bg: '#0d1b2a',
+      text: '#e0e0e0',
+      textLight: '#b0bec5',
+    };
     keywords = ['梦境', '折叠', '冷蓝'];
-    styleDNA = { colorTemperature: 'cool', saturation: 'low', contrast: 'high', compositionType: 'symmetric', lightingType: 'dramatic', scale: 'monumental', pace: 'dynamic', texture: 'smooth' };
+    styleDNA = {
+      colorTemperature: 'cool',
+      saturation: 'low',
+      contrast: 'high',
+      compositionType: 'symmetric',
+      lightingType: 'dramatic',
+      scale: 'monumental',
+      pace: 'dynamic',
+      texture: 'smooth',
+    };
     styleDesc = '冷色调巨物感的梦境哲学';
   } else {
-    colors = { primary: '#455a64', secondary: '#78909c', accent: '#ffd54f', bg: '#1a1a2e', text: '#eceff1', textLight: '#b0bec5' };
+    colors = {
+      primary: '#455a64',
+      secondary: '#78909c',
+      accent: '#ffd54f',
+      bg: '#1a1a2e',
+      text: '#eceff1',
+      textLight: '#b0bec5',
+    };
     keywords = ['电影感', '叙事', '氛围'];
-    styleDNA = { colorTemperature: 'cool', saturation: 'medium', contrast: 'medium', compositionType: 'asymmetric', lightingType: 'dramatic', scale: 'medium', pace: 'dynamic', texture: 'grainy' };
+    styleDNA = {
+      colorTemperature: 'cool',
+      saturation: 'medium',
+      contrast: 'medium',
+      compositionType: 'asymmetric',
+      lightingType: 'dramatic',
+      scale: 'medium',
+      pace: 'dynamic',
+      texture: 'grainy',
+    };
     styleDesc = `${movieName}的视觉风格`;
   }
 
   return {
     name: `${movieName}风格`,
     styleDesc,
-    colors, keywords, styleDNA,
+    colors,
+    keywords,
+    styleDNA,
     promptCore: `inspired by movie ${movieName}, cinematic style`,
     negativePrompt: 'low quality, off-topic',
     emotions: [],
     quotes: ['每一帧画面，都是导演留给观众的密码。'],
-    sourceMovie: movieName
+    sourceMovie: movieName,
   };
 }
 
@@ -506,9 +710,10 @@ function openBlendModal() {
   const selectB = $('blend-director-b');
   selectA.innerHTML = '';
   selectB.innerHTML = '';
-  DIRECTORS.forEach(d => {
+  DIRECTORS.forEach((d) => {
     const optA = document.createElement('option');
-    optA.value = d.id; optA.textContent = d.name;
+    optA.value = d.id;
+    optA.textContent = d.name;
     selectA.appendChild(optA);
     const optB = optA.cloneNode(true);
     selectB.appendChild(optB);
@@ -519,9 +724,10 @@ function openBlendModal() {
   const inlineA = $('blend-director-a-inline');
   const inlineB = $('blend-director-b-inline');
   if (inlineA && inlineA.children.length <= 1) {
-    DIRECTORS.forEach(d => {
+    DIRECTORS.forEach((d) => {
       const optA = document.createElement('option');
-      optA.value = d.id; optA.textContent = d.name;
+      optA.value = d.id;
+      optA.textContent = d.name;
       inlineA.appendChild(optA);
       const optB = optA.cloneNode(true);
       inlineB.appendChild(optB);
@@ -536,10 +742,13 @@ async function doBlend() {
   const idB = $('blend-director-b').value;
   const ratio = $('blend-ratio-slider').value / 100;
 
-  if (idA === idB) { showToast('请选择两位不同的导演'); return; }
+  if (idA === idB) {
+    showToast('请选择两位不同的导演');
+    return;
+  }
 
-  const styleA = DIRECTORS.find(d => d.id === idA);
-  const styleB = DIRECTORS.find(d => d.id === idB);
+  const styleA = DIRECTORS.find((d) => d.id === idA);
+  const styleB = DIRECTORS.find((d) => d.id === idB);
   if (!styleA || !styleB) return;
 
   $('blend-loading').style.display = 'block';
@@ -553,19 +762,19 @@ async function doBlend() {
         // 本地降级：混合色彩和DNA
         const blended = {
           name: `${styleA.name}×${styleB.name}`,
-          styleDesc: `${styleA.name}(${Math.round(ratio*100)}%)与${styleB.name}(${Math.round((1-ratio)*100)}%)的混搭风格`,
+          styleDesc: `${styleA.name}(${Math.round(ratio * 100)}%)与${styleB.name}(${Math.round((1 - ratio) * 100)}%)的混搭风格`,
           colors: {},
-          keywords: [...new Set([...(styleA.keywords||[]), ...(styleB.keywords||[])])].slice(0, 5),
+          keywords: [...new Set([...(styleA.keywords || []), ...(styleB.keywords || [])])].slice(0, 5),
           styleDNA: styleA.styleDNA,
           promptCore: `${styleA.promptCore} blended with ${styleB.promptCore}`,
           negativePrompt: styleB.negativePrompt,
-          emotions: [...new Set([...(styleA.emotions||[]), ...(styleB.emotions||[])])].slice(0, 4),
+          emotions: [...new Set([...(styleA.emotions || []), ...(styleB.emotions || [])])].slice(0, 4),
           quotes: [
             (styleA.quotes && styleA.quotes[0]) || '风格即态度。',
-            (styleB.quotes && styleB.quotes[0]) || '每一帧都是表达。'
-          ]
+            (styleB.quotes && styleB.quotes[0]) || '每一帧都是表达。',
+          ],
         };
-        ['primary','secondary','accent','bg','text','textLight'].forEach(k => {
+        ['primary', 'secondary', 'accent', 'bg', 'text', 'textLight'].forEach((k) => {
           blended.colors[k] = blendHexColors(styleA.colors[k], styleB.colors[k], ratio);
         });
         showToast('AI 混搭不可用，已使用本地混搭');
@@ -573,7 +782,15 @@ async function doBlend() {
       }
     );
     state.currentCustomStyle = result;
-    showStylePreview(result, 'blend-preview', 'blend-preview-name', 'blend-preview-desc', 'blend-preview-keywords', 'blend-preview-colors', 'blend-preview-dna-radar');
+    showStylePreview(
+      result,
+      'blend-preview',
+      'blend-preview-name',
+      'blend-preview-desc',
+      'blend-preview-keywords',
+      'blend-preview-colors',
+      'blend-preview-dna-radar'
+    );
   } finally {
     $('blend-loading').style.display = 'none';
   }
@@ -598,5 +815,5 @@ export {
   analyzeMovieStyle,
   localAnalyzeMovie,
   openBlendModal,
-  doBlend
+  doBlend,
 };

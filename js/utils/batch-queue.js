@@ -53,10 +53,10 @@ class BatchQueue {
     this.running = 0;
     this.completed = 0;
     this.failed = 0;
-    this.onProgress = options.onProgress || (function () {});
-    this.onTaskComplete = options.onTaskComplete || (function () {});
-    this.onTaskError = options.onTaskError || (function () {});
-    this.onAllComplete = options.onAllComplete || (function () {});
+    this.onProgress = options.onProgress || function () {};
+    this.onTaskComplete = options.onTaskComplete || function () {};
+    this.onTaskError = options.onTaskError || function () {};
+    this.onAllComplete = options.onAllComplete || function () {};
     this._aborted = false;
     this._started = false;
   }

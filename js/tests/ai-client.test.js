@@ -79,9 +79,7 @@ function sharedApiFetchErrorTests(label, triggerFn) {
     });
 
     it('429 限流且带 Retry-After 头时应提示重试时间', async () => {
-      mockFetch.mockResolvedValueOnce(
-        mockJsonResponse({ ok: false, status: 429, headers: { 'Retry-After': '30' } }),
-      );
+      mockFetch.mockResolvedValueOnce(mockJsonResponse({ ok: false, status: 429, headers: { 'Retry-After': '30' } }));
       await expect(triggerFn()).rejects.toThrow('请求过于频繁，请稍后再试（30 秒后可重试）');
     });
 
@@ -96,9 +94,7 @@ function sharedApiFetchErrorTests(label, triggerFn) {
     });
 
     it('500 服务器错误且响应体含 error 字段时应抛出该错误信息', async () => {
-      mockFetch.mockResolvedValueOnce(
-        mockJsonResponse({ ok: false, status: 500, json: { error: '服务器内部错误' } }),
-      );
+      mockFetch.mockResolvedValueOnce(mockJsonResponse({ ok: false, status: 500, json: { error: '服务器内部错误' } }));
       await expect(triggerFn()).rejects.toThrow('服务器内部错误');
     });
 
@@ -218,7 +214,7 @@ describe('generateImage', () => {
       mockJsonResponse({
         ok: true,
         json: { imageBase64: 'aGVsbG8=', engine: 'seedream' },
-      }),
+      })
     );
 
     const result = await generateImage({
@@ -240,7 +236,7 @@ describe('generateImage', () => {
       mockJsonResponse({
         ok: true,
         json: { imageUrl: 'https://example.com/img.png', engine: 'canvas' },
-      }),
+      })
     );
 
     const result = await generateImage({
@@ -255,9 +251,7 @@ describe('generateImage', () => {
   });
 
   it('应以 POST 方式请求 /api/generate-image 并传递完整请求体', async () => {
-    mockFetch.mockResolvedValueOnce(
-      mockJsonResponse({ ok: true, json: { imageBase64: 'img', engine: 'seedream' } }),
-    );
+    mockFetch.mockResolvedValueOnce(mockJsonResponse({ ok: true, json: { imageBase64: 'img', engine: 'seedream' } }));
 
     await generateImage({
       text: '日落',
@@ -281,18 +275,12 @@ describe('generateImage', () => {
   });
 
   it('后端既不返回 imageBase64 也不返回 imageUrl 时应抛出错误', async () => {
-    mockFetch.mockResolvedValueOnce(
-      mockJsonResponse({ ok: true, json: { engine: 'seedream' } }),
-    );
+    mockFetch.mockResolvedValueOnce(mockJsonResponse({ ok: true, json: { engine: 'seedream' } }));
 
-    await expect(
-      generateImage({ text: '日落', directorId: 'wong-kar-wai' }),
-    ).rejects.toThrow('未收到图片数据');
+    await expect(generateImage({ text: '日落', directorId: 'wong-kar-wai' })).rejects.toThrow('未收到图片数据');
   });
 
-  sharedApiFetchErrorTests('generateImage', () =>
-    generateImage({ text: '日落', directorId: 'wong-kar-wai' }),
-  );
+  sharedApiFetchErrorTests('generateImage', () => generateImage({ text: '日落', directorId: 'wong-kar-wai' }));
 });
 
 // ========== generateCopy ==========
@@ -334,9 +322,7 @@ describe('generateCopy', () => {
     });
   });
 
-  sharedApiFetchErrorTests('generateCopy', () =>
-    generateCopy({ text: '日落', directorId: 'wong-kar-wai' }),
-  );
+  sharedApiFetchErrorTests('generateCopy', () => generateCopy({ text: '日落', directorId: 'wong-kar-wai' }));
 });
 
 // ========== generateCopyStream ==========
@@ -354,10 +340,7 @@ describe('generateCopyStream', () => {
     const onDone = vi.fn();
     const onError = vi.fn();
 
-    await generateCopyStream(
-      { text: '日落', directorId: 'wong-kar-wai' },
-      { onToken, onDone, onError },
-    );
+    await generateCopyStream({ text: '日落', directorId: 'wong-kar-wai' }, { onToken, onDone, onError });
 
     expect(onToken).toHaveBeenCalledTimes(2);
     expect(onToken).toHaveBeenNthCalledWith(1, '你好');
@@ -370,10 +353,7 @@ describe('generateCopyStream', () => {
   it('应以 POST 方式请求 /api/generate-copy-stream 并传递正确的请求体', async () => {
     mockFetch.mockResolvedValueOnce(mockStreamResponse(['event: done\ndata: {}\n\n']));
 
-    await generateCopyStream(
-      { text: '日落', directorId: 'wong-kar-wai', emotion: '忧郁', type: 'title' },
-      {},
-    );
+    await generateCopyStream({ text: '日落', directorId: 'wong-kar-wai', emotion: '忧郁', type: 'title' }, {});
 
     const [url, options] = mockFetch.mock.calls[0];
     expect(url).toBe('/api/generate-copy-stream');
@@ -390,8 +370,8 @@ describe('generateCopyStream', () => {
   it('跨 chunk 的 SSE 事件应被正确缓冲拼接', async () => {
     // 将一个 event 行拆分到两个 chunk 中，验证缓冲机制
     const sseChunks = [
-      'event: tok',           // 不完整的事件类型行
-      'en\ndata: {"token":"OK"}\n\n',  // 补全 + data 行
+      'event: tok', // 不完整的事件类型行
+      'en\ndata: {"token":"OK"}\n\n', // 补全 + data 行
       'event: done\ndata: {}\n\n',
     ];
     mockFetch.mockResolvedValueOnce(mockStreamResponse(sseChunks));
@@ -399,10 +379,7 @@ describe('generateCopyStream', () => {
     const onToken = vi.fn();
     const onDone = vi.fn();
 
-    await generateCopyStream(
-      { text: '日落', directorId: 'wong-kar-wai' },
-      { onToken, onDone },
-    );
+    await generateCopyStream({ text: '日落', directorId: 'wong-kar-wai' }, { onToken, onDone });
 
     expect(onToken).toHaveBeenCalledTimes(1);
     expect(onToken).toHaveBeenCalledWith('OK');
@@ -410,20 +387,14 @@ describe('generateCopyStream', () => {
   });
 
   it('流中出现 error 事件时应调用 onError', async () => {
-    const sseChunks = [
-      'event: token\ndata: {"token":"部分内容"}\n\n',
-      'event: error\ndata: {"error":"生成中断"}\n\n',
-    ];
+    const sseChunks = ['event: token\ndata: {"token":"部分内容"}\n\n', 'event: error\ndata: {"error":"生成中断"}\n\n'];
     mockFetch.mockResolvedValueOnce(mockStreamResponse(sseChunks));
 
     const onToken = vi.fn();
     const onError = vi.fn();
     const onDone = vi.fn();
 
-    await generateCopyStream(
-      { text: '日落', directorId: 'wong-kar-wai' },
-      { onToken, onDone, onError },
-    );
+    await generateCopyStream({ text: '日落', directorId: 'wong-kar-wai' }, { onToken, onDone, onError });
 
     expect(onToken).toHaveBeenCalledWith('部分内容');
     expect(onError).toHaveBeenCalledTimes(1);
@@ -432,15 +403,10 @@ describe('generateCopyStream', () => {
   });
 
   it('error 事件无 error 字段时应使用默认错误信息', async () => {
-    mockFetch.mockResolvedValueOnce(
-      mockStreamResponse(['event: error\ndata: {}\n\n']),
-    );
+    mockFetch.mockResolvedValueOnce(mockStreamResponse(['event: error\ndata: {}\n\n']));
 
     const onError = vi.fn();
-    await generateCopyStream(
-      { text: '日落', directorId: 'wong-kar-wai' },
-      { onError },
-    );
+    await generateCopyStream({ text: '日落', directorId: 'wong-kar-wai' }, { onError });
 
     expect(onError).toHaveBeenCalledTimes(1);
     expect(onError.mock.calls[0][0].message).toBe('流式生成错误');
@@ -453,10 +419,7 @@ describe('generateCopyStream', () => {
     const onToken = vi.fn();
     const onDone = vi.fn();
 
-    await generateCopyStream(
-      { text: '日落', directorId: 'wong-kar-wai' },
-      { onToken, onDone, onError },
-    );
+    await generateCopyStream({ text: '日落', directorId: 'wong-kar-wai' }, { onToken, onDone, onError });
 
     expect(onError).toHaveBeenCalledTimes(1);
     expect(onError.mock.calls[0][0]).toBeInstanceOf(Error);
@@ -466,15 +429,10 @@ describe('generateCopyStream', () => {
   });
 
   it('响应非 OK 且含 error 字段时应调用 onError 并传递错误信息', async () => {
-    mockFetch.mockResolvedValueOnce(
-      mockJsonResponse({ ok: false, status: 500, json: { error: '服务不可用' } }),
-    );
+    mockFetch.mockResolvedValueOnce(mockJsonResponse({ ok: false, status: 500, json: { error: '服务不可用' } }));
 
     const onError = vi.fn();
-    await generateCopyStream(
-      { text: '日落', directorId: 'wong-kar-wai' },
-      { onError },
-    );
+    await generateCopyStream({ text: '日落', directorId: 'wong-kar-wai' }, { onError });
 
     expect(onError).toHaveBeenCalledTimes(1);
     expect(onError.mock.calls[0][0].message).toBe('服务不可用');
@@ -489,10 +447,7 @@ describe('generateCopyStream', () => {
     });
 
     const onError = vi.fn();
-    await generateCopyStream(
-      { text: '日落', directorId: 'wong-kar-wai' },
-      { onError },
-    );
+    await generateCopyStream({ text: '日落', directorId: 'wong-kar-wai' }, { onError });
 
     expect(onError).toHaveBeenCalledTimes(1);
     expect(onError.mock.calls[0][0].message).toBe('请求失败 (503)');
@@ -500,16 +455,11 @@ describe('generateCopyStream', () => {
 
   it('未提供回调时不应报错（使用默认空函数）', async () => {
     mockFetch.mockResolvedValueOnce(
-      mockStreamResponse([
-        'event: token\ndata: {"token":"x"}\n\n',
-        'event: done\ndata: {}\n\n',
-      ]),
+      mockStreamResponse(['event: token\ndata: {"token":"x"}\n\n', 'event: done\ndata: {}\n\n'])
     );
 
     // 不传任何回调，应正常完成不抛错
-    await expect(
-      generateCopyStream({ text: '日落', directorId: 'wong-kar-wai' }, {}),
-    ).resolves.toBeUndefined();
+    await expect(generateCopyStream({ text: '日落', directorId: 'wong-kar-wai' }, {})).resolves.toBeUndefined();
   });
 });
 
@@ -517,7 +467,10 @@ describe('generateCopyStream', () => {
 
 describe('getMovies', () => {
   it('应成功返回电影列表', async () => {
-    const movies = [{ id: '1', name: '电影A' }, { id: '2', name: '电影B' }];
+    const movies = [
+      { id: '1', name: '电影A' },
+      { id: '2', name: '电影B' },
+    ];
     mockFetch.mockResolvedValueOnce(mockJsonResponse({ ok: true, json: movies }));
 
     const result = await getMovies();

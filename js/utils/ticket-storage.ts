@@ -13,7 +13,7 @@ const TICKETS_KEY = 'zaojing_tickets';
 
 /**
  * 票根数据结构
- * 描述一次旅行票根生成结果的完整信息，包含渲染图、原图与情绪分析等元数据。
+ * 描述一次旅行票根生成结果的完整信息，包含渲染图和情绪分析等元数据。
  */
 export interface TicketItem {
   /** 唯一标识 */
@@ -22,7 +22,7 @@ export interface TicketItem {
   createdAt: number;
   /** 目的地名称 */
   destination: string;
-  /** 旅行日期（YYYY-MM-DD） */
+  /** 旅行日期（YYYY.MM.DD） */
   date: string;
   /** 心情文案 */
   moodText: string;
@@ -45,8 +45,6 @@ export interface TicketItem {
   animationType: string;
   /** 渲染后的票根图片 data URL */
   ticketDataUrl: string;
-  /** 原始照片 data URL */
-  photoDataUrl: string;
   /** 风格推荐理由（可选） */
   styleReason?: string;
 }
@@ -69,9 +67,7 @@ async function readTickets(): Promise<TicketItem[]> {
   try {
     const stored = await smartGet<TicketItem[]>(TICKETS_KEY);
     if (!stored) return [];
-    // smartGet 对 JSON 数据会自动解析，但也可能返回字符串
-    const tickets =
-      typeof stored === 'string' ? (JSON.parse(stored) as TicketItem[]) : stored;
+    const tickets = typeof stored === 'string' ? (JSON.parse(stored) as TicketItem[]) : stored;
     return Array.isArray(tickets) ? tickets : [];
   } catch (e) {
     logger.warn('[TicketStorage] 读取票根失败:', e);
@@ -91,22 +87,19 @@ async function writeTickets(tickets: TicketItem[]): Promise<void> {
 /**
  * 保存一张票根
  * 自动生成 id 与 createdAt（若未提供），追加到现有票根列表后持久化。
+ * 保存失败会抛出异常，调用方需处理错误提示。
  * @param ticket 待保存的票根数据
  */
 export async function saveTicket(ticket: TicketItem): Promise<void> {
-  try {
-    const tickets = await readTickets();
-    // 补充默认字段，保证数据完整性
-    const newTicket: TicketItem = {
-      ...ticket,
-      id: ticket.id || generateId(),
-      createdAt: ticket.createdAt || Date.now(),
-    };
-    tickets.push(newTicket);
-    await writeTickets(tickets);
-  } catch (e) {
-    logger.warn('[TicketStorage] 保存票根失败:', e);
-  }
+  const tickets = await readTickets();
+  const newTicket: TicketItem = {
+    ...ticket,
+    id: ticket.id || generateId(),
+    createdAt: ticket.createdAt || Date.now(),
+  };
+  tickets.push(newTicket);
+  await writeTickets(tickets);
+  logger.info({ id: newTicket.id, destination: newTicket.destination }, '票根保存成功');
 }
 
 /**
@@ -126,16 +119,17 @@ export async function getAllTickets(): Promise<TicketItem[]> {
 
 /**
  * 删除指定 ID 的票根
+ * 删除失败会抛出异常，调用方需处理错误提示。
  * @param id 票根唯一标识
  */
 export async function deleteTicket(id: string): Promise<void> {
-  try {
-    const tickets = await readTickets();
-    const filtered = tickets.filter((t) => t.id !== id);
-    await writeTickets(filtered);
-  } catch (e) {
-    logger.warn('[TicketStorage] 删除票根失败:', e);
+  const tickets = await readTickets();
+  const filtered = tickets.filter((t) => t.id !== id);
+  if (filtered.length === tickets.length) {
+    throw new Error('票根不存在');
   }
+  await writeTickets(filtered);
+  logger.info({ id }, '票根删除成功');
 }
 
 /**
@@ -143,11 +137,8 @@ export async function deleteTicket(id: string): Promise<void> {
  * 直接清除存储中的票根键，释放空间。
  */
 export async function clearAllTickets(): Promise<void> {
-  try {
-    await smartDelete(TICKETS_KEY);
-  } catch (e) {
-    logger.warn('[TicketStorage] 清空票根失败:', e);
-  }
+  await smartDelete(TICKETS_KEY);
+  logger.info('所有票根已清空');
 }
 
 /**
@@ -164,4 +155,13 @@ export async function getTicket(id: string): Promise<TicketItem | null> {
     logger.warn('[TicketStorage] 获取票根详情失败:', e);
     return null;
   }
+}
+
+/**
+ * 获取已存储票根数量
+ * @returns 票根总数
+ */
+export async function getTicketCount(): Promise<number> {
+  const tickets = await readTickets();
+  return tickets.length;
 }

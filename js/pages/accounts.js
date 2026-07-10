@@ -76,12 +76,14 @@ function renderMatrixStats() {
       <span class="account-stat-value">${stats.totalPublishes}</span>
       <span class="account-stat-label">总发布</span>
     </div>
-    ${MATRIX_PLATFORMS.map((p) => `
+    ${MATRIX_PLATFORMS.map(
+      (p) => `
       <div class="account-stat-item">
         <span class="account-stat-value" style="color:${p.color}">${stats.byPlatform[p.id] || 0}</span>
         <span class="account-stat-label">${p.icon} ${p.label}</span>
       </div>
-    `).join('')}
+    `
+    ).join('')}
   `;
 }
 
@@ -98,15 +100,16 @@ function renderAccountsList() {
     return;
   }
 
-  listEl.innerHTML = accounts.map((account) => {
-    const platform = getPlatformConfig(account.platform);
-    const statusColor = getStatusColor(account.status);
-    const statusLabel = getStatusLabel(account.status);
-    const avatarHtml = account.avatar
-      ? `<img class="account-avatar" src="${escapeHtml(account.avatar)}" alt="">`
-      : `<div class="account-avatar-placeholder" style="background:${platform ? platform.color : '#666'}">${escapeHtml(account.nickname.charAt(0))}</div>`;
+  listEl.innerHTML = accounts
+    .map((account) => {
+      const platform = getPlatformConfig(account.platform);
+      const statusColor = getStatusColor(account.status);
+      const statusLabel = getStatusLabel(account.status);
+      const avatarHtml = account.avatar
+        ? `<img class="account-avatar" src="${escapeHtml(account.avatar)}" alt="">`
+        : `<div class="account-avatar-placeholder" style="background:${platform ? platform.color : '#666'}">${escapeHtml(account.nickname.charAt(0))}</div>`;
 
-    return `
+      return `
       <div class="account-item" data-id="${escapeHtml(account.id)}">
         <label class="account-checkbox">
           <input type="checkbox" class="account-select" data-id="${escapeHtml(account.id)}"
@@ -128,7 +131,8 @@ function renderAccountsList() {
         <button class="btn btn-ghost btn-sm account-remove" data-id="${escapeHtml(account.id)}">删除</button>
       </div>
     `;
-  }).join('');
+    })
+    .join('');
 
   // 绑定删除按钮
   listEl.querySelectorAll('.account-remove').forEach((btn) => {
@@ -201,9 +205,7 @@ function updatePublishButton() {
   const btn = $('btn-publish-matrix');
   if (btn) {
     btn.disabled = selected.length === 0;
-    btn.textContent = selected.length > 0
-      ? `📤 一键发布到 ${selected.length} 个账号`
-      : '📤 一键发布到选中账号';
+    btn.textContent = selected.length > 0 ? `📤 一键发布到 ${selected.length} 个账号` : '📤 一键发布到选中账号';
   }
 }
 
@@ -219,8 +221,8 @@ export function showAddAccountForm() {
   // 渲染平台选择
   const platformSelect = $('new-account-platform');
   if (platformSelect) {
-    platformSelect.innerHTML = MATRIX_PLATFORMS.map((p) =>
-      `<option value="${p.id}">${p.icon} ${p.label}</option>`
+    platformSelect.innerHTML = MATRIX_PLATFORMS.map(
+      (p) => `<option value="${p.id}">${p.icon} ${p.label}</option>`
     ).join('');
   }
 

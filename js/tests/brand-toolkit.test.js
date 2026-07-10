@@ -2,11 +2,7 @@
  * 品牌工具包单元测试
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import {
-  DEFAULT_BRAND_CONFIG,
-  LOGO_POSITIONS,
-  WATERMARK_POSITIONS,
-} from '../utils/brand-toolkit.js';
+import { DEFAULT_BRAND_CONFIG, LOGO_POSITIONS, WATERMARK_POSITIONS } from '../utils/brand-toolkit.js';
 
 // Mock localStorage
 const mockStore = {};

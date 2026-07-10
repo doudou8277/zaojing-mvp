@@ -2,7 +2,17 @@
  * 造境 ZaoJing — 品牌工具包页面模块
  * Logo 上传、水印设置、品牌色板配置
  */
-import { $, state, toast, escapeHtml, sanitizeImageUrl, logger, openModal, closeModal, openResultToolsModal } from '../shared.js';
+import {
+  $,
+  state,
+  toast,
+  escapeHtml,
+  sanitizeImageUrl,
+  logger,
+  openModal,
+  closeModal,
+  openResultToolsModal,
+} from '../shared.js';
 import {
   loadBrandConfig,
   saveBrandConfig,

@@ -3,17 +3,22 @@
  * 从 app.js 提取：海报展示 / 二次创作 / 下载分享 / 历史记录 / 电影墙
  */
 
-import { $, state, toast, navigate, escapeHtml, sleep, openModal, closeModal, openResultToolsModal } from '../shared.js';
+import {
+  $,
+  state,
+  toast,
+  navigate,
+  escapeHtml,
+  sleep,
+  openModal,
+  closeModal,
+  openResultToolsModal,
+} from '../shared.js';
 import { logger } from '../utils/logger.js';
 import { lazyLoadAll } from '../utils/lazy-load.js';
 import { safeRevokeUrl } from '../utils/sanitize.js';
 import { shareToPlatform, saveImageToLocal, generatePlatformCopy } from '../utils/social-share.js';
-import {
-  animatePoster,
-  downloadVideoBlob,
-  ANIMATION_PRESETS,
-  isAnimationSupported,
-} from '../utils/poster-animator.js';
+import { animatePoster, downloadVideoBlob, ANIMATION_PRESETS, isAnimationSupported } from '../utils/poster-animator.js';
 import { applyBrandingToImage, loadBrandConfig } from '../utils/brand-toolkit.js';
 import { smartSet, smartGet, smartDelete } from '../utils/storage.js';
 import * as AIClient from '../ai-client';
@@ -220,19 +225,27 @@ function renderPlatformCopy(copy) {
 
   el.innerHTML = `
     <div class="platform-copy-tabs">
-      ${platforms.map((p, i) => `
+      ${platforms
+        .map(
+          (p, i) => `
         <button class="platform-copy-tab ${i === 0 ? 'active' : ''}" data-platform="${p.id}" style="${i === 0 ? `border-color:${p.color}` : ''}">
           ${p.icon} ${p.label}
         </button>
-      `).join('')}
+      `
+        )
+        .join('')}
     </div>
     <div class="platform-copy-content">
-      ${platforms.map((p, i) => `
+      ${platforms
+        .map(
+          (p, i) => `
         <div class="platform-copy-panel ${i === 0 ? 'active' : ''}" data-platform="${p.id}">
           <div class="platform-copy-text">${escapeHtml(copy[p.id] || '')}</div>
           <button class="btn btn-ghost btn-sm platform-copy-btn" data-copy-text="${escapeHtml(copy[p.id] || '')}">复制文案</button>
         </div>
-      `).join('')}
+      `
+        )
+        .join('')}
     </div>
   `;
 
@@ -490,7 +503,9 @@ async function regenerateAllPosters() {
       });
       // 在替换前释放旧海报的 Blob URL，避免内存泄漏
       if (state.posterResults && state.posterResults.length) {
-        state.posterResults.forEach((r) => { safeRevokeUrl(r.dataUrl); });
+        state.posterResults.forEach((r) => {
+          safeRevokeUrl(r.dataUrl);
+        });
       }
       state.posterResults = [gridResult];
       state.currentPosterIndex = 0;
@@ -510,7 +525,9 @@ async function regenerateAllPosters() {
       }
       // 在替换前释放旧海报的 Blob URL，避免内存泄漏
       if (state.posterResults && state.posterResults.length) {
-        state.posterResults.forEach((r) => { safeRevokeUrl(r.dataUrl); });
+        state.posterResults.forEach((r) => {
+          safeRevokeUrl(r.dataUrl);
+        });
       }
       state.posterResults = results;
       state.currentPosterIndex = 0;
@@ -583,7 +600,10 @@ function copyShareLink() {
       .then(() => {
         toast('链接已复制到剪贴板');
       })
-      .catch((err) => { logger.warn('剪贴板写入失败，降级到 execCommand:', err); fallbackCopy(link); });
+      .catch((err) => {
+        logger.warn('剪贴板写入失败，降级到 execCommand:', err);
+        fallbackCopy(link);
+      });
   } else {
     fallbackCopy(link);
   }

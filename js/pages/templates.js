@@ -155,9 +155,12 @@ function renderTemplateGrid() {
   const allTemplates = [...userTemplates, ...POSTER_TEMPLATES];
 
   // 按分类过滤
-  const filtered = _currentCategory === 'all'
-    ? allTemplates
-    : allTemplates.filter((t) => t.category === _currentCategory || (_currentCategory === 'custom' && t.source === 'user'));
+  const filtered =
+    _currentCategory === 'all'
+      ? allTemplates
+      : allTemplates.filter(
+          (t) => t.category === _currentCategory || (_currentCategory === 'custom' && t.source === 'user')
+        );
 
   if (filtered.length === 0) {
     container.innerHTML = '<div class="template-empty">暂无模板，生成海报后可保存为模板</div>';

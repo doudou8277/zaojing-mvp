@@ -11,7 +11,7 @@ const logger = pino({
   level: process.env.LOG_LEVEL || (isProduction ? 'info' : 'debug'),
   base: {
     service: 'zaojing-server',
-    version: '1.0.0'
+    version: '1.0.0',
   },
   timestamp: pino.stdTimeFunctions.isoTime,
   // 脱敏：防止 API Key、Token、base64 图片数据写入日志
@@ -30,9 +30,9 @@ const logger = pino({
       '*.imageBase64',
       '*.imageBase64.length',
       'imageBase64',
-      'req.body.imageBase64'
+      'req.body.imageBase64',
     ],
-    censor: '[REDACTED]'
+    censor: '[REDACTED]',
   },
   ...(isProduction
     ? {} // 生产环境：纯 JSON 输出，便于日志聚合
@@ -44,10 +44,10 @@ const logger = pino({
             colorize: true,
             translateTime: 'HH:MM:ss',
             ignore: 'pid,hostname,service,version',
-            messageFormat: '{msg}'
-          }
-        }
-      })
+            messageFormat: '{msg}',
+          },
+        },
+      }),
 });
 
 module.exports = logger;

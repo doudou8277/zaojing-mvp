@@ -38,7 +38,7 @@ describe('generateImageSchema', () => {
   it('应接受有效的图片生成请求', () => {
     const result = schemas.generateImage.safeParse({
       text: '文字',
-      directorId: 'miyazaki'
+      directorId: 'miyazaki',
     });
     expect(result.success).toBe(true);
   });
@@ -46,7 +46,7 @@ describe('generateImageSchema', () => {
   it('应设置 engine 默认值为 seedream', () => {
     const result = schemas.generateImage.safeParse({
       text: '文字',
-      directorId: 'miyazaki'
+      directorId: 'miyazaki',
     });
     expect(result.success).toBe(true);
     expect(result.data.engine).toBe('seedream');
@@ -55,7 +55,7 @@ describe('generateImageSchema', () => {
   it('应设置 size 默认值为 vertical', () => {
     const result = schemas.generateImage.safeParse({
       text: '文字',
-      directorId: 'miyazaki'
+      directorId: 'miyazaki',
     });
     expect(result.success).toBe(true);
     expect(result.data.size).toBe('vertical');
@@ -65,7 +65,7 @@ describe('generateImageSchema', () => {
     const result = schemas.generateImage.safeParse({
       text: '文字',
       directorId: 'miyazaki',
-      engine: 'invalid-engine'
+      engine: 'invalid-engine',
     });
     expect(result.success).toBe(false);
   });
@@ -74,7 +74,7 @@ describe('generateImageSchema', () => {
     const result = schemas.generateImage.safeParse({
       text: '文字',
       directorId: 'miyazaki',
-      size: 'huge'
+      size: 'huge',
     });
     expect(result.success).toBe(false);
   });
@@ -83,7 +83,7 @@ describe('generateImageSchema', () => {
     const result = schemas.generateImage.safeParse({
       text: '文字',
       directorId: 'wkw',
-      engine: 'seedream'
+      engine: 'seedream',
     });
     expect(result.success).toBe(true);
   });
@@ -99,7 +99,7 @@ describe('generateCopySchema', () => {
   it('应接受有效的文案生成请求', () => {
     const result = schemas.generateCopy.safeParse({
       text: '文字',
-      directorId: 'nolan'
+      directorId: 'nolan',
     });
     expect(result.success).toBe(true);
   });
@@ -115,7 +115,7 @@ describe('agentCreateSchema', () => {
   it('应接受有效的 Agent 请求', () => {
     const result = schemas.agentCreate.safeParse({
       text: '文字',
-      directorIds: ['miyazaki', 'wkw']
+      directorIds: ['miyazaki', 'wkw'],
     });
     expect(result.success).toBe(true);
   });
@@ -135,14 +135,14 @@ describe('agentCreateSchema', () => {
 describe('analyzeImageSchema', () => {
   it('应接受有效的 base64 图片数据', () => {
     const result = schemas.analyzeImage.safeParse({
-      imageBase64: 'a'.repeat(200)
+      imageBase64: 'a'.repeat(200),
     });
     expect(result.success).toBe(true);
   });
 
   it('应拒绝过短的 base64 数据', () => {
     const result = schemas.analyzeImage.safeParse({
-      imageBase64: 'short'
+      imageBase64: 'short',
     });
     expect(result.success).toBe(false);
   });
@@ -157,7 +157,7 @@ describe('analyzeImageSchema', () => {
 describe('parseStyleSchema', () => {
   it('应接受有效的风格描述', () => {
     const result = schemas.parseStyle.safeParse({
-      description: '赛博朋克风格'
+      description: '赛博朋克风格',
     });
     expect(result.success).toBe(true);
   });
@@ -169,7 +169,7 @@ describe('parseStyleSchema', () => {
 
   it('应拒绝超过 500 字的描述', () => {
     const result = schemas.parseStyle.safeParse({
-      description: 'a'.repeat(501)
+      description: 'a'.repeat(501),
     });
     expect(result.success).toBe(false);
   });
@@ -189,7 +189,7 @@ describe('analyzeMovieSchema', () => {
 
   it('应拒绝过长的电影名称', () => {
     const result = schemas.analyzeMovie.safeParse({
-      movieName: 'a'.repeat(201)
+      movieName: 'a'.repeat(201),
     });
     expect(result.success).toBe(false);
   });
@@ -201,7 +201,7 @@ describe('blendStylesSchema', () => {
     const result = schemas.blendStyles.safeParse({
       styleA: { name: '风格A' },
       styleB: { name: '风格B' },
-      ratio: 0.5
+      ratio: 0.5,
     });
     expect(result.success).toBe(true);
   });
@@ -209,7 +209,7 @@ describe('blendStylesSchema', () => {
   it('ratio 应默认为 0.5', () => {
     const result = schemas.blendStyles.safeParse({
       styleA: { name: 'A' },
-      styleB: { name: 'B' }
+      styleB: { name: 'B' },
     });
     expect(result.success).toBe(true);
     expect(result.data.ratio).toBe(0.5);
@@ -219,7 +219,7 @@ describe('blendStylesSchema', () => {
     const result = schemas.blendStyles.safeParse({
       styleA: {},
       styleB: {},
-      ratio: 1.5
+      ratio: 1.5,
     });
     expect(result.success).toBe(false);
   });
@@ -227,7 +227,7 @@ describe('blendStylesSchema', () => {
   it('应拒绝缺少 styleA 的请求', () => {
     const result = schemas.blendStyles.safeParse({
       styleB: {},
-      ratio: 0.5
+      ratio: 0.5,
     });
     expect(result.success).toBe(false);
   });
@@ -239,7 +239,9 @@ describe('validate middleware', () => {
     const req = { body: { text: '  文字  ' } };
     let nextCalled = false;
     const middleware = validate(schemas.analyze, 'body');
-    middleware(req, {}, () => { nextCalled = true; });
+    middleware(req, {}, () => {
+      nextCalled = true;
+    });
     expect(nextCalled).toBe(true);
     expect(req.body.text).toBe('文字'); // trim 生效
   });
@@ -254,7 +256,7 @@ describe('validate middleware', () => {
       json: (data) => {
         expect(data).toHaveProperty('error');
         expect(data).toHaveProperty('details');
-      }
+      },
     };
     const middleware = validate(schemas.analyze, 'body');
     middleware(req, res, () => {

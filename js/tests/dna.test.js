@@ -4,13 +4,7 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import {
-  DNA_DIMENSIONS,
-  DNA_VALUE_MAPS,
-  dnaToValues,
-  drawDNAGrid,
-  drawDNALabels,
-} from '../utils/dna.ts';
+import { DNA_DIMENSIONS, DNA_VALUE_MAPS, dnaToValues, drawDNAGrid, drawDNALabels } from '../utils/dna.ts';
 
 // ========== 辅助：创建 mock CanvasRenderingContext2D ==========
 function createMockCtx() {
@@ -67,16 +61,7 @@ describe('DNA_DIMENSIONS', () => {
 
   it('应包含正确的中文标签', () => {
     const labels = DNA_DIMENSIONS.map((d) => d.label);
-    expect(labels).toEqual([
-      '色温',
-      '饱和',
-      '对比',
-      '构图',
-      '光影',
-      '尺度',
-      '节奏',
-      '质感',
-    ]);
+    expect(labels).toEqual(['色温', '饱和', '对比', '构图', '光影', '尺度', '节奏', '质感']);
   });
 
   it('所有 key 应唯一', () => {
@@ -333,16 +318,7 @@ describe('drawDNALabels', () => {
     drawDNALabels(ctx, 100, 100, 50, n, angleStep);
 
     const labels = ctx.fillText.mock.calls.map((call) => call[0]);
-    expect(labels).toEqual([
-      '色温',
-      '饱和',
-      '对比',
-      '构图',
-      '光影',
-      '尺度',
-      '节奏',
-      '质感',
-    ]);
+    expect(labels).toEqual(['色温', '饱和', '对比', '构图', '光影', '尺度', '节奏', '质感']);
   });
 
   it('应设置 fillStyle、font、textAlign、textBaseline', () => {

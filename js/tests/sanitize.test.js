@@ -30,9 +30,7 @@ describe('escapeHtml', () => {
   });
 
   it('应同时转义所有特殊字符', () => {
-    expect(escapeHtml('<script>alert("xss")</script>')).toBe(
-      '&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;'
-    );
+    expect(escapeHtml('<script>alert("xss")</script>')).toBe('&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;');
   });
 
   it('应转义包含 & 的混合字符串（& 优先转义避免双重转义）', () => {
@@ -44,7 +42,7 @@ describe('escapeHtml', () => {
   });
 
   it('应转义包含单引号和双引号的字符串', () => {
-    expect(escapeHtml("it's a \"test\"")).toBe('it&#39;s a &quot;test&quot;');
+    expect(escapeHtml('it\'s a "test"')).toBe('it&#39;s a &quot;test&quot;');
   });
 
   // ========== null / undefined 输入 ==========

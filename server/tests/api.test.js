@@ -42,9 +42,7 @@ describe('健康检查', () => {
 // ========== 错误上报 ==========
 describe('错误上报', () => {
   it('POST /api/errors 缺少 errors 字段应返回 400', async () => {
-    const res = await request(app)
-      .post('/api/errors')
-      .send({});
+    const res = await request(app).post('/api/errors').send({});
 
     expect(res.status).toBe(400);
     expect(res.body).toHaveProperty('error');
@@ -52,18 +50,14 @@ describe('错误上报', () => {
   });
 
   it('POST /api/errors errors 非数组应返回 400', async () => {
-    const res = await request(app)
-      .post('/api/errors')
-      .send({ errors: 'not-an-array' });
+    const res = await request(app).post('/api/errors').send({ errors: 'not-an-array' });
 
     expect(res.status).toBe(400);
     expect(res.body.error).toHaveProperty('code', 'INVALID_FORMAT');
   });
 
   it('POST /api/errors 空数组应返回 204', async () => {
-    const res = await request(app)
-      .post('/api/errors')
-      .send({ errors: [] });
+    const res = await request(app).post('/api/errors').send({ errors: [] });
 
     expect(res.status).toBe(204);
   });
@@ -79,9 +73,9 @@ describe('错误上报', () => {
             url: 'http://localhost/',
             sessionId: 'test-sid',
             timeSinceLoad: 1000,
-            stack: 'Error: 测试错误\n    at test'
-          }
-        ]
+            stack: 'Error: 测试错误\n    at test',
+          },
+        ],
       });
 
     expect(res.status).toBe(204);
@@ -89,9 +83,7 @@ describe('错误上报', () => {
 
   it('POST /api/errors 超过 50 条应返回 400 TOO_MANY_ERRORS', async () => {
     const errors = Array.from({ length: 51 }, () => ({ type: 'error', message: 'x' }));
-    const res = await request(app)
-      .post('/api/errors')
-      .send({ errors });
+    const res = await request(app).post('/api/errors').send({ errors });
 
     expect(res.status).toBe(400);
     expect(res.body.error).toHaveProperty('code', 'TOO_MANY_ERRORS');
@@ -119,9 +111,7 @@ describe('认证', () => {
 // ========== 输入校验 ==========
 describe('输入校验', () => {
   it('POST /api/analyze 缺少 text 字段应返回 400', async () => {
-    const res = await request(app)
-      .post('/api/analyze')
-      .send({});
+    const res = await request(app).post('/api/analyze').send({});
 
     expect(res.status).toBe(400);
     expect(res.body).toHaveProperty('error');
@@ -130,9 +120,7 @@ describe('输入校验', () => {
   });
 
   it('POST /api/analyze text 为空字符串应返回 400', async () => {
-    const res = await request(app)
-      .post('/api/analyze')
-      .send({ text: '' });
+    const res = await request(app).post('/api/analyze').send({ text: '' });
 
     expect(res.status).toBe(400);
     expect(res.body).toHaveProperty('error');
@@ -140,9 +128,7 @@ describe('输入校验', () => {
   });
 
   it('POST /api/generate-image 缺少 directorId 应返回 400', async () => {
-    const res = await request(app)
-      .post('/api/generate-image')
-      .send({ text: '一段文字' });
+    const res = await request(app).post('/api/generate-image').send({ text: '一段文字' });
 
     expect(res.status).toBe(400);
     expect(res.body).toHaveProperty('error');
@@ -163,9 +149,7 @@ describe('MCP 端点', () => {
 // ========== 风格相关 ==========
 describe('风格相关', () => {
   it('POST /api/parse-style 缺少 description 应返回 400', async () => {
-    const res = await request(app)
-      .post('/api/parse-style')
-      .send({});
+    const res = await request(app).post('/api/parse-style').send({});
 
     expect(res.status).toBe(400);
     expect(res.body).toHaveProperty('error');
@@ -173,9 +157,7 @@ describe('风格相关', () => {
   });
 
   it('POST /api/blend-styles 缺少 styleA/styleB 应返回 400', async () => {
-    const res = await request(app)
-      .post('/api/blend-styles')
-      .send({});
+    const res = await request(app).post('/api/blend-styles').send({});
 
     expect(res.status).toBe(400);
     expect(res.body).toHaveProperty('error');
@@ -188,9 +170,7 @@ describe('风格相关', () => {
 describe('错误路径 / 边界 case', () => {
   // ---------- analyze 端点 ----------
   it('POST /api/analyze text 仅含空白字符应返回 400（trim 后为空）', async () => {
-    const res = await request(app)
-      .post('/api/analyze')
-      .send({ text: '     ' });
+    const res = await request(app).post('/api/analyze').send({ text: '     ' });
 
     expect(res.status).toBe(400);
     expect(res.body.error).toHaveProperty('code', 400);
@@ -207,18 +187,14 @@ describe('错误路径 / 边界 case', () => {
 
   // ---------- generate-image 端点 ----------
   it('POST /api/generate-image 缺少 text 字段应返回 400', async () => {
-    const res = await request(app)
-      .post('/api/generate-image')
-      .send({ directorId: 'miyazaki' });
+    const res = await request(app).post('/api/generate-image').send({ directorId: 'miyazaki' });
 
     expect(res.status).toBe(400);
     expect(res.body.error).toHaveProperty('code', 400);
   });
 
   it('POST /api/generate-image text 为空字符串应返回 400', async () => {
-    const res = await request(app)
-      .post('/api/generate-image')
-      .send({ text: '', directorId: 'miyazaki' });
+    const res = await request(app).post('/api/generate-image').send({ text: '', directorId: 'miyazaki' });
 
     expect(res.status).toBe(400);
     expect(res.body.error).toHaveProperty('code', 400);
@@ -232,7 +208,7 @@ describe('错误路径 / 边界 case', () => {
     expect(res.status).toBe(400);
     expect(res.body.error).toHaveProperty('code', 400);
     // Zod enum 校验失败应在 details 中包含 engine 字段错误
-    const hasEngineError = res.body.details?.some(d => d.field === 'engine');
+    const hasEngineError = res.body.details?.some((d) => d.field === 'engine');
     expect(hasEngineError).toBe(true);
   });
 
@@ -247,9 +223,7 @@ describe('错误路径 / 边界 case', () => {
 
   // ---------- generate-copy 端点 ----------
   it('POST /api/generate-copy 缺少 directorId 应返回 400', async () => {
-    const res = await request(app)
-      .post('/api/generate-copy')
-      .send({ text: '一段文字' });
+    const res = await request(app).post('/api/generate-copy').send({ text: '一段文字' });
 
     expect(res.status).toBe(400);
     expect(res.body.error).toHaveProperty('code', 400);
@@ -262,9 +236,7 @@ describe('错误路径 / 边界 case', () => {
     const originalToken = process.env.METRICS_TOKEN;
     process.env.METRICS_TOKEN = 'secret-token';
     try {
-      const res = await request(app)
-        .get('/metrics')
-        .set('Authorization', 'Bearer wrong-token');
+      const res = await request(app).get('/metrics').set('Authorization', 'Bearer wrong-token');
 
       expect(res.status).toBe(401);
     } finally {
@@ -300,9 +272,7 @@ describe('错误路径 / 边界 case', () => {
 
   // ---------- 合规检测 ----------
   it('POST /api/compliance-check 缺少 content 应返回 400', async () => {
-    const res = await request(app)
-      .post('/api/compliance-check')
-      .send({});
+    const res = await request(app).post('/api/compliance-check').send({});
     expect(res.status).toBe(400);
   });
 
@@ -325,10 +295,7 @@ describe('错误路径 / 边界 case', () => {
 
   // ---------- 非 JSON body ----------
   it('POST /api/analyze 发送非 JSON content-type 应返回 400 或错误（不应崩溃）', async () => {
-    const res = await request(app)
-      .post('/api/analyze')
-      .set('Content-Type', 'text/plain')
-      .send('not json');
+    const res = await request(app).post('/api/analyze').set('Content-Type', 'text/plain').send('not json');
 
     // Express JSON 中间件对非法 JSON 返回 400；text/plain 时 req.body 为 {}，
     // 校验层发现缺少 text 也返回 400
@@ -347,9 +314,7 @@ describe('限流', () => {
     // 发送空 body 触发校验失败（400），但请求仍计入限流计数
     // 之前的测试可能已消耗部分配额，发送 25 次确保超过 20 次阈值
     for (let i = 0; i < 25; i++) {
-      const res = await request(app)
-        .post('/api/analyze')
-        .send({});
+      const res = await request(app).post('/api/analyze').send({});
       statusCodes.push(res.status);
     }
 

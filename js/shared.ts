@@ -81,23 +81,26 @@ interface AppInitialState {
 const $ = (id: string): HTMLElement | null => document.getElementById(id);
 
 // 页面 DOM 映射（惰性守卫：非 DOM 环境（如 Node 测试）中返回空对象）
-const pages: Record<string, HTMLElement | null> = typeof document !== 'undefined' ? {
-  input: $('page-input'),
-  directors: $('page-directors'),
-  generating: $('page-generating'),
-  result: $('page-result'),
-  wall: $('page-wall'),
-  ticket: $('page-ticket'),
-  cocreate: $('page-cocreate'),
-  movies: $('page-movies'),
-  batch: $('page-batch'),
-  'hot-topics': $('page-hot-topics'),
-  template: $('page-template'),
-} : {};
+const pages: Record<string, HTMLElement | null> =
+  typeof document !== 'undefined'
+    ? {
+        input: $('page-input'),
+        directors: $('page-directors'),
+        generating: $('page-generating'),
+        result: $('page-result'),
+        wall: $('page-wall'),
+        ticket: $('page-ticket'),
+        cocreate: $('page-cocreate'),
+        movies: $('page-movies'),
+        batch: $('page-batch'),
+        'hot-topics': $('page-hot-topics'),
+        template: $('page-template'),
+      }
+    : {};
 
 // 路由切换
 function navigate(pageId: string): void {
-  Object.values(pages).forEach(p => p && p.classList.remove('active'));
+  Object.values(pages).forEach((p) => p && p.classList.remove('active'));
   const page = pages[pageId];
   if (page) page.classList.add('active');
   window.scrollTo(0, 0);
@@ -129,7 +132,7 @@ function updateFlowIndicator(pageId: string): void {
   const order = ['input', 'directors', 'result'];
   const currentIdx = order.indexOf(currentStep);
 
-  indicator.querySelectorAll<HTMLElement>('.flow-step').forEach(el => {
+  indicator.querySelectorAll<HTMLElement>('.flow-step').forEach((el) => {
     const step = el.dataset.step || '';
     const idx = order.indexOf(step);
     el.classList.toggle('active', idx === currentIdx);
@@ -157,7 +160,7 @@ function toast(msg: string, duration: number = 2500): void {
     el.show(msg, duration);
   } else {
     // 回退：直接操作 DOM（兼容非组件环境，如测试或旧版 HTML）
-    const toastEl = el as (HTMLElement & { _timer?: ReturnType<typeof setTimeout> });
+    const toastEl = el as HTMLElement & { _timer?: ReturnType<typeof setTimeout> };
     toastEl.textContent = msg;
     toastEl.classList.add('show');
     clearTimeout(toastEl._timer);
@@ -172,7 +175,7 @@ function toast(msg: string, duration: number = 2500): void {
 const showToast = toast;
 
 function sleep(ms: number): Promise<void> {
-  return new Promise(r => setTimeout(r, ms));
+  return new Promise((r) => setTimeout(r, ms));
 }
 
 // escapeHtml 统一从 utils/sanitize.js 导入，消灭重复定义
@@ -234,8 +237,10 @@ const previousFocusMap = new WeakMap<HTMLElement, HTMLElement | null>();
 
 // 所有弹窗 ID 清单（zj-modal + 原生 div）
 const ALL_MODAL_IDS = [
-  'result-tools-modal', 'style-editor-modal',
-  'director-swap-modal', 'creative-modal',
+  'result-tools-modal',
+  'style-editor-modal',
+  'director-swap-modal',
+  'creative-modal',
   'movie-detail-overlay',
 ];
 
@@ -260,9 +265,11 @@ function findZJModalParent(el: HTMLElement): ZJModalElement | null {
 
 // 获取弹窗内所有可聚焦元素
 function getFocusable(modal: HTMLElement): HTMLElement[] {
-  return Array.from(modal.querySelectorAll<HTMLElement>(
-    'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-  ));
+  return Array.from(
+    modal.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    )
+  );
 }
 
 // 统一打开弹窗：处理焦点陷阱
@@ -344,7 +351,7 @@ function closeModal(id: string): void {
 
 // 检查是否有弹窗打开
 function isAnyModalOpen(): boolean {
-  return ALL_MODAL_IDS.some(id => {
+  return ALL_MODAL_IDS.some((id) => {
     const el = findModalEl(id);
     return el && el.style.display !== 'none';
   });
@@ -353,7 +360,7 @@ function isAnyModalOpen(): boolean {
 // 关闭所有弹窗，返回是否有弹窗被关闭
 function closeAllModals(): boolean {
   let closedAny = false;
-  ALL_MODAL_IDS.forEach(id => {
+  ALL_MODAL_IDS.forEach((id) => {
     const el = findModalEl(id);
     if (el && el.style.display !== 'none') {
       closeModal(id);
@@ -373,13 +380,32 @@ function openResultToolsModal(tab: string): void {
 
 /** 切换结果工具弹窗的 Tab 面板 */
 function switchResultToolsTab(tab: string): void {
-  document.querySelectorAll<HTMLElement>('.result-tools-tab').forEach(btn => {
+  document.querySelectorAll<HTMLElement>('.result-tools-tab').forEach((btn) => {
     btn.classList.toggle('active', btn.dataset.resultTab === tab);
   });
-  document.querySelectorAll<HTMLElement>('.result-tools-panel').forEach(panel => {
+  document.querySelectorAll<HTMLElement>('.result-tools-panel').forEach((panel) => {
     panel.classList.toggle('active', panel.dataset.resultPanel === tab);
   });
 }
 
-export { $, pages, navigate, toast, showToast, sleep, escapeHtml, sanitizeColor, sanitizeImageUrl, sanitizeAttr, state, logger,
-  openModal, closeModal, isAnyModalOpen, closeAllModals, openResultToolsModal, switchResultToolsTab, ALL_MODAL_IDS };
+export {
+  $,
+  pages,
+  navigate,
+  toast,
+  showToast,
+  sleep,
+  escapeHtml,
+  sanitizeColor,
+  sanitizeImageUrl,
+  sanitizeAttr,
+  state,
+  logger,
+  openModal,
+  closeModal,
+  isAnyModalOpen,
+  closeAllModals,
+  openResultToolsModal,
+  switchResultToolsTab,
+  ALL_MODAL_IDS,
+};

@@ -11,9 +11,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 
 // 检测当前环境是否支持 customElements
-const supportsCustomElements =
-  typeof customElements !== 'undefined' &&
-  typeof HTMLElement !== 'undefined';
+const supportsCustomElements = typeof customElements !== 'undefined' && typeof HTMLElement !== 'undefined';
 
 // 根据环境支持情况决定是否运行测试
 const describeOrSkip = supportsCustomElements ? describe : describe.skip;

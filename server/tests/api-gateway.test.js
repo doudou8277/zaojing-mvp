@@ -301,10 +301,12 @@ describe('registerWebhook / listWebhooks / deleteWebhook', () => {
   });
 
   it('不支持的事件类型应抛出错误', () => {
-    expect(() => apiGateway.registerWebhook({
-      url: 'https://example.com/wh',
-      events: ['invalid.event'],
-    })).toThrow();
+    expect(() =>
+      apiGateway.registerWebhook({
+        url: 'https://example.com/wh',
+        events: ['invalid.event'],
+      })
+    ).toThrow();
   });
 
   it('应列出所有 Webhook', () => {

@@ -28,21 +28,48 @@ import { logger } from './logger.js';
 const FORMAT_CONFIG = {
   // 竖版 3:4
   vertical: {
-    width: 1080, height: 1440, photoRatio: 0.55,
-    dest: 56, date: 24, mood: 36, info: 20,
-    destLines: 2, moodLines: 3, padding: 72, corner: 16, notch: 12,
+    width: 1080,
+    height: 1440,
+    photoRatio: 0.55,
+    dest: 56,
+    date: 24,
+    mood: 36,
+    info: 20,
+    destLines: 2,
+    moodLines: 3,
+    padding: 72,
+    corner: 16,
+    notch: 12,
   },
   // 方形 1:1
   square: {
-    width: 1080, height: 1080, photoRatio: 0.55,
-    dest: 60, date: 24, mood: 34, info: 20,
-    destLines: 2, moodLines: 2, padding: 64, corner: 16, notch: 12,
+    width: 1080,
+    height: 1080,
+    photoRatio: 0.55,
+    dest: 60,
+    date: 24,
+    mood: 34,
+    info: 20,
+    destLines: 2,
+    moodLines: 2,
+    padding: 64,
+    corner: 16,
+    notch: 12,
   },
-  // 横版 9:4
+  // 横版 16:7 (更舒展的电影宽幅比例)
   horizontal: {
-    width: 1080, height: 480, photoRatio: 0.45,
-    dest: 48, date: 20, mood: 26, info: 16,
-    destLines: 1, moodLines: 1, padding: 44, corner: 12, notch: 10,
+    width: 1080,
+    height: 560,
+    photoRatio: 0.42,
+    dest: 44,
+    date: 18,
+    mood: 24,
+    info: 16,
+    destLines: 1,
+    moodLines: 1,
+    padding: 40,
+    corner: 12,
+    notch: 10,
   },
 };
 
@@ -54,19 +81,19 @@ const FORMAT_CONFIG = {
 //  - accent: 心情文案强调色
 //  - primary/secondary : 照片兜底 / 装饰色
 const STYLE_COLORS = {
-  miyazaki:  { primary: '#5b9bd5', secondary: '#8fbc8f', text: '#2a3a2a', bg: '#f5f0e6', accent: '#7ec8a0' },
-  wkw:       { primary: '#c8a02e', secondary: '#2d5a3d', text: '#f0e8d0', bg: '#1a1a14', accent: '#e8b848' },
-  koreeda:   { primary: '#a0b89c', secondary: '#d4c5a0', text: '#3a3a2a', bg: '#faf6ee', accent: '#c4a878' },
-  wes:       { primary: '#e89a7e', secondary: '#7ab0c4', text: '#4a3a3a', bg: '#f5ebe0', accent: '#d4857a' },
-  nolan:     { primary: '#6a8caf', secondary: '#3a4a5a', text: '#d0d8e0', bg: '#1a1e24', accent: '#8aa4c4' },
-  chow:      { primary: '#e8c828', secondary: '#d44848', text: '#3a2a1a', bg: '#fdf5e6', accent: '#f0a030' },
-  jia:       { primary: '#8a7a5a', secondary: '#5a5a4a', text: '#c4b8a0', bg: '#2a2620', accent: '#a89878' },
-  lee:       { primary: '#7a9a8a', secondary: '#b0a890', text: '#3a3a30', bg: '#f0ece4', accent: '#9ab4a4' },
-  kurosawa:  { primary: '#8a8a8a', secondary: '#5a5a5a', text: '#e0e0e0', bg: '#1a1a1a', accent: '#aaaaaa' },
-  coppola:   { primary: '#c4a4a0', secondary: '#8a9ab0', text: '#4a3a3a', bg: '#f0ebe6', accent: '#d4b8b4' },
-  chazelle:  { primary: '#7a4ac4', secondary: '#e84858', text: '#f0e8e0', bg: '#1a1420', accent: '#b878e8' },
+  miyazaki: { primary: '#5b9bd5', secondary: '#8fbc8f', text: '#2a3a2a', bg: '#f5f0e6', accent: '#7ec8a0' },
+  wkw: { primary: '#c8a02e', secondary: '#2d5a3d', text: '#f0e8d0', bg: '#1a1a14', accent: '#e8b848' },
+  koreeda: { primary: '#a0b89c', secondary: '#d4c5a0', text: '#3a3a2a', bg: '#faf6ee', accent: '#c4a878' },
+  wes: { primary: '#e89a7e', secondary: '#7ab0c4', text: '#4a3a3a', bg: '#f5ebe0', accent: '#d4857a' },
+  nolan: { primary: '#6a8caf', secondary: '#3a4a5a', text: '#d0d8e0', bg: '#1a1e24', accent: '#8aa4c4' },
+  chow: { primary: '#e8c828', secondary: '#d44848', text: '#3a2a1a', bg: '#fdf5e6', accent: '#f0a030' },
+  jia: { primary: '#8a7a5a', secondary: '#5a5a4a', text: '#c4b8a0', bg: '#2a2620', accent: '#a89878' },
+  lee: { primary: '#7a9a8a', secondary: '#b0a890', text: '#3a3a30', bg: '#f0ece4', accent: '#9ab4a4' },
+  kurosawa: { primary: '#8a8a8a', secondary: '#5a5a5a', text: '#e0e0e0', bg: '#1a1a1a', accent: '#aaaaaa' },
+  coppola: { primary: '#c4a4a0', secondary: '#8a9ab0', text: '#4a3a3a', bg: '#f0ebe6', accent: '#d4b8b4' },
+  chazelle: { primary: '#7a4ac4', secondary: '#e84858', text: '#f0e8e0', bg: '#1a1420', accent: '#b878e8' },
   tarantino: { primary: '#e84848', secondary: '#e8c828', text: '#f0e8d0', bg: '#2a1410', accent: '#f06848' },
-  default:   { primary: '#c87f2e', secondary: '#3d7a8c', text: '#2a2218', bg: '#faf6ef', accent: '#c87f2e' },
+  default: { primary: '#c87f2e', secondary: '#3d7a8c', text: '#2a2218', bg: '#faf6ef', accent: '#c87f2e' },
 };
 
 // 风格 ID → 中文名称（用于底部信息行的风格署名）
@@ -196,16 +223,25 @@ export async function renderTicket(canvas, options) {
   await drawPhoto(ctx, photoUrl, width, photoHeight, colors, fmt.corner);
 
   // 3. 虚线撕裂线 + 两侧半圆缺口
-  drawPerforation(ctx, width, photoHeight, colors);
+  drawPerforation(ctx, width, photoHeight, colors, fmt);
 
   // 4. 信息区文字 + 底部信息行 + 底部打孔
   drawInfoArea(ctx, {
-    width, height, photoHeight, colors, fmt,
-    destination, date, moodText, ticketNumber, styleId, emotion,
+    width,
+    height,
+    photoHeight,
+    colors,
+    fmt,
+    destination,
+    date,
+    moodText,
+    ticketNumber,
+    styleId,
+    emotion,
   });
 
-  // 5. 纸张质感叠加（细微噪点颗粒，增加实体感）
-  drawPaperTexture(ctx, width, height, colors);
+  // 5. 纸张质感叠加（仅信息区+照片边缘，保持照片主体清晰度）
+  drawPaperTexture(ctx, width, height, colors, photoHeight);
 }
 
 // ========== 内部工具：图片加载与绘制 ==========
@@ -436,8 +472,9 @@ function drawPhotoPlaceholder(ctx, width, photoHeight, colors) {
  * @param {number} width
  * @param {number} y - 撕裂线 y 坐标
  * @param {Object} colors
+ * @param {Object} fmt - 版式配置（用于 notch 半径）
  */
-function drawPerforation(ctx, width, y, colors) {
+function drawPerforation(ctx, width, y, colors, fmt) {
   ctx.save();
 
   // 虚线
@@ -452,7 +489,7 @@ function drawPerforation(ctx, width, y, colors) {
 
   // 两侧半圆缺口（圆心贴在边缘，仅靠内半侧可见，咬入照片）
   ctx.fillStyle = colors.bg;
-  const r = 10;
+  const r = fmt?.notch || 12;
   ctx.beginPath();
   ctx.arc(0, y, r, 0, Math.PI * 2);
   ctx.fill();
@@ -471,10 +508,9 @@ function drawPerforation(ctx, width, y, colors) {
  * @param {Object} o
  */
 function drawInfoArea(ctx, o) {
-  const {
-    width, height, photoHeight, colors, fmt,
-    destination, date, moodText, ticketNumber, styleId, emotion,
-  } = o;
+  ctx.save(); // 保存状态，防止污染外部上下文
+
+  const { width, height, photoHeight, colors, fmt, destination, date, moodText, ticketNumber, styleId, emotion } = o;
 
   const pad = fmt.padding;
   const contentWidth = width - pad * 2;
@@ -493,10 +529,12 @@ function drawInfoArea(ctx, o) {
   }
   y += Math.round(fmt.dest * 0.25);
 
-  // —— 日期 + 场景（无衬线、弱化色） ——
+  // —— 日期 + 场景（无衬线、弱化色）——
   ctx.fillStyle = hexToRgba(colors.text, 0.6);
   ctx.font = `${fmt.date}px "PingFang SC", sans-serif`;
-  const dateLine = [date, emotion && emotion.sceneType].filter(Boolean).join('  ·  ');
+  // 避免场景类型与目的地重复显示
+  const sceneToShow = emotion && emotion.sceneType && emotion.sceneType !== destination ? emotion.sceneType : '';
+  const dateLine = [date, sceneToShow].filter(Boolean).join('  ·  ');
   if (dateLine) {
     ctx.fillText(dateLine, width / 2, y);
     y += fmt.date + Math.round(fmt.date * 0.7);
@@ -541,6 +579,8 @@ function drawInfoArea(ctx, o) {
 
   // —— 底部打孔存根 ——
   drawBottomNotches(ctx, width, height, colors, fmt.notch);
+
+  ctx.restore(); // 恢复 save() 时的状态
 }
 
 // ========== 内部绘制：底部打孔 ==========
@@ -583,18 +623,31 @@ let _textureCacheW = 0;
 let _textureCacheH = 0;
 
 /**
- * 在整张票根上叠加极细微的纸张噪点纹理
+ * 判断颜色是否为深色（用于调整纹理强度）
+ * @param {string} hex - #RRGGBB 格式颜色
+ * @returns {boolean}
+ */
+function isDarkColor(hex) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  // 感知亮度公式
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance < 0.5;
+}
+
+/**
+ * 在信息区叠加极细微的纸张噪点纹理，照片区仅边缘叠加少量颗粒
  * 使用 ImageData 逐像素添加随机透明度，模拟相纸/胶片颗粒感
  * 使用缓存避免重复计算
  * @param {CanvasRenderingContext2D} ctx
  * @param {number} width
  * @param {number} height
  * @param {Object} colors
+ * @param {number} photoHeight - 照片区高度
  */
-function drawPaperTexture(ctx, width, height, colors) {
-  // 仅在信息区叠加纹理（照片区不叠加，保持照片清晰度）
-  // 但为了性能，用小尺寸canvas缩放绘制
-  const texScale = 0.25; // 用1/4尺寸生成纹理再放大，性能更好
+function drawPaperTexture(ctx, width, height, colors, photoHeight) {
+  const texScale = 0.25;
   const tw = Math.round(width * texScale);
   const th = Math.round(height * texScale);
 
@@ -606,23 +659,20 @@ function drawPaperTexture(ctx, width, height, colors) {
     const imgData = texCtx.createImageData(tw, th);
     const data = imgData.data;
 
-    // 生成噪点：大部分像素透明，少数像素为深色/浅色微颗粒
     for (let i = 0; i < data.length; i += 4) {
       const r = Math.random();
       if (r < 0.03) {
-        // 深色颗粒（印刷网点感）
         data[i] = 0;
         data[i + 1] = 0;
         data[i + 2] = 0;
-        data[i + 3] = Math.floor(Math.random() * 18 + 6); // alpha 6-24
+        data[i + 3] = Math.floor(Math.random() * 18 + 6);
       } else if (r < 0.05) {
-        // 浅色颗粒（纸张纤维感）
         data[i] = 255;
         data[i + 1] = 255;
         data[i + 2] = 255;
         data[i + 3] = Math.floor(Math.random() * 12 + 4);
       } else {
-        data[i + 3] = 0; // 完全透明
+        data[i + 3] = 0;
       }
     }
     texCtx.putImageData(imgData, 0, 0);
@@ -631,25 +681,59 @@ function drawPaperTexture(ctx, width, height, colors) {
     _textureCacheH = th;
   }
 
-  // 使用 multiply 混合模式叠加，让噪点融入底色而非浮在上面
+  const dark = isDarkColor(colors.bg);
+
   ctx.save();
-  ctx.globalCompositeOperation = 'multiply';
-  ctx.globalAlpha = 0.5;
-  ctx.drawImage(_textureCache, 0, 0, width, height);
-  ctx.globalAlpha = 0.3;
-  ctx.globalCompositeOperation = 'screen';
-  ctx.drawImage(_textureCache, 0, 0, width, height);
+
+  // 1. 信息区：完整叠加纹理
+  ctx.beginPath();
+  ctx.rect(0, photoHeight, width, height - photoHeight);
+  ctx.clip();
+
+  if (dark) {
+    // 暗色主题：白色噪点为主（screen 模式），增强纸张纤维感
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = 0.25;
+    ctx.drawImage(_textureCache, 0, 0, width, height);
+  } else {
+    // 浅色主题：深色噪点为主（multiply 模式），增强印刷网点感
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.globalAlpha = 0.4;
+    ctx.drawImage(_textureCache, 0, 0, width, height);
+    ctx.globalAlpha = 0.15;
+    ctx.globalCompositeOperation = 'screen';
+    ctx.drawImage(_textureCache, 0, 0, width, height);
+  }
   ctx.restore();
 
-  // 添加极淡的边缘阴影/暗角效果，增加立体感
+  // 2. 照片区底部边缘：叠加极少量渐变纹理，使照片与信息区过渡自然
   ctx.save();
+  const edgeHeight = 30;
+  const edgeGrad = ctx.createLinearGradient(0, photoHeight - edgeHeight, 0, photoHeight + 10);
+  edgeGrad.addColorStop(0, 'rgba(0,0,0,0)');
+  edgeGrad.addColorStop(1, dark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)');
+  ctx.fillStyle = edgeGrad;
+  ctx.fillRect(0, photoHeight - edgeHeight, width, edgeHeight + 10);
+  ctx.restore();
+
+  // 3. 极淡暗角效果（仅作用于信息区，不覆盖照片）
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(0, photoHeight, width, height - photoHeight);
+  ctx.clip();
+  const cx = width / 2;
+  const cy = photoHeight + (height - photoHeight) / 2;
   const vignette = ctx.createRadialGradient(
-    width / 2, height / 2, Math.min(width, height) * 0.3,
-    width / 2, height / 2, Math.max(width, height) * 0.7
+    cx,
+    cy,
+    Math.min(width, height - photoHeight) * 0.3,
+    cx,
+    cy,
+    Math.max(width, height - photoHeight) * 0.7
   );
   vignette.addColorStop(0, 'rgba(0,0,0,0)');
-  vignette.addColorStop(1, 'rgba(0,0,0,0.06)');
+  vignette.addColorStop(1, dark ? 'rgba(0,0,0,0.12)' : 'rgba(0,0,0,0.05)');
   ctx.fillStyle = vignette;
-  ctx.fillRect(0, 0, width, height);
+  ctx.fillRect(0, photoHeight, width, height - photoHeight);
   ctx.restore();
 }

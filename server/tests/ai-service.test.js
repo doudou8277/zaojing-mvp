@@ -5,7 +5,8 @@
 import { describe, it, expect } from 'vitest';
 const aiService = require('../ai-service');
 
-const { cleanJsonResponse, localEmotionAnalysis, generateLocalTitles, localCopy, localParseStyle, localImageAnalysis } = aiService._pure;
+const { cleanJsonResponse, localEmotionAnalysis, generateLocalTitles, localCopy, localParseStyle, localImageAnalysis } =
+  aiService._pure;
 
 // ========== cleanJsonResponse ==========
 describe('cleanJsonResponse', () => {

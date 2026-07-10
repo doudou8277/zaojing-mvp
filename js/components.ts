@@ -123,7 +123,7 @@ class ZJModal extends HTMLElement {
 
     // 用 DOM API 移动原始子节点（而非 innerHTML 拼接，防 XSS）
     if (contentEl) {
-      childNodes.forEach(node => contentEl.appendChild(node));
+      childNodes.forEach((node) => contentEl.appendChild(node));
     }
 
     // 点击遮罩关闭
@@ -319,8 +319,9 @@ class ZJLoading extends HTMLElement {
     // title 不拼入 innerHTML，通过 textContent 安全设置
     const safeSteps = isNaN(steps) || steps < 1 ? 4 : Math.min(steps, 10);
 
-    const dots = Array.from({ length: safeSteps }, (_, i) =>
-      `<div class="gen-step-dot${i === 0 ? ' active' : ''}"></div>`
+    const dots = Array.from(
+      { length: safeSteps },
+      (_, i) => `<div class="gen-step-dot${i === 0 ? ' active' : ''}"></div>`
     ).join('');
 
     this.innerHTML = `

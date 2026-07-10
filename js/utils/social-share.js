@@ -26,7 +26,7 @@ export function shareToXiaohongshu({ text }) {
   // 小红书无 Web 端分享 API，提示用户保存图片后发布
   // 预填剪贴板文案
   if (navigator.clipboard && text) {
-    navigator.clipboard.writeText(text).catch(err => logger.warn('[social-share] 剪贴板写入失败（小红书）:', err));
+    navigator.clipboard.writeText(text).catch((err) => logger.warn('[social-share] 剪贴板写入失败（小红书）:', err));
   }
   // 打开小红书网页版（用户需登录后手动发布）
   window.open('https://www.xiaohongshu.com/publish/publish', '_blank');
@@ -63,7 +63,7 @@ export function shareToWeChat({ url }) {
  */
 export function shareToDouyin({ text }) {
   if (navigator.clipboard && text) {
-    navigator.clipboard.writeText(text).catch(err => logger.warn('[social-share] 剪贴板写入失败（抖音）:', err));
+    navigator.clipboard.writeText(text).catch((err) => logger.warn('[social-share] 剪贴板写入失败（抖音）:', err));
   }
   window.open('https://creator.douyin.com/', '_blank');
 }

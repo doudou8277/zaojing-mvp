@@ -116,9 +116,7 @@ export function addAccount({ platform, nickname, avatar, accessToken }) {
   }
 
   // 检查同平台同昵称是否已存在
-  const existing = accounts.find(
-    (a) => a.platform === platform && a.nickname === nickname
-  );
+  const existing = accounts.find((a) => a.platform === platform && a.nickname === nickname);
   if (existing) {
     throw new Error(`该平台已存在同名账号: ${nickname}`);
   }

@@ -61,13 +61,16 @@ function drawCustomBg(ctx, width, height, colors, rc) {
 
 const bgRenderers = {
   // 王家卫风格：霓虹雨夜
-  wkw: function(ctx, w, h, rc) {
+  wkw: function (ctx, w, h, rc) {
     if (rc) {
       paintEmotionGradient(ctx, w, h, rc);
-      const mv = rc.merged, dc = rc.directorColors;
+      const mv = rc.merged,
+        dc = rc.directorColors;
       const cnt = Math.max(4, Math.round(8 + mv.adjustedParticleCount * 0.2));
       for (let i = 0; i < cnt; i++) {
-        const x = Math.random() * w, y = Math.random() * h, r = 20 + Math.random() * 60;
+        const x = Math.random() * w,
+          y = Math.random() * h,
+          r = 20 + Math.random() * 60;
         const g = ctx.createRadialGradient(x, y, 0, x, y, r);
         g.addColorStop(0, blendColor(dc.accent, mv.accentColor, mv.adjustedLightness));
         g.addColorStop(1, 'rgba(0,0,0,0)');
@@ -116,12 +119,14 @@ const bgRenderers = {
   },
 
   // 宫崎骏风格：天空云彩
-  miyazaki: function(ctx, w, h, rc) {
+  miyazaki: function (ctx, w, h, rc) {
     if (rc) {
       paintEmotionGradient(ctx, w, h, rc);
-      const mv = rc.merged, dc = rc.directorColors;
+      const mv = rc.merged,
+        dc = rc.directorColors;
       // 太阳光晕
-      const sunX = w * 0.72, sunY = h * 0.22;
+      const sunX = w * 0.72,
+        sunY = h * 0.22;
       const sun = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, w * 0.35);
       sun.addColorStop(0, blendColor(dc.accent, mv.accentColor, mv.adjustedLightness));
       sun.addColorStop(1, 'rgba(0,0,0,0)');
@@ -171,10 +176,11 @@ const bgRenderers = {
   },
 
   // 诺兰风格：冷峻建筑
-  nolan: function(ctx, w, h, rc) {
+  nolan: function (ctx, w, h, rc) {
     if (rc) {
       paintEmotionGradient(ctx, w, h, rc);
-      const mv = rc.merged, dc = rc.directorColors;
+      const mv = rc.merged,
+        dc = rc.directorColors;
       ctx.fillStyle = blendColor(dc.bg, mv.bgColor[2], Math.min(1, mv.adjustedLightness + 0.3));
       ctx.globalAlpha = 0.7;
       const baseY = h * 0.7;
@@ -207,10 +213,11 @@ const bgRenderers = {
   },
 
   // 韦斯·安德森：对称粉彩
-  wes: function(ctx, w, h, rc) {
+  wes: function (ctx, w, h, rc) {
     if (rc) {
       paintEmotionGradient(ctx, w, h, rc);
-      const mv = rc.merged, dc = rc.directorColors;
+      const mv = rc.merged,
+        dc = rc.directorColors;
       ctx.strokeStyle = blendColor(dc.accent, mv.accentColor, mv.adjustedLightness);
       ctx.lineWidth = Math.max(2, w * 0.008);
       ctx.globalAlpha = 0.6;
@@ -240,11 +247,13 @@ const bgRenderers = {
   },
 
   // 是枝裕和：柔和居家光
-  koreeda: function(ctx, w, h, rc) {
+  koreeda: function (ctx, w, h, rc) {
     if (rc) {
       paintEmotionGradient(ctx, w, h, rc);
-      const mv = rc.merged, dc = rc.directorColors;
-      const gx = w * 0.3, gy = h * 0.35;
+      const mv = rc.merged,
+        dc = rc.directorColors;
+      const gx = w * 0.3,
+        gy = h * 0.35;
       const glow = ctx.createRadialGradient(gx, gy, 0, gx, gy, w * 0.55);
       glow.addColorStop(0, blendColor(dc.accent, mv.accentColor, mv.adjustedLightness));
       glow.addColorStop(1, 'rgba(0,0,0,0)');
@@ -259,10 +268,11 @@ const bgRenderers = {
   },
 
   // 周星驰：活力斜纹
-  chow: function(ctx, w, h, rc) {
+  chow: function (ctx, w, h, rc) {
     if (rc) {
       paintEmotionGradient(ctx, w, h, rc);
-      const mv = rc.merged, dc = rc.directorColors;
+      const mv = rc.merged,
+        dc = rc.directorColors;
       ctx.save();
       ctx.globalAlpha = 0.15;
       ctx.lineWidth = w * 0.04;
@@ -281,10 +291,11 @@ const bgRenderers = {
   },
 
   // 贾樟柯：水平雾霾
-  jia: function(ctx, w, h, rc) {
+  jia: function (ctx, w, h, rc) {
     if (rc) {
       paintEmotionGradient(ctx, w, h, rc);
-      const mv = rc.merged, dc = rc.directorColors;
+      const mv = rc.merged,
+        dc = rc.directorColors;
       for (let i = 0; i < 4; i++) {
         const y = h * (0.2 + i * 0.18);
         const g = ctx.createLinearGradient(0, y, w, y);
@@ -303,10 +314,11 @@ const bgRenderers = {
   },
 
   // 李安：远山剪影
-  lee: function(ctx, w, h, rc) {
+  lee: function (ctx, w, h, rc) {
     if (rc) {
       paintEmotionGradient(ctx, w, h, rc);
-      const mv = rc.merged, dc = rc.directorColors;
+      const mv = rc.merged,
+        dc = rc.directorColors;
       ctx.fillStyle = blendColor(dc.bg, mv.bgColor[2], Math.min(1, mv.adjustedLightness + 0.2));
       ctx.globalAlpha = 0.6;
       ctx.beginPath();
@@ -326,10 +338,11 @@ const bgRenderers = {
   },
 
   // 黑泽明：戏剧性地平线
-  kurosawa: function(ctx, w, h, rc) {
+  kurosawa: function (ctx, w, h, rc) {
     if (rc) {
       paintEmotionGradient(ctx, w, h, rc);
-      const mv = rc.merged, dc = rc.directorColors;
+      const mv = rc.merged,
+        dc = rc.directorColors;
       const horizon = h * 0.62;
       ctx.fillStyle = blendColor(dc.bg, mv.bgColor[2], Math.min(1, mv.adjustedLightness + 0.25));
       ctx.globalAlpha = 0.5;
@@ -342,10 +355,11 @@ const bgRenderers = {
   },
 
   // 科波拉：教父式压暗
-  coppola: function(ctx, w, h, rc) {
+  coppola: function (ctx, w, h, rc) {
     if (rc) {
       paintEmotionGradient(ctx, w, h, rc);
-      const mv = rc.merged, dc = rc.directorColors;
+      const mv = rc.merged,
+        dc = rc.directorColors;
       const top = ctx.createLinearGradient(0, 0, 0, h * 0.4);
       top.addColorStop(0, blendColor(dc.bg, mv.bgColor[2], Math.min(1, mv.adjustedLightness + 0.4)));
       top.addColorStop(1, 'rgba(0,0,0,0)');
@@ -362,10 +376,11 @@ const bgRenderers = {
   },
 
   // 查泽雷：霓虹城市灯火
-  chazelle: function(ctx, w, h, rc) {
+  chazelle: function (ctx, w, h, rc) {
     if (rc) {
       paintEmotionGradient(ctx, w, h, rc);
-      const mv = rc.merged, dc = rc.directorColors;
+      const mv = rc.merged,
+        dc = rc.directorColors;
       const lightColor = blendColor(dc.accent, mv.accentColor, mv.adjustedLightness);
       const cnt = Math.max(8, Math.round(12 + mv.adjustedParticleCount * 0.2));
       for (let i = 0; i < cnt; i++) {
@@ -383,10 +398,11 @@ const bgRenderers = {
   },
 
   // 塔伦蒂诺：大胆对角分割
-  tarantino: function(ctx, w, h, rc) {
+  tarantino: function (ctx, w, h, rc) {
     if (rc) {
       paintEmotionGradient(ctx, w, h, rc);
-      const mv = rc.merged, dc = rc.directorColors;
+      const mv = rc.merged,
+        dc = rc.directorColors;
       ctx.save();
       ctx.fillStyle = blendColor(dc.primary, mv.bgColor[0], Math.min(1, mv.adjustedLightness + 0.3));
       ctx.globalAlpha = 0.35;
@@ -401,7 +417,7 @@ const bgRenderers = {
       return;
     }
     drawCustomBg(ctx, w, h, null);
-  }
+  },
 };
 
 // ========== AI 背景绘制 ==========
@@ -429,7 +445,7 @@ function drawAIBackground(ctx, imageBitmap, width, height) {
 
 // ========== Worker 消息处理 ==========
 
-self.onmessage = async function(e) {
+self.onmessage = async function (e) {
   const { type, id, width, height, directorId, colors, aiImageBlob, vignetteIntensity, renderContext } = e.data;
 
   if (type !== 'renderBackground') {

@@ -84,11 +84,7 @@ describe('safeAsync', () => {
       { module: 'TestModule' }
     );
 
-    expect(errorSpy).toHaveBeenCalledWith(
-      '[ZaoJing]',
-      '[TestModule] 模块错误:',
-      '日志测试'
-    );
+    expect(errorSpy).toHaveBeenCalledWith('[ZaoJing]', '[TestModule] 模块错误:', '日志测试');
   });
 
   it('未指定 module 时应使用默认模块名 unknown', async () => {
@@ -96,11 +92,7 @@ describe('safeAsync', () => {
       throw new Error('默认模块');
     });
 
-    expect(errorSpy).toHaveBeenCalledWith(
-      '[ZaoJing]',
-      '[unknown] 模块错误:',
-      '默认模块'
-    );
+    expect(errorSpy).toHaveBeenCalledWith('[ZaoJing]', '[unknown] 模块错误:', '默认模块');
   });
 });
 
@@ -155,11 +147,7 @@ describe('safeSync', () => {
       { module: 'SyncModule' }
     );
 
-    expect(errorSpy).toHaveBeenCalledWith(
-      '[ZaoJing]',
-      '[SyncModule] 模块错误:',
-      '同步日志'
-    );
+    expect(errorSpy).toHaveBeenCalledWith('[ZaoJing]', '[SyncModule] 模块错误:', '同步日志');
   });
 });
 
@@ -182,12 +170,9 @@ describe('createModuleBoundary', () => {
 
   it('run 出错时应返回 fallback 值（委托 safeAsync）', async () => {
     const boundary = createModuleBoundary('TestModule');
-    const result = await boundary.run(
-      async () => {
-        throw new Error('run 失败');
-      },
-      'fallback-value'
-    );
+    const result = await boundary.run(async () => {
+      throw new Error('run 失败');
+    }, 'fallback-value');
     expect(result).toBe('fallback-value');
   });
 
@@ -197,22 +182,15 @@ describe('createModuleBoundary', () => {
       throw new Error('委托错误');
     });
 
-    expect(errorSpy).toHaveBeenCalledWith(
-      '[ZaoJing]',
-      '[BoundaryModule] 模块错误:',
-      '委托错误'
-    );
+    expect(errorSpy).toHaveBeenCalledWith('[ZaoJing]', '[BoundaryModule] 模块错误:', '委托错误');
   });
 
   it('run 出错时 fallback 函数应接收错误对象（委托 safeAsync）', async () => {
     const boundary = createModuleBoundary('TestModule');
     const fallbackFn = vi.fn((err) => `handled: ${err.message}`);
-    const result = await boundary.run(
-      async () => {
-        throw new Error('delegated');
-      },
-      fallbackFn
-    );
+    const result = await boundary.run(async () => {
+      throw new Error('delegated');
+    }, fallbackFn);
 
     expect(fallbackFn).toHaveBeenCalledWith(expect.any(Error));
     expect(result).toBe('handled: delegated');
@@ -227,12 +205,9 @@ describe('createModuleBoundary', () => {
 
   it('runSync 出错时应返回 fallback 值（委托 safeSync）', () => {
     const boundary = createModuleBoundary('TestModule');
-    const result = boundary.runSync(
-      () => {
-        throw new Error('runSync 失败');
-      },
-      'sync-fallback'
-    );
+    const result = boundary.runSync(() => {
+      throw new Error('runSync 失败');
+    }, 'sync-fallback');
     expect(result).toBe('sync-fallback');
   });
 
@@ -242,22 +217,15 @@ describe('createModuleBoundary', () => {
       throw new Error('sync 委托错误');
     });
 
-    expect(errorSpy).toHaveBeenCalledWith(
-      '[ZaoJing]',
-      '[SyncBoundary] 模块错误:',
-      'sync 委托错误'
-    );
+    expect(errorSpy).toHaveBeenCalledWith('[ZaoJing]', '[SyncBoundary] 模块错误:', 'sync 委托错误');
   });
 
   it('runSync 出错时 fallback 函数应接收错误对象（委托 safeSync）', () => {
     const boundary = createModuleBoundary('TestModule');
     const fallbackFn = vi.fn((err) => `sync-handled: ${err.message}`);
-    const result = boundary.runSync(
-      () => {
-        throw new Error('sync-delegated');
-      },
-      fallbackFn
-    );
+    const result = boundary.runSync(() => {
+      throw new Error('sync-delegated');
+    }, fallbackFn);
 
     expect(fallbackFn).toHaveBeenCalledWith(expect.any(Error));
     expect(result).toBe('sync-handled: sync-delegated');
@@ -274,15 +242,7 @@ describe('createModuleBoundary', () => {
       throw new Error('B 错误');
     });
 
-    expect(errorSpy).toHaveBeenCalledWith(
-      '[ZaoJing]',
-      '[ModuleA] 模块错误:',
-      'A 错误'
-    );
-    expect(errorSpy).toHaveBeenCalledWith(
-      '[ZaoJing]',
-      '[ModuleB] 模块错误:',
-      'B 错误'
-    );
+    expect(errorSpy).toHaveBeenCalledWith('[ZaoJing]', '[ModuleA] 模块错误:', 'A 错误');
+    expect(errorSpy).toHaveBeenCalledWith('[ZaoJing]', '[ModuleB] 模块错误:', 'B 错误');
   });
 });

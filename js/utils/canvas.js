@@ -27,8 +27,12 @@ export function hexToRgba(hex, alpha) {
  */
 export function drawVignette(ctx, width, height, intensity = 0.35) {
   const gradient = ctx.createRadialGradient(
-    width / 2, height / 2, Math.min(width, height) * 0.3,
-    width / 2, height / 2, Math.max(width, height) * 0.75
+    width / 2,
+    height / 2,
+    Math.min(width, height) * 0.3,
+    width / 2,
+    height / 2,
+    Math.max(width, height) * 0.75
   );
   gradient.addColorStop(0, 'rgba(0,0,0,0)');
   gradient.addColorStop(1, `rgba(0,0,0,${intensity})`);

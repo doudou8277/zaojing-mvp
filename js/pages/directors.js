@@ -1,13 +1,7 @@
 // pages/directors.js — 导演页模块
 // 从 app.js 提取的导演页相关函数：DNA 雷达图、导演多选、情绪光谱可视化与交互。
 import { $, state, toast, escapeHtml } from '../shared.js';
-import {
-  DIRECTORS,
-  EMOTION_SPECTRUM,
-  EMOTION_KEYWORDS,
-  getEmotionFromMood,
-  getStyleDNAValues,
-} from '../data.js';
+import { DIRECTORS, EMOTION_SPECTRUM, EMOTION_KEYWORDS, getEmotionFromMood, getStyleDNAValues } from '../data.js';
 
 // ========== DNA 雷达图 ==========
 
@@ -31,10 +25,10 @@ export function drawDNARadar(canvas, styleDNA, label) {
 
   // 绘制网格（3层）
   for (let layer = 1; layer <= 3; layer++) {
-    const r = radius * layer / 3;
+    const r = (radius * layer) / 3;
     ctx.beginPath();
     for (let i = 0; i < n; i++) {
-      const angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+      const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
       const x = cx + Math.cos(angle) * r;
       const y = cy + Math.sin(angle) * r;
       if (i === 0) ctx.moveTo(x, y);
@@ -48,7 +42,7 @@ export function drawDNARadar(canvas, styleDNA, label) {
 
   // 绘制轴线
   for (let i = 0; i < n; i++) {
-    const angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+    const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
     ctx.beginPath();
     ctx.moveTo(cx, cy);
     ctx.lineTo(cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius);
@@ -59,7 +53,7 @@ export function drawDNARadar(canvas, styleDNA, label) {
   // 绘制数据多边形
   ctx.beginPath();
   for (let i = 0; i < n; i++) {
-    const angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+    const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
     const r = radius * values[i];
     const x = cx + Math.cos(angle) * r;
     const y = cy + Math.sin(angle) * r;
@@ -75,7 +69,7 @@ export function drawDNARadar(canvas, styleDNA, label) {
 
   // 绘制顶点
   for (let i = 0; i < n; i++) {
-    const angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+    const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
     const r = radius * values[i];
     const x = cx + Math.cos(angle) * r;
     const y = cy + Math.sin(angle) * r;
@@ -92,7 +86,7 @@ export function drawDNARadar(canvas, styleDNA, label) {
     ctx.textBaseline = 'middle';
     ctx.fillStyle = 'rgba(245,240,232,0.5)';
     for (let i = 0; i < n; i++) {
-      const angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+      const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
       const labelR = radius + 12;
       const x = cx + Math.cos(angle) * labelR;
       const y = cy + Math.sin(angle) * labelR;
@@ -137,7 +131,7 @@ export function initDirectorsPage(callbacks = {}) {
 
   // 如果有 AI 分析结果，自动选中推荐导演
   if (state.emotionAnalysis && state.emotionAnalysis.recommendedDirectors && state.selectedDirectorIds.length === 0) {
-    state.selectedDirectorIds = state.emotionAnalysis.recommendedDirectors.slice(0, 2).map(d => d.directorId);
+    state.selectedDirectorIds = state.emotionAnalysis.recommendedDirectors.slice(0, 2).map((d) => d.directorId);
   }
 
   // 显示 AI 情绪分析结果
@@ -147,7 +141,7 @@ export function initDirectorsPage(callbacks = {}) {
     heroSub.innerHTML = `AI 识别情绪：<strong style="color:var(--accent)">${escapeHtml(ea.primaryEmotion)}</strong> · 推荐导演已标记 <span class="ai-badge">AI</span>`;
   }
 
-  DIRECTORS.forEach(director => {
+  DIRECTORS.forEach((director) => {
     const card = document.createElement('button');
     card.type = 'button';
     card.className = 'director-card';
@@ -160,9 +154,10 @@ export function initDirectorsPage(callbacks = {}) {
     card.style.setProperty('--dir-color', director.colors.primary);
 
     // 查找 AI 推荐信息
-    const aiRec = state.emotionAnalysis && state.emotionAnalysis.recommendedDirectors
-      ? state.emotionAnalysis.recommendedDirectors.find(r => r.directorId === director.id)
-      : null;
+    const aiRec =
+      state.emotionAnalysis && state.emotionAnalysis.recommendedDirectors
+        ? state.emotionAnalysis.recommendedDirectors.find((r) => r.directorId === director.id)
+        : null;
 
     const aiBadge = aiRec
       ? `<div class="ai-rec-badge" title="${escapeHtml(aiRec.reason || '')}">AI推荐 ${escapeHtml(String(aiRec.matchScore || 0))}%</div>`
@@ -187,9 +182,9 @@ export function initDirectorsPage(callbacks = {}) {
   });
 
   // 为每张导演卡片绘制 DNA 雷达图
-  document.querySelectorAll('.director-card').forEach(card => {
+  document.querySelectorAll('.director-card').forEach((card) => {
     const directorId = card.dataset.id;
-    const director = DIRECTORS.find(d => d.id === directorId);
+    const director = DIRECTORS.find((d) => d.id === directorId);
     if (director && director.styleDNA) {
       const canvas = card.querySelector('canvas.dna-radar');
       if (canvas) {
@@ -245,7 +240,7 @@ export function toggleDirector(id) {
   }
 
   // 更新卡片视觉
-  document.querySelectorAll('.director-card').forEach(card => {
+  document.querySelectorAll('.director-card').forEach((card) => {
     const id = card.dataset.id;
     const isSelected = state.selectedDirectorIds.includes(id);
     card.classList.toggle('selected', isSelected);
@@ -286,10 +281,11 @@ export function renderEmotionSpectrum() {
   if (state.emotionAnalysis && state.emotionAnalysis.primaryEmotion) {
     // 有 AI 分析结果时，使用 AI 识别的情绪
     emotion = state.emotionAnalysis.primaryEmotion;
-    intensity = state.emotionAnalysis.emotionIntensity || (Math.floor(Math.random() * 4) + 6);
-    keywords = (state.emotionAnalysis.keywords && state.emotionAnalysis.keywords.length > 0)
-      ? state.emotionAnalysis.keywords
-      : null;
+    intensity = state.emotionAnalysis.emotionIntensity || Math.floor(Math.random() * 4) + 6;
+    keywords =
+      state.emotionAnalysis.keywords && state.emotionAnalysis.keywords.length > 0
+        ? state.emotionAnalysis.keywords
+        : null;
   } else if (state.moodTagId) {
     // 没有 AI 分析结果时，根据心情标签显示默认情绪
     emotion = getEmotionFromMood(state.moodTagId) || '治愈';
@@ -310,12 +306,12 @@ export function renderEmotionSpectrum() {
   // 更新渐变色条
   const bar = $('spectrum-bar');
   bar.style.background = config.gradient;
-  bar.style.width = (intensity * 10) + '%';
+  bar.style.width = intensity * 10 + '%';
 
   // 更新滑块位置
   const slider = $('spectrum-slider');
   if (slider) {
-    slider.style.left = (intensity * 10) + '%';
+    slider.style.left = intensity * 10 + '%';
   }
 
   // 渲染情绪类型快捷选择按钮（取前8个常用情绪）
@@ -323,7 +319,7 @@ export function renderEmotionSpectrum() {
   if (emotionsEl) {
     emotionsEl.innerHTML = '';
     const emotionKeys = Object.keys(EMOTION_SPECTRUM).slice(0, 8);
-    emotionKeys.forEach(emo => {
+    emotionKeys.forEach((emo) => {
       const chip = document.createElement('span');
       chip.className = 'spectrum-emotion-chip';
       chip.textContent = emo;
@@ -337,7 +333,7 @@ export function renderEmotionSpectrum() {
   const keywordsEl = $('spectrum-keywords');
   keywordsEl.innerHTML = '';
   const keywordList = keywords && keywords.length > 0 ? keywords : config.keywords;
-  keywordList.forEach(kw => {
+  keywordList.forEach((kw) => {
     const tag = document.createElement('span');
     tag.className = 'spectrum-keyword';
     tag.textContent = kw;
@@ -388,9 +384,9 @@ export function _updateIntensityFromPosition(clientX) {
   state.emotionAnalysis.emotionIntensity = intensity;
 
   const slider = _spectrumDragState.slider;
-  if (slider) slider.style.left = (intensity * 10) + '%';
+  if (slider) slider.style.left = intensity * 10 + '%';
   const bar = $('spectrum-bar');
-  if (bar) bar.style.width = (intensity * 10) + '%';
+  if (bar) bar.style.width = intensity * 10 + '%';
 
   const emotion = state.emotionAnalysis.primaryEmotion || '治愈';
   $('spectrum-intensity').textContent = `${emotion} · 强度 ${intensity}/10`;
@@ -439,7 +435,7 @@ export function initSpectrumInteraction() {
       const config = EMOTION_SPECTRUM[emotion];
       if (!config) return;
 
-      emotionsEl.querySelectorAll('.spectrum-emotion-chip').forEach(c => c.classList.remove('active'));
+      emotionsEl.querySelectorAll('.spectrum-emotion-chip').forEach((c) => c.classList.remove('active'));
       chip.classList.add('active');
 
       if (!state.emotionAnalysis) state.emotionAnalysis = {};
@@ -451,7 +447,7 @@ export function initSpectrumInteraction() {
       const keywordsEl = $('spectrum-keywords');
       if (keywordsEl) {
         keywordsEl.innerHTML = '';
-        config.keywords.forEach(kw => {
+        config.keywords.forEach((kw) => {
           const tag = document.createElement('span');
           tag.className = 'spectrum-keyword';
           tag.textContent = kw;

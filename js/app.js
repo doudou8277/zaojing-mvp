@@ -8,7 +8,19 @@
 import '../css/app.css';
 import { logger } from './utils/logger.js';
 import { lazyLoadAll, disconnectLazyLoad } from './utils/lazy-load.js';
-import { $, state, toast, navigate, pages, openModal, closeModal, closeAllModals, switchResultToolsTab, ALL_MODAL_IDS, escapeHtml } from './shared.js';
+import {
+  $,
+  state,
+  toast,
+  navigate,
+  pages,
+  openModal,
+  closeModal,
+  closeAllModals,
+  switchResultToolsTab,
+  ALL_MODAL_IDS,
+  escapeHtml,
+} from './shared.js';
 import { DIRECTORS } from './data';
 import * as AIClient from './ai-client';
 import { createModuleBoundary } from './utils/error-boundary.js';
@@ -65,19 +77,44 @@ const pageInitialized = {};
 async function loadPageModule(name) {
   if (lazyModules[name]) return lazyModules[name];
   switch (name) {
-    case 'result':      lazyModules.result      = await import('./pages/result.js');      return lazyModules.result;
-    case 'style':       lazyModules.style       = await import('./pages/style.js');       return lazyModules.style;
-    case 'ticket':      lazyModules.ticket      = await import('./pages/ticket.js');      return lazyModules.ticket;
-    case 'cocreate':    lazyModules.cocreate    = await import('./pages/cocreate.js');    return lazyModules.cocreate;
-    case 'trailer':     lazyModules.trailer     = await import('./pages/trailer.js');     return lazyModules.trailer;
-    case 'generating':  lazyModules.generating  = await import('./pages/generating.js');  return lazyModules.generating;
-    case 'batch':       lazyModules.batch       = await import('./pages/batch.js');       return lazyModules.batch;
-    case 'templates':   lazyModules.templates   = await import('./pages/templates.js');   return lazyModules.templates;
-    case 'brand':       lazyModules.brand       = await import('./pages/brand.js');       return lazyModules.brand;
-    case 'hot-topics':  lazyModules.hotTopics   = await import('./pages/hot-topics.js');  return lazyModules.hotTopics;
-    case 'typography':  lazyModules.typography  = await import('./pages/typography.js');  return lazyModules.typography;
-    case 'accounts':    lazyModules.accounts    = await import('./pages/accounts.js');    return lazyModules.accounts;
-    default: throw new Error(`Unknown page module: ${name}`);
+    case 'result':
+      lazyModules.result = await import('./pages/result.js');
+      return lazyModules.result;
+    case 'style':
+      lazyModules.style = await import('./pages/style.js');
+      return lazyModules.style;
+    case 'ticket':
+      lazyModules.ticket = await import('./pages/ticket.js');
+      return lazyModules.ticket;
+    case 'cocreate':
+      lazyModules.cocreate = await import('./pages/cocreate.js');
+      return lazyModules.cocreate;
+    case 'trailer':
+      lazyModules.trailer = await import('./pages/trailer.js');
+      return lazyModules.trailer;
+    case 'generating':
+      lazyModules.generating = await import('./pages/generating.js');
+      return lazyModules.generating;
+    case 'batch':
+      lazyModules.batch = await import('./pages/batch.js');
+      return lazyModules.batch;
+    case 'templates':
+      lazyModules.templates = await import('./pages/templates.js');
+      return lazyModules.templates;
+    case 'brand':
+      lazyModules.brand = await import('./pages/brand.js');
+      return lazyModules.brand;
+    case 'hot-topics':
+      lazyModules.hotTopics = await import('./pages/hot-topics.js');
+      return lazyModules.hotTopics;
+    case 'typography':
+      lazyModules.typography = await import('./pages/typography.js');
+      return lazyModules.typography;
+    case 'accounts':
+      lazyModules.accounts = await import('./pages/accounts.js');
+      return lazyModules.accounts;
+    default:
+      throw new Error(`Unknown page module: ${name}`);
   }
 }
 
@@ -176,16 +213,18 @@ function initDirectorsPageWithCallbacks() {
   } else {
     // style.js 尚未加载：先无回调渲染导演页，再异步加载 style 并补充风格功能
     initDirectorsPage({});
-    ensurePageInit('style').then((mod) => {
-      mod.initStyleSourceTabs();
-      mod.initDirectorSearch();
-      mod.initCustomStylePanel();
-      mod.initMovieStylePanel();
-      mod.initBlendStylePanel();
-      mod.loadCustomStyles();
-      mod.renderSavedStyles();
-      mod.renderStyleRecommendations();
-    }).catch((e) => logger.warn('异步加载风格模块失败:', e));
+    ensurePageInit('style')
+      .then((mod) => {
+        mod.initStyleSourceTabs();
+        mod.initDirectorSearch();
+        mod.initCustomStylePanel();
+        mod.initMovieStylePanel();
+        mod.initBlendStylePanel();
+        mod.loadCustomStyles();
+        mod.renderSavedStyles();
+        mod.renderStyleRecommendations();
+      })
+      .catch((e) => logger.warn('异步加载风格模块失败:', e));
   }
 }
 
@@ -266,10 +305,22 @@ function bindEvents() {
   });
 
   // 结果页（懒加载 result 模块）
-  $('btn-download').addEventListener('click', async () => { await ensurePageInit('result'); lazyModules.result.downloadPoster(); });
-  $('btn-share').addEventListener('click', async () => { await ensurePageInit('result'); lazyModules.result.sharePoster(); });
-  $('btn-regenerate').addEventListener('click', async () => { await ensurePageInit('result'); lazyModules.result.regenerate(); });
-  $('btn-refresh-quote').addEventListener('click', async () => { await ensurePageInit('result'); lazyModules.result.refreshQuote(); });
+  $('btn-download').addEventListener('click', async () => {
+    await ensurePageInit('result');
+    lazyModules.result.downloadPoster();
+  });
+  $('btn-share').addEventListener('click', async () => {
+    await ensurePageInit('result');
+    lazyModules.result.sharePoster();
+  });
+  $('btn-regenerate').addEventListener('click', async () => {
+    await ensurePageInit('result');
+    lazyModules.result.regenerate();
+  });
+  $('btn-refresh-quote').addEventListener('click', async () => {
+    await ensurePageInit('result');
+    lazyModules.result.refreshQuote();
+  });
 
   // 刷新 AI 影评
   $('btn-refresh-review').addEventListener('click', async () => {
@@ -327,7 +378,10 @@ function bindEvents() {
   });
 
   // 电影墙
-  $('btn-to-wall').addEventListener('click', async () => { await ensurePageInit('result'); lazyModules.result.initWallPage(); });
+  $('btn-to-wall').addEventListener('click', async () => {
+    await ensurePageInit('result');
+    lazyModules.result.initWallPage();
+  });
   $('btn-wall-to-input').addEventListener('click', () => navigateTo('input'));
   $('btn-wall-back').addEventListener('click', () => navigateTo('input'));
   $('btn-wall-clear').addEventListener('click', async () => {
@@ -347,8 +401,14 @@ function bindEvents() {
   });
 
   // 分享（action 按钮保留，close/overlay 由 zj-modal 统一处理）
-  $('btn-copy-link').addEventListener('click', async () => { await ensurePageInit('result'); lazyModules.result.copyShareLink(); });
-  $('btn-download-qr').addEventListener('click', async () => { await ensurePageInit('result'); lazyModules.result.downloadQRCode(); });
+  $('btn-copy-link').addEventListener('click', async () => {
+    await ensurePageInit('result');
+    lazyModules.result.copyShareLink();
+  });
+  $('btn-download-qr').addEventListener('click', async () => {
+    await ensurePageInit('result');
+    lazyModules.result.downloadQRCode();
+  });
 
   // 多平台分享按钮
   document.querySelectorAll('.share-platform-btn').forEach((btn) => {
@@ -359,7 +419,10 @@ function bindEvents() {
   });
 
   // 保存图片按钮
-  $('btn-download-image').addEventListener('click', async () => { await ensurePageInit('result'); lazyModules.result.savePosterImage(); });
+  $('btn-download-image').addEventListener('click', async () => {
+    await ensurePageInit('result');
+    lazyModules.result.savePosterImage();
+  });
 
   // AI 引擎选择器
   document.querySelectorAll('.ai-engine-chip').forEach((chip) => {
@@ -378,32 +441,71 @@ function bindEvents() {
   });
 
   // 多人共创（懒加载 cocreate 模块）
-  $('btn-to-cocreate').addEventListener('click', async () => { await ensurePageInit('cocreate'); lazyModules.cocreate.initCocreatePage(); });
+  $('btn-to-cocreate').addEventListener('click', async () => {
+    await ensurePageInit('cocreate');
+    lazyModules.cocreate.initCocreatePage();
+  });
   $('btn-add-contributor').addEventListener('click', async () => {
     await ensurePageInit('cocreate');
     const count = $('cocreate-inputs').querySelectorAll('.cocreate-input-item').length;
     lazyModules.cocreate.addCocreateInput(`创作者${count + 1}`, '');
   });
   $('btn-cocreate-back').addEventListener('click', () => navigateTo('input'));
-  $('btn-cocreate-analyze').addEventListener('click', async () => { await ensurePageInit('cocreate'); lazyModules.cocreate.analyzeCocreate(); });
-  $('btn-cocreate-generate').addEventListener('click', async () => { await ensurePageInit('cocreate'); lazyModules.cocreate.generateCocreatePoster(); });
+  $('btn-cocreate-analyze').addEventListener('click', async () => {
+    await ensurePageInit('cocreate');
+    lazyModules.cocreate.analyzeCocreate();
+  });
+  $('btn-cocreate-generate').addEventListener('click', async () => {
+    await ensurePageInit('cocreate');
+    lazyModules.cocreate.generateCocreatePoster();
+  });
 
   // 电影预告片（懒加载 trailer 模块；close/overlay 由 zj-modal 统一处理）
-  $('btn-trailer').addEventListener('click', async () => { await ensurePageInit('trailer'); lazyModules.trailer.playTrailer(); });
-  $('btn-trailer-replay').addEventListener('click', async () => { await ensurePageInit('trailer'); lazyModules.trailer.playTrailer(); });
-  $('btn-trailer-skip').addEventListener('click', async () => { await ensurePageInit('trailer'); lazyModules.trailer.skipTrailer(); });
+  $('btn-trailer').addEventListener('click', async () => {
+    await ensurePageInit('trailer');
+    lazyModules.trailer.playTrailer();
+  });
+  $('btn-trailer-replay').addEventListener('click', async () => {
+    await ensurePageInit('trailer');
+    lazyModules.trailer.playTrailer();
+  });
+  $('btn-trailer-skip').addEventListener('click', async () => {
+    await ensurePageInit('trailer');
+    lazyModules.trailer.skipTrailer();
+  });
 
   // 海报动效化（result 模块的动画功能；close/overlay 由 zj-modal 统一处理）
-  $('btn-animate').addEventListener('click', async () => { await ensurePageInit('result'); lazyModules.result.openAnimateModal(); });
-  $('btn-download-video').addEventListener('click', async () => { await ensurePageInit('result'); lazyModules.result.downloadAnimationVideo(); });
+  $('btn-animate').addEventListener('click', async () => {
+    await ensurePageInit('result');
+    lazyModules.result.openAnimateModal();
+  });
+  $('btn-download-video').addEventListener('click', async () => {
+    await ensurePageInit('result');
+    lazyModules.result.downloadAnimationVideo();
+  });
 
   // 批量生成（懒加载 batch 模块）
-  $('btn-to-batch').addEventListener('click', async () => { await ensurePageInit('batch'); lazyModules.batch.openBatchModal(); });
+  $('btn-to-batch').addEventListener('click', async () => {
+    await ensurePageInit('batch');
+    lazyModules.batch.openBatchModal();
+  });
   $('btn-batch-back').addEventListener('click', () => navigateTo('input'));
-  $('btn-batch-start').addEventListener('click', async () => { await ensurePageInit('batch'); lazyModules.batch.startBatchGeneration(); });
-  $('btn-batch-abort').addEventListener('click', async () => { await ensurePageInit('batch'); lazyModules.batch.abortBatchGeneration(); });
-  $('btn-batch-finish').addEventListener('click', async () => { await ensurePageInit('batch'); lazyModules.batch.finishBatch(); });
-  $('btn-batch-download-all').addEventListener('click', async () => { await ensurePageInit('batch'); lazyModules.batch.downloadAllBatchPosters(); });
+  $('btn-batch-start').addEventListener('click', async () => {
+    await ensurePageInit('batch');
+    lazyModules.batch.startBatchGeneration();
+  });
+  $('btn-batch-abort').addEventListener('click', async () => {
+    await ensurePageInit('batch');
+    lazyModules.batch.abortBatchGeneration();
+  });
+  $('btn-batch-finish').addEventListener('click', async () => {
+    await ensurePageInit('batch');
+    lazyModules.batch.finishBatch();
+  });
+  $('btn-batch-download-all').addEventListener('click', async () => {
+    await ensurePageInit('batch');
+    lazyModules.batch.downloadAllBatchPosters();
+  });
   $('batch-csv-input').addEventListener('change', async (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -422,29 +524,59 @@ function bindEvents() {
   });
 
   // 模板库（懒加载 templates 模块）
-  $('btn-to-templates').addEventListener('click', async () => { await ensurePageInit('templates'); lazyModules.templates.openTemplateModal(); });
+  $('btn-to-templates').addEventListener('click', async () => {
+    await ensurePageInit('templates');
+    lazyModules.templates.openTemplateModal();
+  });
   $('btn-template-back').addEventListener('click', () => navigateTo('input'));
-  $('btn-save-template').addEventListener('click', async () => { await ensurePageInit('templates'); lazyModules.templates.saveCurrentAsTemplate(); });
+  $('btn-save-template').addEventListener('click', async () => {
+    await ensurePageInit('templates');
+    lazyModules.templates.saveCurrentAsTemplate();
+  });
 
   // 品牌工具包（懒加载 brand 模块；close/overlay 由 zj-modal 统一处理）
-  $('btn-brand').addEventListener('click', async () => { await ensurePageInit('brand'); lazyModules.brand.openBrandModal(); });
-  $('btn-brand-apply').addEventListener('click', async () => { await ensurePageInit('brand'); lazyModules.brand.closeBrandModal(); });
+  $('btn-brand').addEventListener('click', async () => {
+    await ensurePageInit('brand');
+    lazyModules.brand.openBrandModal();
+  });
+  $('btn-brand-apply').addEventListener('click', async () => {
+    await ensurePageInit('brand');
+    lazyModules.brand.closeBrandModal();
+  });
 
   // 热点话题（懒加载 hot-topics 模块）
-  $('btn-to-hot-topics').addEventListener('click', async () => { await ensurePageInit('hot-topics'); lazyModules.hotTopics.openHotTopicsModal(); });
+  $('btn-to-hot-topics').addEventListener('click', async () => {
+    await ensurePageInit('hot-topics');
+    lazyModules.hotTopics.openHotTopicsModal();
+  });
   $('btn-hot-topics-back').addEventListener('click', () => navigateTo('input'));
-  $('btn-hot-topics-refresh').addEventListener('click', async () => { await ensurePageInit('hot-topics'); lazyModules.hotTopics.refreshHotTopics(); });
+  $('btn-hot-topics-refresh').addEventListener('click', async () => {
+    await ensurePageInit('hot-topics');
+    lazyModules.hotTopics.refreshHotTopics();
+  });
 
   // 字体排版（懒加载 typography 模块；close/overlay 由 zj-modal 统一处理）
-  $('btn-typography').addEventListener('click', async () => { await ensurePageInit('typography'); lazyModules.typography.openTypographyModal(); });
-  $('btn-typography-apply').addEventListener('click', async () => { await ensurePageInit('typography'); lazyModules.typography.closeTypographyModal(); });
+  $('btn-typography').addEventListener('click', async () => {
+    await ensurePageInit('typography');
+    lazyModules.typography.openTypographyModal();
+  });
+  $('btn-typography-apply').addEventListener('click', async () => {
+    await ensurePageInit('typography');
+    lazyModules.typography.closeTypographyModal();
+  });
 
   // 账号矩阵（懒加载 accounts 模块；close/overlay 由 zj-modal 统一处理）
-  $('btn-accounts').addEventListener('click', async () => { await ensurePageInit('accounts'); lazyModules.accounts.openAccountsModal(); });
-  $('btn-accounts-close').addEventListener('click', async () => { await ensurePageInit('accounts'); lazyModules.accounts.closeAccountsModal(); });
+  $('btn-accounts').addEventListener('click', async () => {
+    await ensurePageInit('accounts');
+    lazyModules.accounts.openAccountsModal();
+  });
+  $('btn-accounts-close').addEventListener('click', async () => {
+    await ensurePageInit('accounts');
+    lazyModules.accounts.closeAccountsModal();
+  });
 
   // ========== 结果工具弹窗 Tab 切换 + zj:close 清理 ==========
-  document.querySelectorAll('.result-tools-tab').forEach(btn => {
+  document.querySelectorAll('.result-tools-tab').forEach((btn) => {
     btn.onclick = () => switchResultToolsTab(btn.dataset.resultTab);
   });
   const resultToolsModalEl = document.querySelector('zj-modal[modal-id="result-tools-modal"]');
@@ -525,21 +657,48 @@ function bindEvents() {
   });
 
   // ========== 风格工具栏按钮（懒加载 style 模块）==========
-  $('btn-create-style')?.addEventListener('click', async () => { await ensurePageInit('style'); lazyModules.style.openStyleCreateModal(); });
-  $('btn-movie-style')?.addEventListener('click', async () => { await ensurePageInit('style'); lazyModules.style.openMovieStyleModal(); });
-  $('btn-blend-style')?.addEventListener('click', async () => { await ensurePageInit('style'); lazyModules.style.openBlendModal(); });
+  $('btn-create-style')?.addEventListener('click', async () => {
+    await ensurePageInit('style');
+    lazyModules.style.openStyleCreateModal();
+  });
+  $('btn-movie-style')?.addEventListener('click', async () => {
+    await ensurePageInit('style');
+    lazyModules.style.openMovieStyleModal();
+  });
+  $('btn-blend-style')?.addEventListener('click', async () => {
+    await ensurePageInit('style');
+    lazyModules.style.openBlendModal();
+  });
 
   // ========== 自定义风格创建 ==========
-  $('btn-parse-style')?.addEventListener('click', async () => { await ensurePageInit('style'); lazyModules.style.parseCustomStyle(); });
-  $('btn-save-style')?.addEventListener('click', async () => { await ensurePageInit('style'); lazyModules.style.saveAndUseCustomStyle(); });
+  $('btn-parse-style')?.addEventListener('click', async () => {
+    await ensurePageInit('style');
+    lazyModules.style.parseCustomStyle();
+  });
+  $('btn-save-style')?.addEventListener('click', async () => {
+    await ensurePageInit('style');
+    lazyModules.style.saveAndUseCustomStyle();
+  });
 
   // ========== 电影风格分析 ==========
-  $('btn-analyze-movie')?.addEventListener('click', async () => { await ensurePageInit('style'); lazyModules.style.analyzeMovieStyle(); });
-  $('btn-save-movie-style')?.addEventListener('click', async () => { await ensurePageInit('style'); lazyModules.style.saveAndUseCustomStyle(); });
+  $('btn-analyze-movie')?.addEventListener('click', async () => {
+    await ensurePageInit('style');
+    lazyModules.style.analyzeMovieStyle();
+  });
+  $('btn-save-movie-style')?.addEventListener('click', async () => {
+    await ensurePageInit('style');
+    lazyModules.style.saveAndUseCustomStyle();
+  });
 
   // ========== 风格混搭 ==========
-  $('btn-do-blend')?.addEventListener('click', async () => { await ensurePageInit('style'); lazyModules.style.doBlend(); });
-  $('btn-save-blend-style')?.addEventListener('click', async () => { await ensurePageInit('style'); lazyModules.style.saveAndUseCustomStyle(); });
+  $('btn-do-blend')?.addEventListener('click', async () => {
+    await ensurePageInit('style');
+    lazyModules.style.doBlend();
+  });
+  $('btn-save-blend-style')?.addEventListener('click', async () => {
+    await ensurePageInit('style');
+    lazyModules.style.saveAndUseCustomStyle();
+  });
   $('blend-ratio-slider')?.addEventListener('input', (e) => {
     const v = e.target.value;
     $('blend-ratio-value').textContent = `${v} : ${100 - v}`;
@@ -605,7 +764,7 @@ async function init() {
   // 根据初始 hash 路由（支持直接URL访问，如 #ticket、#wall 等）
   const initialHash = window.location.hash.replace('#', '');
   const validPages = ['input', 'directors', 'result', 'wall', 'ticket', 'cocreate', 'movies', 'batch', 'hot-topics'];
-  const startPage = (initialHash && validPages.includes(initialHash)) ? initialHash : 'input';
+  const startPage = initialHash && validPages.includes(initialHash) ? initialHash : 'input';
 
   // 如果是直接访问ticket/wall等页面，需要先确保input页初始化（它是入口），但显示目标页面
   if (startPage !== 'input' && startPage !== 'directors' && startPage !== 'generating' && startPage !== 'result') {
@@ -681,14 +840,22 @@ async function init() {
     }
   };
   if ('requestIdleCallback' in window) {
-    requestIdleCallback(() => { void checkBackendHealth(); }, { timeout: 3000 });
+    requestIdleCallback(
+      () => {
+        void checkBackendHealth();
+      },
+      { timeout: 3000 }
+    );
     // 首屏渲染后，在空闲时预加载高频使用的页面模块，让用户点击时几乎瞬间加载
-    requestIdleCallback(() => {
-      // 预加载电影模块（用户点击"热门电影"时使用）
-      import('./movie-module').catch(err => logger.warn('模块预加载失败 (movie-module):', err));
-      // 预加载结果页（生成完成后立即跳转）
-      import('./pages/generating').catch(err => logger.warn('模块预加载失败 (generating):', err));
-    }, { timeout: 5000 });
+    requestIdleCallback(
+      () => {
+        // 预加载电影模块（用户点击"热门电影"时使用）
+        import('./movie-module').catch((err) => logger.warn('模块预加载失败 (movie-module):', err));
+        // 预加载结果页（生成完成后立即跳转）
+        import('./pages/generating').catch((err) => logger.warn('模块预加载失败 (generating):', err));
+      },
+      { timeout: 5000 }
+    );
   } else {
     setTimeout(checkBackendHealth, 500);
   }

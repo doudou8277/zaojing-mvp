@@ -47,10 +47,12 @@ class LRUCache {
    * 生成缓存 Key
    */
   buildKey(...parts) {
-    return parts.map(p => {
-      if (typeof p === 'object') return JSON.stringify(p);
-      return String(p);
-    }).join('::');
+    return parts
+      .map((p) => {
+        if (typeof p === 'object') return JSON.stringify(p);
+        return String(p);
+      })
+      .join('::');
   }
 
   /**
@@ -103,9 +105,14 @@ class LRUCache {
       }
     }
 
-    const expireAt = ttlMs !== undefined
-      ? (ttlMs > 0 ? Date.now() + ttlMs : 0)
-      : (this.defaultTtlMs > 0 ? Date.now() + this.defaultTtlMs : 0);
+    const expireAt =
+      ttlMs !== undefined
+        ? ttlMs > 0
+          ? Date.now() + ttlMs
+          : 0
+        : this.defaultTtlMs > 0
+          ? Date.now() + this.defaultTtlMs
+          : 0;
 
     this.cache.set(key, { value, expireAt, bytes });
     this.currentBytes += bytes;
@@ -143,9 +150,9 @@ class LRUCache {
       maxSize: this.maxSize,
       hits: this.hits,
       misses: this.misses,
-      hitRate: total > 0 ? (this.hits / total * 100).toFixed(1) + '%' : '0%',
+      hitRate: total > 0 ? ((this.hits / total) * 100).toFixed(1) + '%' : '0%',
       bytesUsed: this.currentBytes,
-      bytesMax: this.maxBytes
+      bytesMax: this.maxBytes,
     };
   }
 }
@@ -166,15 +173,18 @@ const styleCache = new LRUCache(50, 24 * 60 * 60 * 1000);
 
 // 定期输出缓存统计（每 10 分钟）
 if (process.env.NODE_ENV !== 'production') {
-  setInterval(() => {
-    const stats = {
-      emotion: emotionCache.getStats(),
-      copy: copyCache.getStats(),
-      image: imageCache.getStats(),
-      style: styleCache.getStats()
-    };
-    logger.debug({ stats }, '缓存统计');
-  }, 10 * 60 * 1000).unref();
+  setInterval(
+    () => {
+      const stats = {
+        emotion: emotionCache.getStats(),
+        copy: copyCache.getStats(),
+        image: imageCache.getStats(),
+        style: styleCache.getStats(),
+      };
+      logger.debug({ stats }, '缓存统计');
+    },
+    10 * 60 * 1000
+  ).unref();
 }
 
 module.exports = {
@@ -182,5 +192,5 @@ module.exports = {
   emotionCache,
   copyCache,
   imageCache,
-  styleCache
+  styleCache,
 };

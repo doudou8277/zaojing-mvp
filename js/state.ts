@@ -36,14 +36,11 @@ function shallowEqual(a: unknown, b: unknown): boolean {
   const keysA = Object.keys(a);
   const keysB = Object.keys(b);
   if (keysA.length !== keysB.length) return false;
-  return keysA.every(k => (a as Record<string, unknown>)[k] === (b as Record<string, unknown>)[k]);
+  return keysA.every((k) => (a as Record<string, unknown>)[k] === (b as Record<string, unknown>)[k]);
 }
 
 /** 需要拦截的数组变异方法 */
-const ARRAY_MUTATORS = new Set([
-  'push', 'pop', 'splice', 'shift', 'unshift',
-  'sort', 'reverse', 'fill', 'copyWithin',
-]);
+const ARRAY_MUTATORS = new Set(['push', 'pop', 'splice', 'shift', 'unshift', 'sort', 'reverse', 'fill', 'copyWithin']);
 
 /** 追踪已包装的数组 Proxy，避免重复包装 */
 const wrappedArrays = new WeakSet<unknown[]>();
@@ -52,10 +49,7 @@ const wrappedArrays = new WeakSet<unknown[]>();
  * 包装数组的变异方法，调用后自动触发通知
  * 解决 Proxy set 陷阱的 !== 引用比较对原地修改无效的问题
  */
-function wrapArrayMutators(
-  arr: unknown[],
-  notify: () => void,
-): unknown[] {
+function wrapArrayMutators(arr: unknown[], notify: () => void): unknown[] {
   const proxy = new Proxy(arr, {
     get(target: unknown[], prop: string): unknown {
       const val = target[prop as keyof unknown[]];
@@ -97,74 +91,85 @@ function createStore<T extends Record<string, unknown>>(initialState: T): Store<
   /** 通知指定字段的订阅者 + 全局订阅者 */
   function notify(key: string, newValue: unknown, oldValue: unknown): void {
     if (subscribers[key]) {
-      subscribers[key].forEach(cb => {
-        try { cb(newValue, oldValue, key); } catch (e) { logger.error('[State] 订阅回调错误:', e); }
+      subscribers[key].forEach((cb) => {
+        try {
+          cb(newValue, oldValue, key);
+        } catch (e) {
+          logger.error('[State] 订阅回调错误:', e);
+        }
       });
     }
-    globalSubscribers.forEach(cb => {
-      try { cb(key, newValue, oldValue); } catch (e) { logger.error('[State] 全局订阅回调错误:', e); }
+    globalSubscribers.forEach((cb) => {
+      try {
+        cb(key, newValue, oldValue);
+      } catch (e) {
+        logger.error('[State] 全局订阅回调错误:', e);
+      }
     });
   }
 
-  const proxy = new Proxy({ ...initialState }, {
-    set(target: Record<string, unknown>, key: string, value: unknown): boolean {
-      const oldValue = target[key];
+  const proxy = new Proxy(
+    { ...initialState },
+    {
+      set(target: Record<string, unknown>, key: string, value: unknown): boolean {
+        const oldValue = target[key];
 
-      // 数组值包装变异方法，使 push/splice 等能触发订阅
-      let processedValue = value;
-      if (Array.isArray(value) && !wrappedArrays.has(value as unknown[])) {
-        processedValue = wrapArrayMutators(value as unknown[], () => {
-          notify(key, target[key], oldValue);
-        });
-      }
-
-      target[key] = processedValue;
-
-      // 浅比较判定是否变化（替代 !== 引用比较）
-      if (!shallowEqual(oldValue, processedValue)) {
-        notify(key, processedValue, oldValue);
-      }
-      return true;
-    },
-
-    get(target: Record<string, unknown>, key: string): unknown {
-      // 提供方法
-      if (key === 'subscribe') {
-        return (field: string, callback: Subscriber<unknown>): (() => void) => {
-          if (!subscribers[field]) subscribers[field] = new Set();
-          subscribers[field].add(callback);
-          return () => subscribers[field].delete(callback);
-        };
-      }
-      if (key === 'subscribeAll') {
-        return (callback: GlobalSubscriber): (() => void) => {
-          globalSubscribers.add(callback);
-          return () => globalSubscribers.delete(callback);
-        };
-      }
-      if (key === 'setState') {
-        return (updates: Partial<T>): void => {
-          Object.keys(updates).forEach(k => {
-            (proxy as Record<string, unknown>)[k] = (updates as Record<string, unknown>)[k];
+        // 数组值包装变异方法，使 push/splice 等能触发订阅
+        let processedValue = value;
+        if (Array.isArray(value) && !wrappedArrays.has(value as unknown[])) {
+          processedValue = wrapArrayMutators(value as unknown[], () => {
+            notify(key, target[key], oldValue);
           });
-        };
-      }
-      if (key === 'reset') {
-        return (): void => {
-          Object.keys(initialSnapshot).forEach(k => {
-            (proxy as Record<string, unknown>)[k] = (initialSnapshot as Record<string, unknown>)[k];
-          });
-        };
-      }
-      if (key === 'getSnapshot') {
-        return (): T => deepClone(proxy) as T;
-      }
-      return target[key];
+        }
+
+        target[key] = processedValue;
+
+        // 浅比较判定是否变化（替代 !== 引用比较）
+        if (!shallowEqual(oldValue, processedValue)) {
+          notify(key, processedValue, oldValue);
+        }
+        return true;
+      },
+
+      get(target: Record<string, unknown>, key: string): unknown {
+        // 提供方法
+        if (key === 'subscribe') {
+          return (field: string, callback: Subscriber<unknown>): (() => void) => {
+            if (!subscribers[field]) subscribers[field] = new Set();
+            subscribers[field].add(callback);
+            return () => subscribers[field].delete(callback);
+          };
+        }
+        if (key === 'subscribeAll') {
+          return (callback: GlobalSubscriber): (() => void) => {
+            globalSubscribers.add(callback);
+            return () => globalSubscribers.delete(callback);
+          };
+        }
+        if (key === 'setState') {
+          return (updates: Partial<T>): void => {
+            Object.keys(updates).forEach((k) => {
+              (proxy as Record<string, unknown>)[k] = (updates as Record<string, unknown>)[k];
+            });
+          };
+        }
+        if (key === 'reset') {
+          return (): void => {
+            Object.keys(initialSnapshot).forEach((k) => {
+              (proxy as Record<string, unknown>)[k] = (initialSnapshot as Record<string, unknown>)[k];
+            });
+          };
+        }
+        if (key === 'getSnapshot') {
+          return (): T => deepClone(proxy) as T;
+        }
+        return target[key];
+      },
     }
-  });
+  );
 
   // 初始化时对所有数组字段包装变异方法
-  Object.keys(initialState).forEach(k => {
+  Object.keys(initialState).forEach((k) => {
     const val = (initialState as Record<string, unknown>)[k];
     if (Array.isArray(val)) {
       (proxy as Record<string, unknown>)[k] = val; // 触发 set 陷阱，自动包装

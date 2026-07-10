@@ -4,7 +4,15 @@
  * 支持：AI生图背景 / Canvas风格背景 + 字体切换 + 自定义标题/金句 + 4 种版式
  */
 
-import { DIRECTORS, extractTitle, POSTER_FORMATS, getQuoteByIndex, getRandomQuote, mergeEmotionAndText, type MergedVisual } from './data';
+import {
+  DIRECTORS,
+  extractTitle,
+  POSTER_FORMATS,
+  getQuoteByIndex,
+  getRandomQuote,
+  mergeEmotionAndText,
+  type MergedVisual,
+} from './data';
 import { FALLBACK_MOVIES } from './movie-data.js';
 import { hexToRgba, drawVignette } from './utils/canvas.js';
 import { logger } from './utils/logger.js';
@@ -36,7 +44,9 @@ import {
 // 同一 chunk 并在首屏被 modulepreload。改为 setter 注入：由 movie-module
 // 在初始化时调用 setGetServerMovies 注入实现，打破循环依赖。
 let _getServerMovies: (() => any[]) | null = null;
-export function setGetServerMovies(fn: (() => any[]) | null) { _getServerMovies = fn; }
+export function setGetServerMovies(fn: (() => any[]) | null) {
+  _getServerMovies = fn;
+}
 import type { DirectorColors, PosterFormat, StyleDNA } from './types.d.ts';
 
 // ========== 局部类型定义 ==========
@@ -210,7 +220,7 @@ function getWorker(): Worker | null {
   if (!_worker) {
     try {
       _worker = new Worker(new URL('./poster-worker.js', import.meta.url), { type: 'module' });
-      _worker.onmessage = function(e: MessageEvent) {
+      _worker.onmessage = function (e: MessageEvent) {
         const { id, success, buffer, error } = e.data;
         const pending = _pendingRequests.get(id);
         if (!pending) return;
@@ -221,7 +231,7 @@ function getWorker(): Worker | null {
           pending.reject(new Error(error || 'Worker 渲染失败'));
         }
       };
-      _worker.onerror = function(e: ErrorEvent) {
+      _worker.onerror = function (e: ErrorEvent) {
         logger.error('Poster Worker 错误:', e.message);
         // reject 所有 pending 请求
         for (const [, { reject }] of _pendingRequests) {
@@ -295,20 +305,29 @@ async function renderBackgroundViaWorker(
     }, API_TIMEOUT_WORKER);
 
     _pendingRequests.set(id, {
-      resolve: (buffer: ArrayBuffer) => { clearTimeout(timer); resolve(buffer); },
-      reject: (err: Error) => { clearTimeout(timer); reject(err); }
+      resolve: (buffer: ArrayBuffer) => {
+        clearTimeout(timer);
+        resolve(buffer);
+      },
+      reject: (err: Error) => {
+        clearTimeout(timer);
+        reject(err);
+      },
     });
-    worker.postMessage({
-      type: 'renderBackground',
-      id,
-      width,
-      height,
-      directorId,
-      colors,
-      aiImageBlob,
-      vignetteIntensity,
-      renderContext: renderContext || null
-    }, aiImageBlob ? [aiImageBlob as unknown as Transferable] : []);
+    worker.postMessage(
+      {
+        type: 'renderBackground',
+        id,
+        width,
+        height,
+        directorId,
+        colors,
+        aiImageBlob,
+        vignetteIntensity,
+        renderContext: renderContext || null,
+      },
+      aiImageBlob ? [aiImageBlob as unknown as Transferable] : []
+    );
   });
 }
 
@@ -326,7 +345,7 @@ function createCanvas(width: number, height: number): HTMLCanvasElement {
 function canvasToBlobUrl(canvas: HTMLCanvasElement): Promise<string> {
   return new Promise<string>((resolve, reject) => {
     const tryPng = () => {
-      canvas.toBlob(blob => {
+      canvas.toBlob((blob) => {
         if (blob) {
           resolve(URL.createObjectURL(blob));
         } else {
@@ -337,13 +356,17 @@ function canvasToBlobUrl(canvas: HTMLCanvasElement): Promise<string> {
 
     // 尝试 WebP
     try {
-      canvas.toBlob(blob => {
-        if (blob && blob.type === 'image/webp' && blob.size > 0) {
-          resolve(URL.createObjectURL(blob));
-        } else {
-          tryPng();
-        }
-      }, 'image/webp', 0.92);
+      canvas.toBlob(
+        (blob) => {
+          if (blob && blob.type === 'image/webp' && blob.size > 0) {
+            resolve(URL.createObjectURL(blob));
+          } else {
+            tryPng();
+          }
+        },
+        'image/webp',
+        0.92
+      );
     } catch (e) {
       // WebP 不支持或 toBlob 失败，降级为 PNG
       logger.warn('WebP 导出失败，降级为 PNG:', e instanceof Error ? e.message : String(e));
@@ -361,7 +384,7 @@ function wrapText(
   ctx: CanvasRenderingContext2D,
   text: string,
   maxWidth: number,
-  maxLines: number = 10,
+  maxLines: number = 10
 ): WrapTextResult {
   const paragraphs = text.split('\n');
   const lines: string[] = [];
@@ -521,7 +544,8 @@ function drawMiyazakiBg(ctx: CanvasRenderingContext2D, w: number, h: number, rc?
     paintEmotionGradient(ctx, w, h, rc);
     const { merged: mv, directorColors: dc } = rc;
     // 太阳光晕
-    const sunX = w * 0.72, sunY = h * 0.22;
+    const sunX = w * 0.72,
+      sunY = h * 0.22;
     const sun = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, w * 0.35);
     sun.addColorStop(0, blendColor(dc.accent, mv.accentColor, mv.adjustedLightness));
     sun.addColorStop(1, 'rgba(0,0,0,0)');
@@ -548,7 +572,8 @@ function drawMiyazakiBg(ctx: CanvasRenderingContext2D, w: number, h: number, rc?
   ctx.fillRect(0, 0, w, h);
 
   // 太阳光晕
-  const sunX = w * 0.72, sunY = h * 0.22;
+  const sunX = w * 0.72,
+    sunY = h * 0.22;
   const sunGrad = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, w * 0.35);
   sunGrad.addColorStop(0, 'rgba(255, 245, 157, 0.7)');
   sunGrad.addColorStop(0.3, 'rgba(255, 224, 130, 0.3)');
@@ -561,10 +586,10 @@ function drawMiyazakiBg(ctx: CanvasRenderingContext2D, w: number, h: number, rc?
     { x: w * 0.15, y: h * 0.18, scale: 1.0 },
     { x: w * 0.55, y: h * 0.12, scale: 0.7 },
     { x: w * 0.85, y: h * 0.28, scale: 0.85 },
-    { x: w * 0.30, y: h * 0.35, scale: 0.6 },
-    { x: w * 0.70, y: h * 0.42, scale: 0.5 }
+    { x: w * 0.3, y: h * 0.35, scale: 0.6 },
+    { x: w * 0.7, y: h * 0.42, scale: 0.5 },
   ];
-  clouds.forEach(c => drawCloud(ctx, c.x, c.y, w * 0.08 * c.scale));
+  clouds.forEach((c) => drawCloud(ctx, c.x, c.y, w * 0.08 * c.scale));
 
   // 远中近山
   drawHills(ctx, w, h * 0.65, h * 0.72, '#81c784', 0.6);
@@ -584,9 +609,9 @@ function drawMiyazakiBg(ctx: CanvasRenderingContext2D, w: number, h: number, rc?
   const birds = [
     { x: w * 0.25, y: h * 0.25, size: 12 },
     { x: w * 0.35, y: h * 0.22, size: 10 },
-    { x: w * 0.42, y: h * 0.28, size: 8 }
+    { x: w * 0.42, y: h * 0.28, size: 8 },
   ];
-  birds.forEach(b => drawBird(ctx, b.x, b.y, b.size));
+  birds.forEach((b) => drawBird(ctx, b.x, b.y, b.size));
 
   // 暖色叠加
   const warmGrad = ctx.createLinearGradient(0, 0, 0, h);
@@ -609,9 +634,9 @@ function drawCloud(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: num
     { dx: -r * 0.3, dy: -r * 0.4, r: r * 0.6 },
     { dx: r * 0.4, dy: -r * 0.35, r: r * 0.55 },
     { dx: r * 1.4, dy: r * 0.3, r: r * 0.5 },
-    { dx: -r * 1.4, dy: r * 0.3, r: r * 0.45 }
+    { dx: -r * 1.4, dy: r * 0.3, r: r * 0.45 },
   ];
-  puffs.forEach(p => {
+  puffs.forEach((p) => {
     ctx.beginPath();
     ctx.arc(cx + p.dx, cy + p.dy, p.r, 0, Math.PI * 2);
     ctx.fill();
@@ -619,7 +644,14 @@ function drawCloud(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: num
   ctx.restore();
 }
 
-function drawHills(ctx: CanvasRenderingContext2D, w: number, startY: number, endY: number, color: string, opacity: number): void {
+function drawHills(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  startY: number,
+  endY: number,
+  color: string,
+  opacity: number
+): void {
   ctx.save();
   ctx.globalAlpha = opacity;
   ctx.fillStyle = color;
@@ -658,7 +690,9 @@ function drawWongKarWaiBg(ctx: CanvasRenderingContext2D, w: number, h: number, r
     // 霓虹散景
     const cnt = Math.max(4, Math.round(8 + mv.adjustedParticleCount * 0.2));
     for (let i = 0; i < cnt; i++) {
-      const x = Math.random() * w, y = Math.random() * h, r = 20 + Math.random() * 60;
+      const x = Math.random() * w,
+        y = Math.random() * h,
+        r = 20 + Math.random() * 60;
       const g = ctx.createRadialGradient(x, y, 0, x, y, r);
       g.addColorStop(0, blendColor(dc.accent, mv.accentColor, mv.adjustedLightness));
       g.addColorStop(1, 'rgba(0,0,0,0)');
@@ -685,9 +719,9 @@ function drawWongKarWaiBg(ctx: CanvasRenderingContext2D, w: number, h: number, r
     { x: w * 0.2, y: h * 0.3, r: w * 0.22, color: 'rgba(61, 122, 90, 0.4)' },
     { x: w * 0.8, y: h * 0.5, r: w * 0.28, color: 'rgba(201, 163, 107, 0.22)' },
     { x: w * 0.5, y: h * 0.7, r: w * 0.2, color: 'rgba(255, 107, 107, 0.14)' },
-    { x: w * 0.1, y: h * 0.8, r: w * 0.15, color: 'rgba(61, 122, 90, 0.18)' }
+    { x: w * 0.1, y: h * 0.8, r: w * 0.15, color: 'rgba(61, 122, 90, 0.18)' },
   ];
-  neonPositions.forEach(n => {
+  neonPositions.forEach((n) => {
     const grad = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r);
     grad.addColorStop(0, n.color);
     grad.addColorStop(1, 'rgba(0,0,0,0)');
@@ -725,12 +759,19 @@ function drawWongKarWaiBg(ctx: CanvasRenderingContext2D, w: number, h: number, r
   ctx.beginPath();
   ctx.moveTo(0, h * 0.75);
   const buildings = [
-    { x: 0.05, h: 0.15 }, { x: 0.12, h: 0.22 }, { x: 0.2, h: 0.12 },
-    { x: 0.28, h: 0.28 }, { x: 0.38, h: 0.18 }, { x: 0.48, h: 0.25 },
-    { x: 0.58, h: 0.14 }, { x: 0.68, h: 0.3 }, { x: 0.78, h: 0.2 },
-    { x: 0.88, h: 0.16 }, { x: 0.95, h: 0.24 }
+    { x: 0.05, h: 0.15 },
+    { x: 0.12, h: 0.22 },
+    { x: 0.2, h: 0.12 },
+    { x: 0.28, h: 0.28 },
+    { x: 0.38, h: 0.18 },
+    { x: 0.48, h: 0.25 },
+    { x: 0.58, h: 0.14 },
+    { x: 0.68, h: 0.3 },
+    { x: 0.78, h: 0.2 },
+    { x: 0.88, h: 0.16 },
+    { x: 0.95, h: 0.24 },
   ];
-  buildings.forEach(b => {
+  buildings.forEach((b) => {
     ctx.lineTo(w * b.x, h * (0.75 - b.h));
     ctx.lineTo(w * (b.x + 0.05), h * (0.75 - b.h));
   });
@@ -746,7 +787,8 @@ function drawKoreedaBg(ctx: CanvasRenderingContext2D, w: number, h: number, rc?:
     paintEmotionGradient(ctx, w, h, rc);
     const { merged: mv, directorColors: dc } = rc;
     // 柔和居家光晕
-    const gx = w * 0.3, gy = h * 0.35;
+    const gx = w * 0.3,
+      gy = h * 0.35;
     const glow = ctx.createRadialGradient(gx, gy, 0, gx, gy, w * 0.55);
     glow.addColorStop(0, blendColor(dc.accent, mv.accentColor, mv.adjustedLightness));
     glow.addColorStop(1, 'rgba(0,0,0,0)');
@@ -802,9 +844,9 @@ function drawKoreedaBg(ctx: CanvasRenderingContext2D, w: number, h: number, rc?:
   const clothes = [
     { x: w * 0.15, color: 'rgba(230, 200, 156, 0.25)' },
     { x: w * 0.45, color: 'rgba(168, 200, 181, 0.25)' },
-    { x: w * 0.75, color: 'rgba(244, 194, 194, 0.2)' }
+    { x: w * 0.75, color: 'rgba(244, 194, 194, 0.2)' },
   ];
-  clothes.forEach(c => {
+  clothes.forEach((c) => {
     ctx.fillStyle = c.color;
     ctx.fillRect(c.x, h * 0.33, w * 0.06, h * 0.08);
   });
@@ -834,7 +876,8 @@ function drawWesAndersonBg(ctx: CanvasRenderingContext2D, w: number, h: number, 
   ctx.fillRect(0, h * 0.65, w, h * 0.35);
 
   // 中心对称装饰
-  const cx = w / 2, cy = h * 0.4;
+  const cx = w / 2,
+    cy = h * 0.4;
   ctx.fillStyle = 'rgba(244, 194, 194, 0.6)';
   ctx.beginPath();
   ctx.arc(cx, cy, w * 0.18, 0, Math.PI * 2);
@@ -1041,9 +1084,10 @@ function drawChowBg(ctx: CanvasRenderingContext2D, w: number, h: number, rc?: Re
   // 漫画集中线（冲击感）
   ctx.strokeStyle = 'rgba(183, 28, 28, 0.1)';
   ctx.lineWidth = 1.5;
-  const centerX = w * 0.5, centerY = h * 0.4;
+  const centerX = w * 0.5,
+    centerY = h * 0.4;
   for (let i = 0; i < 24; i++) {
-    const angle = (Math.PI * 2 / 24) * i;
+    const angle = ((Math.PI * 2) / 24) * i;
     ctx.beginPath();
     ctx.moveTo(centerX + Math.cos(angle) * w * 0.15, centerY + Math.sin(angle) * w * 0.15);
     ctx.lineTo(centerX + Math.cos(angle) * w * 0.5, centerY + Math.sin(angle) * w * 0.5);
@@ -1051,9 +1095,17 @@ function drawChowBg(ctx: CanvasRenderingContext2D, w: number, h: number, rc?: Re
   }
 }
 
-function drawStar(ctx: CanvasRenderingContext2D, cx: number, cy: number, spikes: number, outerR: number, innerR: number): void {
-  let rot = Math.PI / 2 * 3;
-  let x = cx, y = cy;
+function drawStar(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  spikes: number,
+  outerR: number,
+  innerR: number
+): void {
+  let rot = (Math.PI / 2) * 3;
+  let x = cx,
+    y = cy;
   const step = Math.PI / spikes;
   ctx.beginPath();
   ctx.moveTo(cx, cy - outerR);
@@ -1116,9 +1168,9 @@ function drawJiaBg(ctx: CanvasRenderingContext2D, w: number, h: number, rc?: Ren
     { x: 0.32, y: 0.6, w: 0.15, h: 0.3 },
     { x: 0.52, y: 0.68, w: 0.1, h: 0.22 },
     { x: 0.66, y: 0.62, w: 0.14, h: 0.28 },
-    { x: 0.84, y: 0.7, w: 0.1, h: 0.2 }
+    { x: 0.84, y: 0.7, w: 0.1, h: 0.2 },
   ];
-  ruins.forEach(r => {
+  ruins.forEach((r) => {
     ctx.fillRect(w * r.x, h * r.y, w * r.w, h * r.h);
   });
 
@@ -1149,7 +1201,8 @@ function drawJiaBg(ctx: CanvasRenderingContext2D, w: number, h: number, rc?: Ren
   // 远处塔吊剪影（时代变迁标志）
   ctx.strokeStyle = 'rgba(61, 53, 40, 0.5)';
   ctx.lineWidth = 2;
-  const craneX = w * 0.75, craneY = h * 0.55;
+  const craneX = w * 0.75,
+    craneY = h * 0.55;
   ctx.beginPath();
   ctx.moveTo(craneX, h * 0.9);
   ctx.lineTo(craneX, craneY);
@@ -1198,9 +1251,9 @@ function drawLeeBg(ctx: CanvasRenderingContext2D, w: number, h: number, rc?: Ren
   const mountains = [
     { y: 0.55, color: 'rgba(45, 106, 79, 0.25)', peaks: 4 },
     { y: 0.65, color: 'rgba(45, 106, 79, 0.4)', peaks: 5 },
-    { y: 0.75, color: 'rgba(26, 58, 28, 0.6)', peaks: 6 }
+    { y: 0.75, color: 'rgba(26, 58, 28, 0.6)', peaks: 6 },
   ];
-  mountains.forEach(m => {
+  mountains.forEach((m) => {
     ctx.fillStyle = m.color;
     ctx.beginPath();
     ctx.moveTo(0, h);
@@ -1229,9 +1282,12 @@ function drawLeeBg(ctx: CanvasRenderingContext2D, w: number, h: number, rc?: Ren
       ctx.beginPath();
       ctx.moveTo(x, h);
       ctx.bezierCurveTo(
-        x + (Math.random() - 0.5) * 10, h * 0.6,
-        x + (Math.random() - 0.5) * 15, h * 0.3,
-        x + (Math.random() - 0.5) * 10, h * 0.1
+        x + (Math.random() - 0.5) * 10,
+        h * 0.6,
+        x + (Math.random() - 0.5) * 15,
+        h * 0.3,
+        x + (Math.random() - 0.5) * 10,
+        h * 0.1
       );
       ctx.stroke();
       // 竹节
@@ -1246,7 +1302,8 @@ function drawLeeBg(ctx: CanvasRenderingContext2D, w: number, h: number, rc?: Ren
   }
 
   // 金色月光晕（画意美学）
-  const moonX = w * 0.7, moonY = h * 0.2;
+  const moonX = w * 0.7,
+    moonY = h * 0.2;
   const moonGrad = ctx.createRadialGradient(moonX, moonY, 0, moonX, moonY, w * 0.2);
   moonGrad.addColorStop(0, 'rgba(212, 168, 67, 0.4)');
   moonGrad.addColorStop(0.5, 'rgba(212, 168, 67, 0.15)');
@@ -1347,10 +1404,12 @@ function drawKurosawaBg(ctx: CanvasRenderingContext2D, w: number, h: number, rc?
     { x: 0.35, y: 0.62, h: 0.33 },
     { x: 0.5, y: 0.64, h: 0.31 },
     { x: 0.65, y: 0.63, h: 0.32 },
-    { x: 0.8, y: 0.65, h: 0.3 }
+    { x: 0.8, y: 0.65, h: 0.3 },
   ];
-  figures.forEach(f => {
-    const fx = w * f.x, fy = h * f.y, fh = h * f.h;
+  figures.forEach((f) => {
+    const fx = w * f.x,
+      fy = h * f.y,
+      fh = h * f.h;
     // 头部
     ctx.beginPath();
     ctx.arc(fx, fy, w * 0.015, 0, Math.PI * 2);
@@ -1438,7 +1497,8 @@ function drawCoppolaBg(ctx: CanvasRenderingContext2D, w: number, h: number, rc?:
 
   // 孤独人物剪影（疏离感）
   ctx.fillStyle = 'rgba(93, 78, 87, 0.25)';
-  const figureX = w * 0.5, figureY = h * 0.7;
+  const figureX = w * 0.5,
+    figureY = h * 0.7;
   ctx.beginPath();
   ctx.arc(figureX, figureY, w * 0.012, 0, Math.PI * 2);
   ctx.fill();
@@ -1496,7 +1556,8 @@ function drawChazelleBg(ctx: CanvasRenderingContext2D, w: number, h: number, rc?
   ctx.fillRect(0, 0, w, h);
 
   // 舞台聚光灯效果（顶部射下）
-  const spotX = w * 0.5, spotY = 0;
+  const spotX = w * 0.5,
+    spotY = 0;
   const spotGrad = ctx.createRadialGradient(spotX, spotY, 0, spotX, spotY, h * 0.8);
   spotGrad.addColorStop(0, 'rgba(255, 210, 63, 0.25)');
   spotGrad.addColorStop(0.3, 'rgba(255, 107, 53, 0.1)');
@@ -1535,12 +1596,16 @@ function drawChazelleBg(ctx: CanvasRenderingContext2D, w: number, h: number, rc?
   // 音符意象（爵士乐感）
   ctx.fillStyle = 'rgba(232, 213, 240, 0.15)';
   const notes = [
-    { x: 0.15, y: 0.3 }, { x: 0.85, y: 0.25 },
-    { x: 0.2, y: 0.5 }, { x: 0.8, y: 0.45 },
-    { x: 0.1, y: 0.65 }, { x: 0.9, y: 0.6 }
+    { x: 0.15, y: 0.3 },
+    { x: 0.85, y: 0.25 },
+    { x: 0.2, y: 0.5 },
+    { x: 0.8, y: 0.45 },
+    { x: 0.1, y: 0.65 },
+    { x: 0.9, y: 0.6 },
   ];
-  notes.forEach(n => {
-    const nx = w * n.x, ny = h * n.y;
+  notes.forEach((n) => {
+    const nx = w * n.x,
+      ny = h * n.y;
     ctx.beginPath();
     ctx.arc(nx, ny, w * 0.012, 0, Math.PI * 2);
     ctx.fill();
@@ -1605,7 +1670,8 @@ function drawTarantinoBg(ctx: CanvasRenderingContext2D, w: number, h: number, rc
   // 低角度视角暗示（从底部仰视的透视线条）
   ctx.strokeStyle = 'rgba(232, 184, 48, 0.15)';
   ctx.lineWidth = 1.5;
-  const vanishX = w * 0.5, vanishY = h * 0.35;
+  const vanishX = w * 0.5,
+    vanishY = h * 0.35;
   for (let i = 0; i <= 8; i++) {
     const x = (w / 8) * i;
     ctx.beginPath();
@@ -1615,7 +1681,7 @@ function drawTarantinoBg(ctx: CanvasRenderingContext2D, w: number, h: number, rc
   }
   // 水平透视线
   for (let i = 1; i <= 5; i++) {
-    const y = h * 0.4 + (h * 0.6) * (i / 5) * (i / 5);
+    const y = h * 0.4 + h * 0.6 * (i / 5) * (i / 5);
     ctx.beginPath();
     ctx.moveTo(0, y);
     ctx.lineTo(w, y);
@@ -1659,7 +1725,13 @@ function drawTarantinoBg(ctx: CanvasRenderingContext2D, w: number, h: number, rc
 }
 
 // ========== 自定义风格动态背景渲染器 ==========
-function drawCustomBg(ctx: CanvasRenderingContext2D, w: number, h: number, colors?: DirectorColors, rc?: RenderContext): void {
+function drawCustomBg(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  colors?: DirectorColors,
+  rc?: RenderContext
+): void {
   if (rc) {
     paintEmotionGradient(ctx, w, h, rc);
     applyEmotionOverlay(ctx, w, h, rc.merged);
@@ -1726,7 +1798,7 @@ const bgRenderers: Record<string, (ctx: CanvasRenderingContext2D, w: number, h: 
   kurosawa: drawKurosawaBg,
   coppola: drawCoppolaBg,
   chazelle: drawChazelleBg,
-  tarantino: drawTarantinoBg
+  tarantino: drawTarantinoBg,
 };
 
 // ========== 文字排版层（支持字体切换） ==========
@@ -1737,12 +1809,12 @@ function drawTextLayer(ctx: CanvasRenderingContext2D, w: number, h: number, opti
   const weight = titleWeight || 700;
 
   // 标题（情绪化：位置 / 大小受文字能量与明度影响）
-  const titleY = merged
-    ? h * (0.35 + (1 - merged.adjustedLightness) * 0.15)
-    : (isVertical ? h * 0.28 : h * 0.32);
+  const titleY = merged ? h * (0.35 + (1 - merged.adjustedLightness) * 0.15) : isVertical ? h * 0.28 : h * 0.32;
   const titleMaxWidth = w * 0.7;
   const baseTitleSize = isVertical ? Math.round(w * TITLE_FONT_RATIO_V) : Math.round(h * TITLE_FONT_RATIO_H);
-  const titleFontSize = merged ? Math.round(baseTitleSize * (1 + merged.textMood.energy * TITLE_ENERGY_SCALE)) : baseTitleSize;
+  const titleFontSize = merged
+    ? Math.round(baseTitleSize * (1 + merged.textMood.energy * TITLE_ENERGY_SCALE))
+    : baseTitleSize;
   const lineHeight = titleFontSize * 1.4;
 
   // 标题可用高度：从 titleY 到 quoteY 之间，留出装饰线和间距
@@ -1760,7 +1832,7 @@ function drawTextLayer(ctx: CanvasRenderingContext2D, w: number, h: number, opti
   ctx.shadowOffsetY = TEXT_SHADOW_OFFSET_Y;
 
   const { lines: titleLines } = wrapText(ctx, title, titleMaxWidth, titleMaxLines);
-  const titleStartY = titleY - (titleLines.length - 1) * lineHeight / 2;
+  const titleStartY = titleY - ((titleLines.length - 1) * lineHeight) / 2;
   titleLines.forEach((line, i) => {
     ctx.fillText(line, w / 2, titleStartY + i * lineHeight);
   });
@@ -1771,7 +1843,7 @@ function drawTextLayer(ctx: CanvasRenderingContext2D, w: number, h: number, opti
   ctx.strokeStyle = colors.textLight;
   ctx.globalAlpha = 0.5;
   ctx.lineWidth = 1.5;
-  const lineY = titleY + titleLines.length * lineHeight / 2 + 15;
+  const lineY = titleY + (titleLines.length * lineHeight) / 2 + 15;
   const lineW = w * 0.12;
   ctx.beginPath();
   ctx.moveTo(w / 2 - lineW, lineY);
@@ -1798,7 +1870,7 @@ function drawTextLayer(ctx: CanvasRenderingContext2D, w: number, h: number, opti
     ctx.globalAlpha = 0.85;
 
     const { lines: quoteLines } = wrapText(ctx, `「${quote}」`, quoteMaxWidth, quoteMaxLines);
-    const quoteStartY = quoteY - (quoteLines.length - 1) * quoteLineHeight / 2;
+    const quoteStartY = quoteY - ((quoteLines.length - 1) * quoteLineHeight) / 2;
     quoteLines.forEach((line, i) => {
       ctx.fillText(line, w / 2, quoteStartY + i * quoteLineHeight);
     });
@@ -1828,12 +1900,7 @@ function drawTextLayer(ctx: CanvasRenderingContext2D, w: number, h: number, opti
 
 // ========== 九宫格合集生成 ==========
 async function generateGrid9(options: GenerateGrid9Options): Promise<PosterGenerateResult> {
-  const {
-    text,
-    directorIds,
-    moodTagId,
-    title: customTitle
-  } = options;
+  const { text, directorIds, moodTagId, title: customTitle } = options;
 
   // 确保字体已加载
   if (document.fonts && document.fonts.ready) {
@@ -1865,7 +1932,7 @@ async function generateGrid9(options: GenerateGrid9Options): Promise<PosterGener
       moodTagId,
       format: 'square',
       showQuote: false, // 九宫格小图不显示金句，避免太挤
-      title: customTitle
+      title: customTitle,
     });
     // 从 dataUrl 恢复 canvas
     const img = new Image();
@@ -1909,7 +1976,7 @@ async function generateGrid9(options: GenerateGrid9Options): Promise<PosterGener
       ctx.drawImage(cellCanvases[idx], x, y, cellSize, cellSize);
       ctx.restore();
       // 导演名标签
-      const director = DIRECTORS.find(d => d.id === cells[idx]);
+      const director = DIRECTORS.find((d) => d.id === cells[idx]);
       if (director) {
         ctx.save();
         ctx.fillStyle = 'rgba(0,0,0,0.5)';
@@ -1946,7 +2013,7 @@ async function generateGrid9(options: GenerateGrid9Options): Promise<PosterGener
     directorId: 'grid9',
     format: '九宫格',
     width: totalSize,
-    height: totalSize
+    height: totalSize,
   };
 }
 
@@ -1994,27 +2061,28 @@ async function generate(options: GenerateOptions): Promise<PosterGenerateResult>
     text,
     emotion,
     directorId,
-    movieId,              // 新增：电影 ID
-    customDNA,            // Phase 2: 自定义/融合 DNA
-    customColors,         // Phase 2: 自定义/融合色彩
-    customPrompt,         // Phase 2: 自定义/融合 prompt
-    swapLabel,            // Phase 2: 换导演/盲盒标签
+    movieId, // 新增：电影 ID
+    customDNA, // Phase 2: 自定义/融合 DNA
+    customColors, // Phase 2: 自定义/融合色彩
+    customPrompt, // Phase 2: 自定义/融合 prompt
+    swapLabel, // Phase 2: 换导演/盲盒标签
     moodTagId,
     format = 'vertical',
     showQuote = true,
     title: customTitle,
     quote: customQuote,
     quoteIndex,
-    aiImageUrl,           // AI 生成的背景图 URL/dataUrl
-    customFontFamily,     // 自定义字体族（覆盖默认）
-    customTitleWeight     // 自定义标题字重（覆盖默认）
+    aiImageUrl, // AI 生成的背景图 URL/dataUrl
+    customFontFamily, // 自定义字体族（覆盖默认）
+    customTitleWeight, // 自定义标题字重（覆盖默认）
   } = options;
 
   // 优先使用电影风格，其次导演风格
   let styleSource: StyleSource | undefined;
   if (movieId) {
-    const movie = (FALLBACK_MOVIES as Movie[]).find(m => m.id === movieId)
-      || ((_getServerMovies ? _getServerMovies() : []) as Movie[]).find(m => m.id === movieId);
+    const movie =
+      (FALLBACK_MOVIES as Movie[]).find((m) => m.id === movieId) ||
+      ((_getServerMovies ? _getServerMovies() : []) as Movie[]).find((m) => m.id === movieId);
     if (movie) {
       // Phase 2: 如果有自定义 DNA/色彩/prompt，使用融合后的
       styleSource = {
@@ -2027,17 +2095,22 @@ async function generate(options: GenerateOptions): Promise<PosterGenerateResult>
         promptCore: customPrompt || movie.stylePrompt,
         quotes: movie.iconicQuotes || [],
         isMovie: true,
-        movieRef: { id: movie.id, title: movie.title, posterUrl: movie.posterUrl, styleDNA: customDNA || movie.styleDNA }
+        movieRef: {
+          id: movie.id,
+          title: movie.title,
+          posterUrl: movie.posterUrl,
+          styleDNA: customDNA || movie.styleDNA,
+        },
       };
     }
   }
   if (!styleSource) {
-    const director = DIRECTORS.find(d => d.id === directorId) || DIRECTORS[0];
+    const director = DIRECTORS.find((d) => d.id === directorId) || DIRECTORS[0];
     styleSource = director as unknown as StyleSource;
   }
 
   // 构建情绪化渲染上下文（Canvas 降级时驱动背景与文字层）
-  const emotionStr = (typeof emotion === 'string' && emotion) ? emotion : 'neutral';
+  const emotionStr = typeof emotion === 'string' && emotion ? emotion : 'neutral';
   const merged = mergeEmotionAndText(emotionStr, text || '');
   const renderContext: RenderContext = {
     emotion: emotionStr,
@@ -2047,7 +2120,7 @@ async function generate(options: GenerateOptions): Promise<PosterGenerateResult>
     moodTagId: moodTagId ?? null,
   };
 
-  const formatConfig = POSTER_FORMATS.find(f => f.id === format) || POSTER_FORMATS[0];
+  const formatConfig = POSTER_FORMATS.find((f) => f.id === format) || POSTER_FORMATS[0];
 
   // 确保字体已加载
   if (document.fonts && document.fonts.ready) {
@@ -2063,8 +2136,10 @@ async function generate(options: GenerateOptions): Promise<PosterGenerateResult>
   let usedWorker = false;
   try {
     const bgBuffer = await renderBackgroundViaWorker(
-      width, height,
-      styleSource.id, styleSource.colors,
+      width,
+      height,
+      styleSource.id,
+      styleSource.colors,
       aiImageUrl,
       aiImageUrl ? VIGNETTE_INTENSITY_AI : VIGNETTE_INTENSITY_CANVAS,
       renderContext
@@ -2096,8 +2171,11 @@ async function generate(options: GenerateOptions): Promise<PosterGenerateResult>
           drawCustomBg(ctx, width, height, styleSource.colors, renderContext);
         } else {
           const bgRenderer = bgRenderers[styleSource.id];
-          if (bgRenderer) { bgRenderer(ctx, width, height, renderContext); }
-          else { drawCustomBg(ctx, width, height, styleSource.colors, renderContext); }
+          if (bgRenderer) {
+            bgRenderer(ctx, width, height, renderContext);
+          } else {
+            drawCustomBg(ctx, width, height, styleSource.colors, renderContext);
+          }
         }
       }
     } else {
@@ -2106,8 +2184,11 @@ async function generate(options: GenerateOptions): Promise<PosterGenerateResult>
         drawCustomBg(ctx, width, height, styleSource.colors, renderContext);
       } else {
         const bgRenderer = bgRenderers[styleSource.id];
-        if (bgRenderer) { bgRenderer(ctx, width, height, renderContext); }
-        else { drawCustomBg(ctx, width, height, styleSource.colors, renderContext); }
+        if (bgRenderer) {
+          bgRenderer(ctx, width, height, renderContext);
+        } else {
+          drawCustomBg(ctx, width, height, styleSource.colors, renderContext);
+        }
       }
     }
 
@@ -2143,8 +2224,8 @@ async function generate(options: GenerateOptions): Promise<PosterGenerateResult>
     colors: styleSource.colors,
     format,
     fontFamily: customFontFamily || styleSource.fontFamily,
-    titleWeight: (typeof customTitleWeight === 'number') ? customTitleWeight : styleSource.titleWeight,
-    merged
+    titleWeight: typeof customTitleWeight === 'number' ? customTitleWeight : styleSource.titleWeight,
+    merged,
   });
 
   // 5. 返回数据
@@ -2160,7 +2241,7 @@ async function generate(options: GenerateOptions): Promise<PosterGenerateResult>
     width,
     height,
     usedAI: !!aiImageUrl,
-    movieRef: styleSource.movieRef || null
+    movieRef: styleSource.movieRef || null,
   };
 }
 
@@ -2168,14 +2249,23 @@ async function generate(options: GenerateOptions): Promise<PosterGenerateResult>
 function blendDNAs(movieDNA: StyleDNA, directorDNA: StyleDNA, ratio?: number): Record<keyof StyleDNA, string> {
   // ratio: 0 = 纯电影, 1 = 纯导演, 0.5 = 均衡融合
   const r = ratio !== undefined ? ratio : 0.5;
-  const keys: (keyof StyleDNA)[] = ['colorTemperature', 'saturation', 'contrast', 'compositionType', 'lightingType', 'scale', 'pace', 'texture'];
+  const keys: (keyof StyleDNA)[] = [
+    'colorTemperature',
+    'saturation',
+    'contrast',
+    'compositionType',
+    'lightingType',
+    'scale',
+    'pace',
+    'texture',
+  ];
   const blended = {} as Record<keyof StyleDNA, string>;
-  keys.forEach(k => {
+  keys.forEach((k) => {
     // 确定性选择：用 key 名做哈希生成 0-1 阈值，避免 Math.random 导致预览/结果不一致
     let hash = 0;
     for (let i = 0; i < k.length; i++) hash = (hash * 31 + k.charCodeAt(i)) % 1000;
     const threshold = hash / 1000;
-    blended[k] = threshold < r ? (directorDNA[k] || movieDNA[k]) : (movieDNA[k] || directorDNA[k]);
+    blended[k] = threshold < r ? directorDNA[k] || movieDNA[k] : movieDNA[k] || directorDNA[k];
   });
   return blended;
 }
@@ -2184,12 +2274,16 @@ function blendColors(movieColors: DirectorColors, directorColors: DirectorColors
   const r = ratio !== undefined ? ratio : 0.5;
   function mixHex(h1: string, h2: string, t: number): string {
     if (!h1 || !h2) return h1 || h2;
-    const r1 = parseInt(h1.slice(1, 3), 16), g1 = parseInt(h1.slice(3, 5), 16), b1 = parseInt(h1.slice(5, 7), 16);
-    const r2 = parseInt(h2.slice(1, 3), 16), g2 = parseInt(h2.slice(3, 5), 16), b2 = parseInt(h2.slice(5, 7), 16);
+    const r1 = parseInt(h1.slice(1, 3), 16),
+      g1 = parseInt(h1.slice(3, 5), 16),
+      b1 = parseInt(h1.slice(5, 7), 16);
+    const r2 = parseInt(h2.slice(1, 3), 16),
+      g2 = parseInt(h2.slice(3, 5), 16),
+      b2 = parseInt(h2.slice(5, 7), 16);
     const rr = Math.round(r1 * (1 - t) + r2 * t);
     const gg = Math.round(g1 * (1 - t) + g2 * t);
     const bb = Math.round(b1 * (1 - t) + b2 * t);
-    return '#' + [rr, gg, bb].map(v => v.toString(16).padStart(2, '0')).join('');
+    return '#' + [rr, gg, bb].map((v) => v.toString(16).padStart(2, '0')).join('');
   }
   return {
     primary: mixHex(movieColors.primary, directorColors.primary, r),
@@ -2197,7 +2291,7 @@ function blendColors(movieColors: DirectorColors, directorColors: DirectorColors
     accent: mixHex(movieColors.accent, directorColors.accent, r),
     bg: mixHex(movieColors.bg, directorColors.bg, r),
     text: mixHex(movieColors.text, directorColors.text, r),
-    textLight: mixHex(movieColors.textLight, directorColors.textLight, r)
+    textLight: mixHex(movieColors.textLight, directorColors.textLight, r),
   };
 }
 
@@ -2213,20 +2307,21 @@ function blendPrompts(moviePrompt: string, directorPrompt: string, ratio?: numbe
 
 // ========== 金句卡生成（H7: 电影金句卡） ==========
 async function generateQuoteCard(options: GenerateQuoteCardOptions): Promise<PosterGenerateResult> {
-  const {
-    quote,
-    movieTitle,
-    movieEnTitle,
-    colors,
-    fontFamily,
-    format = 'square'
-  } = options;
+  const { quote, movieTitle, movieEnTitle, colors, fontFamily, format = 'square' } = options;
 
   const dims = format === 'vertical' ? { w: 720, h: 1080 } : { w: 800, h: 800 };
   const canvas = createCanvas(dims.w, dims.h);
   const ctx = canvas.getContext('2d')!;
-  const w = dims.w, h = dims.h;
-  const c: DirectorColors = colors || { bg: '#1a0a0a', primary: '#c0392b', secondary: '#2c3e50', accent: '#f39c12', text: '#f5e6d3', textLight: '#c9a96e' };
+  const w = dims.w,
+    h = dims.h;
+  const c: DirectorColors = colors || {
+    bg: '#1a0a0a',
+    primary: '#c0392b',
+    secondary: '#2c3e50',
+    accent: '#f39c12',
+    text: '#f5e6d3',
+    textLight: '#c9a96e',
+  };
   const fontFam = fontFamily || "'Noto Serif SC', serif";
 
   // 1. 背景：电影色彩渐变 + 暗角
@@ -2246,7 +2341,9 @@ async function generateQuoteCard(options: GenerateQuoteCardOptions): Promise<Pos
 
   // 纹理光斑
   for (let i = 0; i < 20; i++) {
-    const x = Math.random() * w, y = Math.random() * h, r = Math.random() * 30 + 10;
+    const x = Math.random() * w,
+      y = Math.random() * h,
+      r = Math.random() * 30 + 10;
     const sg = ctx.createRadialGradient(x, y, 0, x, y, r);
     sg.addColorStop(0, hexToRgba(c.accent || c.primary, 0.08));
     sg.addColorStop(1, 'rgba(0,0,0,0)');
@@ -2334,23 +2431,18 @@ async function generateQuoteCard(options: GenerateQuoteCardOptions): Promise<Pos
     width: w,
     height: h,
     usedAI: false,
-    isQuoteCard: true
+    isQuoteCard: true,
   };
 }
 
 // ========== 漫画条生成（H8: 多格漫画） ==========
 async function generateComicStrip(options: GenerateComicStripOptions): Promise<PosterGenerateResult> {
-  const {
-    scenes,
-    movieId,
-    colors,
-    fontFamily
-  } = options;
+  const { scenes, movieId, colors, fontFamily } = options;
 
   const movie = movieId
-    ? ((FALLBACK_MOVIES as Movie[]).find(m => m.id === movieId)
-       || ((_getServerMovies ? _getServerMovies() : []) as Movie[]).find(m => m.id === movieId)
-       || null)
+    ? (FALLBACK_MOVIES as Movie[]).find((m) => m.id === movieId) ||
+      ((_getServerMovies ? _getServerMovies() : []) as Movie[]).find((m) => m.id === movieId) ||
+      null
     : null;
 
   if (!movie) throw new Error('电影不存在');
@@ -2451,20 +2543,13 @@ async function generateComicStrip(options: GenerateComicStripOptions): Promise<P
     height: totalH,
     usedAI: false,
     isComicStrip: true,
-    panelCount
+    panelCount,
   };
 }
 
 // ========== 名场面重绘生成（H9: 场景重绘） ==========
 async function generateSceneRecreation(options: GenerateSceneRecreationOptions): Promise<PosterGenerateResult> {
-  const {
-    sceneDescription,
-    movieTitle,
-    originalScene,
-    colors,
-    stylePrompt,
-    format = 'vertical'
-  } = options;
+  const { sceneDescription, movieTitle, originalScene, colors, stylePrompt, format = 'vertical' } = options;
 
   const result = await generate({
     text: sceneDescription,
@@ -2476,28 +2561,24 @@ async function generateSceneRecreation(options: GenerateSceneRecreationOptions):
     format,
     showQuote: true,
     title: options.customTitle,
-    quote: originalScene
+    quote: originalScene,
   });
 
   return {
     ...result,
     isSceneRecreation: true,
     originalScene,
-    sceneDescription
+    sceneDescription,
   };
 }
 
 // ========== 猜电影海报生成（H10: 猜电影游戏） ==========
 async function generateGuessPoster(options: GenerateGuessPosterOptions): Promise<PosterGenerateResult> {
-  const {
-    movieId,
-    colors,
-    fontFamily,
-    hintLevel = 2
-  } = options;
+  const { movieId, colors, fontFamily, hintLevel = 2 } = options;
 
-  const movie = (FALLBACK_MOVIES as Movie[]).find(m => m.id === movieId)
-    || ((_getServerMovies ? _getServerMovies() : []) as Movie[]).find(m => m.id === movieId);
+  const movie =
+    (FALLBACK_MOVIES as Movie[]).find((m) => m.id === movieId) ||
+    ((_getServerMovies ? _getServerMovies() : []) as Movie[]).find((m) => m.id === movieId);
   if (!movie) throw new Error('电影不存在');
 
   const c: DirectorColors = colors || movie.colors;
@@ -2505,7 +2586,8 @@ async function generateGuessPoster(options: GenerateGuessPosterOptions): Promise
 
   const canvas = createCanvas(720, 1080);
   const ctx = canvas.getContext('2d')!;
-  const w = 720, h = 1080;
+  const w = 720,
+    h = 1080;
 
   // 背景
   const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
@@ -2530,11 +2612,7 @@ async function generateGuessPoster(options: GenerateGuessPosterOptions): Promise
   const hints: Record<number, { title: string; clues: string[] }> = {
     1: {
       title: '🔍 初级提示',
-      clues: [
-        `导演：${movie.director}`,
-        `上映：${movie.releaseDate}`,
-        `片名首字：${movie.title[0]}`
-      ]
+      clues: [`导演：${movie.director}`, `上映：${movie.releaseDate}`, `片名首字：${movie.title[0]}`],
     },
     2: {
       title: '💡 中级提示',
@@ -2542,8 +2620,8 @@ async function generateGuessPoster(options: GenerateGuessPosterOptions): Promise
         `导演：${movie.director}`,
         `上映：${movie.releaseDate}`,
         `片名：${movie.title.slice(0, Math.ceil(movie.title.length / 2))}...`,
-        `视觉风格：${movie.visualStyle}`
-      ]
+        `视觉风格：${movie.visualStyle}`,
+      ],
     },
     3: {
       title: '🎯 高级提示',
@@ -2552,9 +2630,9 @@ async function generateGuessPoster(options: GenerateGuessPosterOptions): Promise
         `导演：${movie.director}`,
         `上映：${movie.releaseDate}`,
         `视觉风格：${movie.visualStyle}`,
-        movie.iconicQuotes && movie.iconicQuotes[0] ? `经典台词：「${movie.iconicQuotes[0]}」` : ''
-      ].filter(Boolean)
-    }
+        movie.iconicQuotes && movie.iconicQuotes[0] ? `经典台词：「${movie.iconicQuotes[0]}」` : '',
+      ].filter(Boolean),
+    },
   };
 
   const hint = hints[level] || hints[2];
@@ -2597,23 +2675,17 @@ async function generateGuessPoster(options: GenerateGuessPosterOptions): Promise
     isGuessPoster: true,
     movieId,
     movieTitle: movie.title,
-    hintLevel: level
+    hintLevel: level,
   };
 }
 
 // ========== 角色梗图生成（H11: 角色二创） ==========
 async function generateCharacterMeme(options: GenerateCharacterMemeOptions): Promise<PosterGenerateResult> {
-  const {
-    movieId,
-    characterName,
-    memeText,
-    memeType = 'dialogue',
-    colors,
-    fontFamily
-  } = options;
+  const { movieId, characterName, memeText, memeType = 'dialogue', colors, fontFamily } = options;
 
-  const movie = (FALLBACK_MOVIES as Movie[]).find(m => m.id === movieId)
-    || ((_getServerMovies ? _getServerMovies() : []) as Movie[]).find(m => m.id === movieId);
+  const movie =
+    (FALLBACK_MOVIES as Movie[]).find((m) => m.id === movieId) ||
+    ((_getServerMovies ? _getServerMovies() : []) as Movie[]).find((m) => m.id === movieId);
   if (!movie) throw new Error('电影不存在');
 
   const c: DirectorColors = colors || movie.colors;
@@ -2621,7 +2693,8 @@ async function generateCharacterMeme(options: GenerateCharacterMemeOptions): Pro
 
   const canvas = createCanvas(800, 800);
   const ctx = canvas.getContext('2d')!;
-  const w = 800, h = 800;
+  const w = 800,
+    h = 800;
 
   // 背景
   const bgGrad = ctx.createLinearGradient(0, 0, w, h);
@@ -2698,7 +2771,7 @@ async function generateCharacterMeme(options: GenerateCharacterMemeOptions): Pro
     isCharacterMeme: true,
     movieId,
     characterName,
-    memeType
+    memeType,
   };
 }
 
@@ -2708,7 +2781,7 @@ const _pure = {
   roundRect,
   blendDNAs,
   blendColors,
-  blendPrompts
+  blendPrompts,
 };
 
 // ========== 导出 ==========
@@ -2723,5 +2796,5 @@ export {
   blendDNAs,
   blendColors,
   blendPrompts,
-  _pure
+  _pure,
 };

@@ -24,11 +24,13 @@ function captureContext() {
     timestamp: Date.now(),
     timeSinceLoad: Date.now() - PAGE_LOAD_TIME,
     viewport: { w: window.innerWidth, h: window.innerHeight },
-    sessionId: sessionStorage.getItem('zaojing_sid') || (() => {
-      const sid = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-      sessionStorage.setItem('zaojing_sid', sid);
-      return sid;
-    })()
+    sessionId:
+      sessionStorage.getItem('zaojing_sid') ||
+      (() => {
+        const sid = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+        sessionStorage.setItem('zaojing_sid', sid);
+        return sid;
+      })(),
   };
 }
 
@@ -61,13 +63,16 @@ function scheduleFlush() {
 
 async function flushErrors() {
   if (ERROR_QUEUE.length === 0) return;
-  if (flushTimer) { clearTimeout(flushTimer); flushTimer = null; }
+  if (flushTimer) {
+    clearTimeout(flushTimer);
+    flushTimer = null;
+  }
   const batch = ERROR_QUEUE.splice(0, ERROR_QUEUE.length);
   try {
     await fetch('/api/errors', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ errors: batch })
+      body: JSON.stringify({ errors: batch }),
     });
   } catch (e) {
     // 上报失败，静默丢弃（避免无限循环）
@@ -84,7 +89,7 @@ export function captureException(error, extra = {}) {
     message: error.message || String(error),
     stack: error.stack,
     ...captureContext(),
-    extra
+    extra,
   };
   reportError(errorData);
   scheduleFlush();
@@ -99,7 +104,7 @@ export function captureMessage(message, level = 'info', extra = {}) {
     level,
     message,
     ...captureContext(),
-    extra
+    extra,
   };
   reportError(errorData);
   scheduleFlush();
@@ -114,7 +119,7 @@ export function initErrorTracking() {
     captureException(event.error || new Error(event.message), {
       filename: event.filename,
       lineno: event.lineno,
-      colno: event.colno
+      colno: event.colno,
     });
   });
 

@@ -62,24 +62,26 @@ function loadData() {
 // 保存本地数据（串行化写入 + 原子重命名，防止并发数据损坏与半写文件）
 let _writeQueue = Promise.resolve();
 function saveData(data) {
-  _writeQueue = _writeQueue.then(() => {
-    // 先写入临时文件，再原子重命名为目标文件
-    // 确保其他读取方永远不会看到半写入的 JSON
-    const tmpFile = DATA_FILE + '.tmp';
-    fs.writeFileSync(tmpFile, JSON.stringify(data, null, 2), 'utf8');
-    fs.renameSync(tmpFile, DATA_FILE); // 原子重命名
-    // 更新内存缓存
-    _cachedData = data;
-    try {
-      _cacheTimestamp = fs.statSync(DATA_FILE).mtimeMs;
-    } catch (e) {
-      // 更新缓存时间戳失败不影响功能
-      logger.debug({ err: e.message }, '[movie-tracker] 保存后更新缓存时间戳失败');
-    }
-  }).catch((e) => {
-    logger.error({ err: e.message }, '[movie-tracker] 保存数据失败');
-    // 防止一次写入失败阻塞后续写入
-  });
+  _writeQueue = _writeQueue
+    .then(() => {
+      // 先写入临时文件，再原子重命名为目标文件
+      // 确保其他读取方永远不会看到半写入的 JSON
+      const tmpFile = DATA_FILE + '.tmp';
+      fs.writeFileSync(tmpFile, JSON.stringify(data, null, 2), 'utf8');
+      fs.renameSync(tmpFile, DATA_FILE); // 原子重命名
+      // 更新内存缓存
+      _cachedData = data;
+      try {
+        _cacheTimestamp = fs.statSync(DATA_FILE).mtimeMs;
+      } catch (e) {
+        // 更新缓存时间戳失败不影响功能
+        logger.debug({ err: e.message }, '[movie-tracker] 保存后更新缓存时间戳失败');
+      }
+    })
+    .catch((e) => {
+      logger.error({ err: e.message }, '[movie-tracker] 保存数据失败');
+      // 防止一次写入失败阻塞后续写入
+    });
   return _writeQueue;
 }
 
@@ -120,9 +122,7 @@ async function fetchMovieDetail(tmdbId) {
 function calculateHeatScore(movie) {
   // 票房分数 (40%)
   const boxOffice = movie.revenue || 0;
-  const boxScore = boxOffice > 0
-    ? Math.min(100, Math.log10(boxOffice / 1000000) * 12)
-    : 0;
+  const boxScore = boxOffice > 0 ? Math.min(100, Math.log10(boxOffice / 1000000) * 12) : 0;
 
   // 社交热度 (30%) - 基于 TMDB popularity
   const popularity = movie.popularity || 0;
@@ -155,18 +155,17 @@ function calculateHeatScore(movie) {
 // 将 TMDB 电影转换为内部格式
 function convertTmdbMovie(tmdbMovie, detail) {
   const heatScore = calculateHeatScore({ ...tmdbMovie, ...detail });
-  const posterUrl = tmdbMovie.poster_path
-    ? `${TMDB_IMG_BASE}/w500${tmdbMovie.poster_path}`
-    : '';
-  const backdropUrl = tmdbMovie.backdrop_path
-    ? `${TMDB_IMG_BASE}/original${tmdbMovie.backdrop_path}`
-    : '';
+  const posterUrl = tmdbMovie.poster_path ? `${TMDB_IMG_BASE}/w500${tmdbMovie.poster_path}` : '';
+  const backdropUrl = tmdbMovie.backdrop_path ? `${TMDB_IMG_BASE}/original${tmdbMovie.backdrop_path}` : '';
 
   return {
     id: `tmdb-${tmdbMovie.id}`,
     title: tmdbMovie.title || tmdbMovie.original_title || '',
     enTitle: tmdbMovie.original_title || '',
-    director: detail && detail.credits && detail.credits.crew ? (detail.credits.crew.find(c => c.job === 'Director') || {}).name || '未知' : '未知',
+    director:
+      detail && detail.credits && detail.credits.crew
+        ? (detail.credits.crew.find((c) => c.job === 'Director') || {}).name || '未知'
+        : '未知',
     releaseDate: tmdbMovie.release_date || '',
     posterUrl,
     backdropUrl,
@@ -190,7 +189,7 @@ function convertTmdbMovie(tmdbMovie, detail) {
     titleWeight: 800,
     status: tmdbMovie.release_date && new Date(tmdbMovie.release_date) > new Date() ? 'upcoming' : 'active',
     featured: false,
-    approved: false
+    approved: false,
   };
 }
 
@@ -214,16 +213,14 @@ async function refreshMovies() {
   const DETAIL_BATCH_SIZE = 5;
   for (let i = 0; i < topMovies.length; i += DETAIL_BATCH_SIZE) {
     const batch = topMovies.slice(i, i + DETAIL_BATCH_SIZE);
-    const details = await Promise.all(
-      batch.map(m => fetchMovieDetail(m.id))
-    );
+    const details = await Promise.all(batch.map((m) => fetchMovieDetail(m.id)));
     for (let j = 0; j < batch.length; j++) {
       newMovies.push(convertTmdbMovie(batch[j], details[j]));
     }
   }
 
-  const approvedIds = new Set(data.movies.map(m => m.id));
-  const newPending = newMovies.filter(m => !approvedIds.has(m.id));
+  const approvedIds = new Set(data.movies.map((m) => m.id));
+  const newPending = newMovies.filter((m) => !approvedIds.has(m.id));
 
   data.pendingReview = [...data.pendingReview, ...newPending];
   data.lastFetch = new Date().toISOString();
@@ -248,7 +245,7 @@ function getPendingMovies() {
 // 管理员审核通过
 function approveMovie(movieId, overrides) {
   const data = loadData();
-  const idx = data.pendingReview.findIndex(m => m.id === movieId);
+  const idx = data.pendingReview.findIndex((m) => m.id === movieId);
   if (idx === -1) return null;
 
   const movie = data.pendingReview[idx];
@@ -270,7 +267,7 @@ function approveMovie(movieId, overrides) {
 // 管理员拒绝
 function rejectMovie(movieId) {
   const data = loadData();
-  data.pendingReview = data.pendingReview.filter(m => m.id !== movieId);
+  data.pendingReview = data.pendingReview.filter((m) => m.id !== movieId);
   saveData(data);
   return true;
 }
@@ -278,7 +275,7 @@ function rejectMovie(movieId) {
 // 更新电影数据（如 DNA 分析结果）
 function updateMovie(movieId, updates) {
   const data = loadData();
-  const movie = data.movies.find(m => m.id === movieId);
+  const movie = data.movies.find((m) => m.id === movieId);
   if (!movie) return null;
   Object.assign(movie, updates);
   saveData(data);
@@ -291,7 +288,7 @@ function getRanking() {
   const movies = data.movies;
 
   const boxOfficeRank = [...movies]
-    .filter(m => m.boxOffice > 0)
+    .filter((m) => m.boxOffice > 0)
     .sort((a, b) => b.boxOffice - a.boxOffice)
     .slice(0, 10)
     .map((m, i) => ({ rank: i + 1, id: m.id, title: m.title, value: m.boxOffice, unit: '元' }));
@@ -321,5 +318,5 @@ module.exports = {
   updateMovie,
   getRanking,
   loadData,
-  flushQueue
+  flushQueue,
 };

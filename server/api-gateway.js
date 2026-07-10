@@ -47,7 +47,15 @@ const API_TIERS = {
     rateLimitPerMin: 300,
     monthlyQuota: 50000,
     pricePerMonth: 999,
-    features: ['poster-generate', 'emotion-analysis', 'batch-generate', 'custom-font', 'webhook', 'priority-support', 'sla'],
+    features: [
+      'poster-generate',
+      'emotion-analysis',
+      'batch-generate',
+      'custom-font',
+      'webhook',
+      'priority-support',
+      'sla',
+    ],
   },
 };
 
@@ -94,20 +102,22 @@ function loadData() {
 // 原子写入
 let _writeQueue = Promise.resolve();
 function saveData(data) {
-  _writeQueue = _writeQueue.then(() => {
-    const tmpFile = DATA_FILE + '.tmp';
-    fs.writeFileSync(tmpFile, JSON.stringify(data, null, 2), 'utf8');
-    fs.renameSync(tmpFile, DATA_FILE);
-    _cache = data;
-    try {
-      _cacheTimestamp = fs.statSync(DATA_FILE).mtimeMs;
-    } catch (e) {
-      // 更新缓存时间戳失败不影响功能
-      logger.debug({ err: e.message }, '[api-gateway] 保存后更新缓存时间戳失败');
-    }
-  }).catch((e) => {
-    logger.error({ err: e.message }, '[api-gateway] 保存数据失败');
-  });
+  _writeQueue = _writeQueue
+    .then(() => {
+      const tmpFile = DATA_FILE + '.tmp';
+      fs.writeFileSync(tmpFile, JSON.stringify(data, null, 2), 'utf8');
+      fs.renameSync(tmpFile, DATA_FILE);
+      _cache = data;
+      try {
+        _cacheTimestamp = fs.statSync(DATA_FILE).mtimeMs;
+      } catch (e) {
+        // 更新缓存时间戳失败不影响功能
+        logger.debug({ err: e.message }, '[api-gateway] 保存后更新缓存时间戳失败');
+      }
+    })
+    .catch((e) => {
+      logger.error({ err: e.message }, '[api-gateway] 保存数据失败');
+    });
   return _writeQueue;
 }
 
@@ -127,9 +137,7 @@ function createApiKey({ name, tier = 'free', expiresInDays = null }) {
   const key = 'zj_' + crypto.randomBytes(24).toString('hex');
   const keyHash = crypto.createHash('sha256').update(key).digest('hex');
   const now = new Date();
-  const expiresAt = expiresInDays
-    ? new Date(now.getTime() + expiresInDays * 24 * 60 * 60 * 1000).toISOString()
-    : null;
+  const expiresAt = expiresInDays ? new Date(now.getTime() + expiresInDays * 24 * 60 * 60 * 1000).toISOString() : null;
 
   const apiKey = {
     id: 'key_' + crypto.randomBytes(8).toString('hex'),

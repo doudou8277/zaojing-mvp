@@ -16,7 +16,7 @@ function localEmotionAnalysis(text, moodTagId) {
   // 2. 文本关键词匹配
   const matched = [];
   for (const [emotion, keywords] of Object.entries(EMOTION_KEYWORDS)) {
-    const hits = keywords.filter(kw => text.includes(kw));
+    const hits = keywords.filter((kw) => text.includes(kw));
     if (hits.length > 0) {
       matched.push({ emotion, score: hits.length, keywords: hits });
     }
@@ -30,8 +30,8 @@ function localEmotionAnalysis(text, moodTagId) {
     primaryEmotion,
     intensity: Math.min(1, (matched[0]?.score || 0) / 3),
     keywords: matched[0]?.keywords || [],
-    secondaryEmotions: matched.slice(1, 3).map(m => m.emotion),
-    source: 'local'
+    secondaryEmotions: matched.slice(1, 3).map((m) => m.emotion),
+    source: 'local',
   };
 }
 
@@ -43,14 +43,14 @@ function localEmotionAnalysis(text, moodTagId) {
 export function initInputPage({ initDirectorsPage } = {}) {
   const moodContainer = $('mood-tags');
   moodContainer.innerHTML = '';
-  MOOD_TAGS.forEach(tag => {
+  MOOD_TAGS.forEach((tag) => {
     const el = document.createElement('button');
     el.className = 'mood-tag';
     el.dataset.id = tag.id;
     el.innerHTML = `<span class="emoji">${tag.emoji}</span> ${tag.label}`;
     if (state.moodTagId === tag.id) el.classList.add('selected');
     el.addEventListener('click', () => {
-      document.querySelectorAll('.mood-tag').forEach(t => t.classList.remove('selected'));
+      document.querySelectorAll('.mood-tag').forEach((t) => t.classList.remove('selected'));
       el.classList.add('selected');
       state.moodTagId = tag.id;
     });
@@ -158,7 +158,8 @@ export function initInputPage({ initDirectorsPage } = {}) {
 
           if (result.keywords && result.keywords.length > 0) {
             keywordsEl.innerHTML = result.keywords
-              .map(kw => `<span class="analysis-keyword">${escapeHtml(kw)}</span>`).join('');
+              .map((kw) => `<span class="analysis-keyword">${escapeHtml(kw)}</span>`)
+              .join('');
           }
 
           hintEl.textContent = result.hint || result.description || '将基于图片情绪生成海报';
@@ -270,7 +271,8 @@ function showComplianceWarning(result, isBlock) {
 
   // 渲染操作按钮
   if (isBlock) {
-    warningActions.innerHTML = '<button class="btn btn-primary btn-sm" id="btn-compliance-close">我知道了，去修改</button>';
+    warningActions.innerHTML =
+      '<button class="btn btn-primary btn-sm" id="btn-compliance-close">我知道了，去修改</button>';
     warningEl.dataset.blocked = 'true';
   } else {
     warningActions.innerHTML = `

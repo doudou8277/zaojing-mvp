@@ -17,12 +17,12 @@ describe('AGENT_TOOLS 工具定义', () => {
 
   it('每个工具应有正确的 function calling 结构', () => {
     const requiredNames = ['analyze_emotion', 'generate_image', 'generate_copy', 'self_evaluate', 'finish'];
-    const actualNames = AGENT_TOOLS.map(t => t.function.name);
+    const actualNames = AGENT_TOOLS.map((t) => t.function.name);
     expect(actualNames.sort()).toEqual(requiredNames.sort());
   });
 
   it('每个工具的 parameters 应包含 type: object', () => {
-    AGENT_TOOLS.forEach(tool => {
+    AGENT_TOOLS.forEach((tool) => {
       expect(tool.type).toBe('function');
       expect(tool.function.parameters.type).toBe('object');
       expect(Array.isArray(tool.function.parameters.required)).toBe(true);
@@ -30,7 +30,7 @@ describe('AGENT_TOOLS 工具定义', () => {
   });
 
   it('finish 工具应包含 summary 参数', () => {
-    const finishTool = AGENT_TOOLS.find(t => t.function.name === 'finish');
+    const finishTool = AGENT_TOOLS.find((t) => t.function.name === 'finish');
     expect(finishTool.function.parameters.properties.summary).toBeDefined();
     expect(finishTool.function.parameters.required).toContain('summary');
   });
@@ -42,7 +42,7 @@ describe('selfEvaluate 自评函数', () => {
     const entry = {
       directorId: 'miyazaki',
       image: { engine: 'seedream', imageBase64: 'fake_base64' },
-      copy: { title: '风之谷', quote: '带上信仰前行' }
+      copy: { title: '风之谷', quote: '带上信仰前行' },
     };
     const result = selfEvaluate('miyazaki', entry, '温暖');
     expect(result.score).toBeGreaterThanOrEqual(90);
@@ -54,7 +54,7 @@ describe('selfEvaluate 自评函数', () => {
     const entry = {
       directorId: 'wkw',
       image: { error: '生成失败' },
-      copy: { title: '重庆森林', quote: '过期罐头' }
+      copy: { title: '重庆森林', quote: '过期罐头' },
     };
     const result = selfEvaluate('wkw', entry, '孤独');
     expect(result.score).toBeLessThan(80);
@@ -65,7 +65,7 @@ describe('selfEvaluate 自评函数', () => {
     const entry = {
       directorId: 'nolan',
       image: { engine: 'seedream', imageUrl: '/img/x.png' },
-      copy: null
+      copy: null,
     };
     const result = selfEvaluate('nolan', entry, '宏大');
     expect(result.score).toBeLessThan(80);
@@ -83,7 +83,7 @@ describe('selfEvaluate 自评函数', () => {
     const entry = {
       directorId: 'unknown_dir',
       image: { engine: 'seedream', imageBase64: 'x' },
-      copy: { title: 't', quote: 'q' }
+      copy: { title: 't', quote: 'q' },
     };
     const result = selfEvaluate('unknown_dir', entry, 'e');
     expect(result.directorName).toBe('unknown_dir');
@@ -118,9 +118,9 @@ describe('executeAgentTool 工具分发', () => {
         miyazaki: {
           directorId: 'miyazaki',
           image: { engine: 'seedream', imageBase64: 'x' },
-          copy: { title: 't', quote: 'q' }
-        }
-      }
+          copy: { title: 't', quote: 'q' },
+        },
+      },
     };
     const obs = await executeAgentTool('self_evaluate', { directorId: 'miyazaki' }, { state });
     const parsed = JSON.parse(obs);
@@ -152,7 +152,7 @@ describe('agentCreate 降级路径', () => {
       moodTagId: 'lonely',
       directorIds: ['wkw'],
       engine: 'seedream',
-      size: 'vertical'
+      size: 'vertical',
     });
 
     // 降级路径应返回 fallback 标记
@@ -174,7 +174,7 @@ describe('agentCreate 降级路径', () => {
       moodTagId: null,
       directorIds: ['miyazaki'],
       engine: 'seedream',
-      size: 'vertical'
+      size: 'vertical',
     });
 
     expect(result.results).toHaveLength(1);

@@ -39,7 +39,7 @@ describe('costMonitor', () => {
   it('byModel 应包含模型名、调用次数、Token 数和费用', () => {
     costMonitor.recordLLMCall('doubao-1.5-pro-32k-250115', 100, 50);
     const stats = costMonitor.getStatsSummary();
-    const doubao = stats.byModel.find(m => m.model === 'doubao-1.5-pro-32k-250115');
+    const doubao = stats.byModel.find((m) => m.model === 'doubao-1.5-pro-32k-250115');
     if (doubao) {
       expect(doubao).toHaveProperty('calls');
       expect(doubao).toHaveProperty('tokens');

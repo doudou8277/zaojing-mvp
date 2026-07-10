@@ -19,7 +19,7 @@ const { wrapText, roundRect, blendDNAs, blendColors, blendPrompts } = _pure;
 function createMockCtx(textWidths = {}) {
   return {
     measureText: vi.fn((text) => ({
-      width: textWidths[text] !== undefined ? textWidths[text] : text.length * 10
+      width: textWidths[text] !== undefined ? textWidths[text] : text.length * 10,
     })),
     beginPath: vi.fn(),
     moveTo: vi.fn(),
@@ -33,14 +33,24 @@ function createMockCtx(textWidths = {}) {
 // ========== blendDNAs 测试 ==========
 describe('blendDNAs', () => {
   const movieDNA = {
-    colorTemperature: 'warm', saturation: 'high', contrast: 'high',
-    compositionType: 'dynamic', lightingType: 'dramatic', scale: 'monumental',
-    pace: 'dynamic', texture: 'grainy'
+    colorTemperature: 'warm',
+    saturation: 'high',
+    contrast: 'high',
+    compositionType: 'dynamic',
+    lightingType: 'dramatic',
+    scale: 'monumental',
+    pace: 'dynamic',
+    texture: 'grainy',
   };
   const directorDNA = {
-    colorTemperature: 'cool', saturation: 'low', contrast: 'low',
-    compositionType: 'symmetric', lightingType: 'natural', scale: 'intimate',
-    pace: 'static', texture: 'smooth'
+    colorTemperature: 'cool',
+    saturation: 'low',
+    contrast: 'low',
+    compositionType: 'symmetric',
+    lightingType: 'natural',
+    scale: 'intimate',
+    pace: 'static',
+    texture: 'smooth',
   };
 
   it('ratio=0 应返回纯电影 DNA', () => {
@@ -82,12 +92,20 @@ describe('blendDNAs', () => {
 // ========== blendColors 测试 ==========
 describe('blendColors', () => {
   const movieColors = {
-    primary: '#ff0000', secondary: '#00ff00', accent: '#0000ff',
-    bg: '#111111', text: '#ffffff', textLight: '#cccccc'
+    primary: '#ff0000',
+    secondary: '#00ff00',
+    accent: '#0000ff',
+    bg: '#111111',
+    text: '#ffffff',
+    textLight: '#cccccc',
   };
   const directorColors = {
-    primary: '#0000ff', secondary: '#ff00ff', accent: '#ffff00',
-    bg: '#222222', text: '#eeeeee', textLight: '#aaaaaa'
+    primary: '#0000ff',
+    secondary: '#ff00ff',
+    accent: '#ffff00',
+    bg: '#222222',
+    text: '#eeeeee',
+    textLight: '#aaaaaa',
   };
 
   it('ratio=0 应返回纯电影颜色', () => {
@@ -177,7 +195,7 @@ describe('blendPrompts', () => {
 // ========== wrapText 测试 ==========
 describe('wrapText', () => {
   it('短文本应在单行返回', () => {
-    const ctx = createMockCtx({ 'Hello': 30 });
+    const ctx = createMockCtx({ Hello: 30 });
     const { lines } = wrapText(ctx, 'Hello', 100);
     expect(lines).toEqual(['Hello']);
   });
@@ -196,7 +214,7 @@ describe('wrapText', () => {
   });
 
   it('单个超宽字符应独占一行', () => {
-    const ctx = createMockCtx({ 'X': 200 });
+    const ctx = createMockCtx({ X: 200 });
     const { lines } = wrapText(ctx, 'X', 100);
     expect(lines).toEqual(['X']);
   });
