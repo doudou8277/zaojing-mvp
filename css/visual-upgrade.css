@@ -1,0 +1,1139 @@
+/* ============================================================
+   造境 ZaoJing — CINEMATIC EDITION v3.0
+   Aesthetic: Private Screening Room · 35mm Film · Noir Cinema
+   ============================================================ */
+
+/* === 1. COLOR PALETTE — Cinema Projection Room === */
+:root {
+  /* visual-upgrade 扩展变量；基础色板与阴影令牌统一由 /css/app.css 提供 */
+  --shadow-screen: 0 0 80px rgba(var(--miya-rgb), 0.08);
+  --glow-miya: 0 0 24px rgba(var(--miya-rgb), 0.3);
+  --glow-gold: 0 0 20px rgba(var(--chow-rgb), 0.2);
+}
+
+/* === 2. GLOBAL ATMOSPHERE — The Screening Room === */
+html {
+  overflow-x: hidden;
+  width: 100%;
+}
+
+body {
+  position: relative !important;
+  background:
+    /* Projector beam from top center */
+    radial-gradient(ellipse 70% 50% at 50% 0%, rgba(var(--miya-rgb), 0.05), transparent 60%),
+    /* Warm bounce from screen */
+    radial-gradient(ellipse 90% 40% at 50% 100%, rgba(var(--chow-rgb), 0.03), transparent 50%),
+    /* Corner vignette */ radial-gradient(ellipse at center, transparent 40%, rgba(0, 0, 0, 0.6) 100%),
+    /* Base */ #070605 !important;
+  background-attachment: fixed !important;
+}
+
+/* === 3. FILM GRAIN — Projector noise === */
+body::after {
+  content: '';
+  position: fixed;
+  inset: -50%;
+  pointer-events: none;
+  z-index: 9996;
+  opacity: 0.045;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+  animation: grain-shift 8s steps(12) infinite;
+  width: 200%;
+  height: 200%;
+}
+
+@keyframes grain-shift {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  10% {
+    transform: translate(-2%, -3%);
+  }
+  20% {
+    transform: translate(-4%, 2%);
+  }
+  30% {
+    transform: translate(2%, -4%);
+  }
+  40% {
+    transform: translate(-2%, 3%);
+  }
+  50% {
+    transform: translate(-1%, 2%);
+  }
+  60% {
+    transform: translate(3%, -2%);
+  }
+  70% {
+    transform: translate(1%, 3%);
+  }
+  80% {
+    transform: translate(-3%, -1%);
+  }
+  90% {
+    transform: translate(2%, 2%);
+  }
+}
+
+/* === 4. VIGNETTE — Theater darkness at edges === */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9995;
+  background: radial-gradient(ellipse 120% 80% at center, transparent 45%, rgba(0, 0, 0, 0.55) 100%);
+}
+
+/* === 5. PROJECTOR DUST — Floating light specks === */
+.projector-dust {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9994;
+  inset: 0;
+  overflow: hidden;
+}
+
+.projector-dust::before,
+.projector-dust::after {
+  content: '';
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: rgba(243, 236, 224, 0.3);
+  border-radius: 50%;
+  box-shadow:
+    120px 200px 0 rgba(243, 236, 224, 0.2),
+    340px 100px 0 rgba(243, 236, 224, 0.15),
+    580px 340px 0 rgba(243, 236, 224, 0.25),
+    250px 500px 0 rgba(243, 236, 224, 0.1),
+    700px 150px 0 rgba(243, 236, 224, 0.2),
+    900px 400px 0 rgba(243, 236, 224, 0.15),
+    150px 600px 0 rgba(243, 236, 224, 0.2),
+    450px 50px 0 rgba(243, 236, 224, 0.1),
+    800px 550px 0 rgba(243, 236, 224, 0.2),
+    70px 350px 0 rgba(243, 236, 224, 0.15),
+    620px 250px 0 rgba(243, 236, 224, 0.1),
+    950px 200px 0 rgba(243, 236, 224, 0.2);
+  animation: dust-float 20s linear infinite;
+}
+
+.projector-dust::after {
+  animation-duration: 30s;
+  animation-delay: -10s;
+  box-shadow:
+    200px 300px 0 rgba(var(--miya-rgb), 0.2),
+    480px 180px 0 rgba(var(--miya-rgb), 0.15),
+    750px 450px 0 rgba(var(--miya-rgb), 0.1),
+    100px 100px 0 rgba(var(--chow-rgb), 0.15),
+    550px 600px 0 rgba(var(--miya-rgb), 0.2),
+    850px 80px 0 rgba(var(--chow-rgb), 0.1),
+    330px 400px 0 rgba(var(--miya-rgb), 0.15),
+    680px 520px 0 rgba(243, 236, 224, 0.1);
+}
+
+@keyframes dust-float {
+  0% {
+    transform: translateY(-10vh) translateX(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(110vh) translateX(30px);
+    opacity: 0;
+  }
+}
+
+/* === 6. SCAN LINES — Subtle film projection lines === */
+.scanlines {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9993;
+  opacity: 0.025;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(243, 236, 224, 0.15) 3px,
+    rgba(243, 236, 224, 0.15) 4px
+  );
+}
+
+/* === 7. TOP NAVIGATION — Curtain Rail === */
+.topbar {
+  background: rgba(7, 6, 5, 0.8) !important;
+  backdrop-filter: blur(30px) saturate(1.3) !important;
+  -webkit-backdrop-filter: blur(30px) saturate(1.3) !important;
+  border-bottom: 1px solid var(--line) !important;
+  height: calc(58px + var(--safe-top)) !important;
+}
+
+.topbar-title {
+  font-size: 1.05rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.12em !important;
+  background: linear-gradient(135deg, var(--ink) 0%, var(--miya) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-family: var(--font-serif) !important;
+}
+
+.topbar .nav-links button {
+  padding: 5px 13px !important;
+  border-radius: var(--radius-full) !important;
+  font-size: 0.78rem !important;
+  border: 1px solid var(--line) !important;
+  background: rgba(19, 17, 14, 0.6) !important;
+  color: var(--ink-mute) !important;
+  transition: all 0.3s var(--ease) !important;
+  letter-spacing: 0.03em;
+}
+
+.topbar .nav-links button:hover {
+  border-color: rgba(var(--miya-rgb), 0.4) !important;
+  color: var(--miya) !important;
+  background: rgba(var(--miya-rgb), 0.08) !important;
+}
+
+/* === 8. BOTTOM TABS — Theater Aisle Lights === */
+.bottom-tabs {
+  background: rgba(7, 6, 5, 0.9) !important;
+  backdrop-filter: blur(30px) saturate(1.2) !important;
+  -webkit-backdrop-filter: blur(30px) saturate(1.2) !important;
+  border-top: 1px solid var(--line) !important;
+  padding-bottom: var(--safe-bottom) !important;
+}
+
+.bottom-tab-item {
+  color: var(--ink-faint) !important;
+  transition: all 0.3s var(--ease) !important;
+}
+
+.bottom-tab-item.active {
+  color: var(--miya) !important;
+  text-shadow: 0 0 12px rgba(var(--miya-rgb), 0.4);
+}
+
+.bottom-tab-item .tab-label {
+  font-size: 0.66rem !important;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+}
+
+.bottom-tab-fab {
+  background: radial-gradient(circle at 30% 30%, var(--miya), var(--miya-dim)) !important;
+  box-shadow:
+    0 4px 20px rgba(var(--miya-rgb), 0.45),
+    0 0 40px rgba(var(--miya-rgb), 0.15),
+    inset 0 1px 1px rgba(255, 255, 255, 0.25) !important;
+  border: 1px solid rgba(var(--miya-rgb), 0.3) !important;
+  width: 54px !important;
+  height: 54px !important;
+  color: var(--bg) !important;
+  font-size: 1.3rem !important;
+  font-weight: 300 !important;
+}
+
+.bottom-tab-fab:hover {
+  transform: scale(1.1) translateY(-3px) !important;
+  box-shadow:
+    0 8px 30px rgba(var(--miya-rgb), 0.55),
+    0 0 60px rgba(var(--miya-rgb), 0.2),
+    inset 0 1px 1px rgba(255, 255, 255, 0.3) !important;
+}
+
+/* === 9. PAGE CONTAINER === */
+.page {
+  animation: page-screen-in 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+}
+
+@keyframes page-screen-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+    filter: blur(6px) brightness(1.5);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0) brightness(1);
+  }
+}
+
+.page-inner {
+  padding-top: 48px !important;
+  padding-bottom: calc(130px + var(--safe-bottom)) !important;
+  position: relative;
+}
+
+/* === 10. HERO — Movie Title Card === */
+.input-hero {
+  text-align: center;
+  margin-bottom: 44px;
+  padding-top: 48px;
+  position: relative;
+}
+
+/* Widescreen aspect ratio bars top & bottom */
+.input-hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--miya), transparent);
+  opacity: 0.6;
+}
+
+.input-hero .hero-clapper {
+  font-size: 2.6rem;
+  margin-bottom: 20px;
+  filter: drop-shadow(0 0 20px rgba(var(--miya-rgb), 0.4)) drop-shadow(0 0 40px rgba(var(--miya-rgb), 0.2));
+  animation: clapper-glow 4s ease-in-out infinite;
+  display: inline-block;
+}
+
+@keyframes clapper-glow {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 20px rgba(var(--miya-rgb), 0.4)) drop-shadow(0 0 40px rgba(var(--miya-rgb), 0.2));
+    transform: rotate(-2deg);
+  }
+  50% {
+    filter: drop-shadow(0 0 30px rgba(var(--miya-rgb), 0.6)) drop-shadow(0 0 60px rgba(var(--miya-rgb), 0.3));
+    transform: rotate(2deg);
+  }
+}
+
+.input-hero h1 {
+  font-size: 2.4rem !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.02em !important;
+  margin-bottom: 14px !important;
+  line-height: 1.15 !important;
+  background: linear-gradient(180deg, #fff8ea 0%, var(--ink) 50%, var(--ink-dim) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: none;
+}
+
+.input-hero p {
+  font-size: 0.92rem !important;
+  color: var(--ink-mute) !important;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  font-family: var(--font-mono) !important;
+  text-transform: uppercase;
+  font-size: 0.72rem !important;
+  opacity: 0.8;
+}
+
+/* Subtitle in serif below the mono tagline */
+.input-hero .hero-sub {
+  font-family: var(--font-serif) !important;
+  font-size: 0.98rem !important;
+  color: var(--ink-dim) !important;
+  text-transform: none !important;
+  letter-spacing: 0.02em !important;
+  margin-top: 10px;
+  opacity: 1;
+}
+
+/* === 11. FLOW INDICATOR — Reel Counter === */
+.flow-indicator {
+  background: rgba(7, 6, 5, 0.88) !important;
+  backdrop-filter: blur(24px) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--radius-full) !important;
+  padding: 7px 22px !important;
+  top: calc(60px + var(--safe-top)) !important;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.03) inset !important;
+}
+
+.flow-step-num {
+  width: 24px !important;
+  height: 24px !important;
+  font-size: 0.7rem !important;
+  background: var(--bg-4) !important;
+  border: 1px solid var(--line);
+  font-family: var(--font-mono);
+}
+
+.flow-step.active .flow-step-num {
+  background: var(--miya) !important;
+  color: var(--bg) !important;
+  font-weight: 700;
+  box-shadow: 0 0 16px rgba(var(--miya-rgb), 0.5);
+  border-color: var(--miya);
+}
+
+.flow-step.done .flow-step-num {
+  background: var(--bg-3) !important;
+  border-color: var(--miya);
+  color: var(--miya) !important;
+}
+
+.flow-step-label {
+  font-size: 0.75rem !important;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+}
+
+/* Step connector line */
+.flow-step + .flow-step::before {
+  background: var(--line-strong) !important;
+}
+
+/* === 12. FILM FRAME INPUT — 35mm Cinema Strip === */
+.input-box.film-frame {
+  border: none !important;
+  border-radius: var(--radius-lg) !important;
+  background: linear-gradient(180deg, var(--bg-2) 0%, var(--bg-1) 100%) !important;
+  box-shadow:
+    0 0 0 1px var(--line),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    0 8px 40px rgba(0, 0, 0, 0.4),
+    var(--shadow-screen) !important;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Left film perforations */
+.input-box.film-frame::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 28px;
+  background: repeating-linear-gradient(180deg, var(--bg-3) 0px, var(--bg-3) 8px, transparent 8px, transparent 20px);
+  z-index: 2;
+  border-right: 1px solid var(--line);
+}
+
+/* Right film perforations */
+.input-box.film-frame::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 28px;
+  background: repeating-linear-gradient(180deg, var(--bg-3) 0px, var(--bg-3) 8px, transparent 8px, transparent 20px);
+  z-index: 2;
+  border-left: 1px solid var(--line);
+}
+
+/* Perforation holes (the actual sprocket holes) */
+.film-perfs {
+  display: none;
+}
+
+/* Top/bottom film edges with perfs */
+.film-perfs-top,
+.film-perfs-bottom {
+  display: none !important;
+}
+
+.input-box textarea {
+  background: transparent !important;
+  border: none !important;
+  font-size: 1.08rem !important;
+  line-height: 1.8 !important;
+  padding: 28px 44px !important;
+  color: var(--ink) !important;
+  font-family: var(--font-serif) !important;
+  min-height: 140px !important;
+}
+
+.input-box textarea::placeholder {
+  color: var(--ink-faint) !important;
+  font-style: italic;
+  font-family: var(--font-serif) !important;
+  opacity: 0.7;
+}
+
+.input-box textarea:focus {
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.input-box.film-frame:focus-within {
+  box-shadow:
+    0 0 0 1px var(--miya),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 0 0 4px rgba(var(--miya-rgb), 0.1),
+    0 8px 40px rgba(0, 0, 0, 0.4),
+    0 0 60px rgba(var(--miya-rgb), 0.1) !important;
+}
+
+.char-count {
+  font-family: var(--font-mono) !important;
+  font-size: 0.68rem !important;
+  color: var(--ink-faint) !important;
+  letter-spacing: 0.1em;
+  bottom: 12px !important;
+  right: 44px !important;
+}
+
+/* === 13. EXAMPLE PROMPTS — Coming Attractions === */
+.example-prompts {
+  margin: 18px 0 22px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.example-label {
+  font-size: 0.66rem !important;
+  color: var(--ink-faint) !important;
+  font-family: var(--font-mono) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+}
+
+.example-chip {
+  padding: 7px 16px !important;
+  border-radius: var(--radius-full) !important;
+  border: 1px solid var(--line) !important;
+  background: var(--bg-2) !important;
+  color: var(--ink-dim) !important;
+  font-size: 0.78rem !important;
+  transition: all 0.3s var(--ease) !important;
+  font-family: var(--font-serif) !important;
+  letter-spacing: 0.02em;
+}
+
+.example-chip:hover {
+  border-color: var(--miya) !important;
+  color: var(--miya) !important;
+  background: rgba(var(--miya-rgb), 0.06) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* === 14. VOICE & UPLOAD BUTTONS === */
+.section-label {
+  font-size: 0.66rem !important;
+  letter-spacing: 0.2em !important;
+  color: var(--ink-faint) !important;
+  margin-bottom: 12px !important;
+  text-transform: uppercase;
+}
+
+.voice-input-btn {
+  border: 1px solid var(--line-strong) !important;
+  border-radius: var(--radius-lg) !important;
+  background: var(--bg-2) !important;
+  padding: 13px 20px !important;
+  font-size: 0.88rem !important;
+  color: var(--ink-dim) !important;
+  transition: all 0.3s var(--ease) !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.voice-input-btn:hover {
+  border-color: var(--chow) !important;
+  color: var(--chow) !important;
+  background: rgba(var(--chow-rgb), 0.06) !important;
+  transform: translateY(-1px);
+}
+
+.upload-image-btn,
+[class*='upload'] {
+  border: 2px dashed var(--line-strong) !important;
+  border-radius: var(--radius-lg) !important;
+  background: var(--bg-2) !important;
+  padding: 22px !important;
+  transition: all 0.3s var(--ease) !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.upload-image-btn:hover,
+[class*='upload']:hover {
+  border-color: var(--miya) !important;
+  background: rgba(var(--miya-rgb), 0.04) !important;
+  border-style: solid !important;
+}
+
+/* === 15. MOOD TAGS — Theater Seat Lights === */
+.mood-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-bottom: 26px;
+}
+
+.mood-tag {
+  padding: 8px 16px !important;
+  border-radius: var(--radius-full) !important;
+  border: 1px solid var(--line) !important;
+  background: rgba(19, 17, 14, 0.8) !important;
+  color: var(--ink-dim) !important;
+  font-size: 0.82rem !important;
+  min-height: 38px !important;
+  transition: all 0.3s var(--ease) !important;
+  font-family: var(--font-serif) !important;
+  letter-spacing: 0.02em;
+  position: relative;
+}
+
+.mood-tag:hover {
+  border-color: var(--line-strong) !important;
+  color: var(--ink) !important;
+  background: var(--bg-3) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+}
+
+.mood-tag.selected {
+  border-color: var(--miya) !important;
+  background: linear-gradient(135deg, rgba(var(--miya-rgb), 0.15), rgba(var(--miya-rgb), 0.05)) !important;
+  color: var(--miya) !important;
+  box-shadow:
+    0 0 24px rgba(var(--miya-rgb), 0.2),
+    inset 0 0 20px rgba(var(--miya-rgb), 0.05) !important;
+}
+
+.mood-tag .emoji {
+  font-size: 0.95rem;
+  filter: saturate(0.85);
+}
+
+/* === 16. PRIMARY CTA — "Now Playing" Curtain Call === */
+.btn-primary {
+  background: linear-gradient(180deg, #f8f2e6 0%, #e6ddd0 100%) !important;
+  color: #0a0908 !important;
+  font-weight: 700 !important;
+  border-radius: var(--radius-lg) !important;
+  padding: 17px 40px !important;
+  font-size: 1.05rem !important;
+  font-family: var(--font-serif) !important;
+  letter-spacing: 0.08em !important;
+  box-shadow:
+    0 4px 20px rgba(248, 242, 230, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1) !important;
+  position: relative;
+  overflow: hidden;
+  text-transform: none;
+}
+
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transform: skewX(-20deg);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(180deg, var(--miya) 0%, #4db89a 100%) !important;
+  transform: translateY(-2px) !important;
+  color: #0a0908 !important;
+  box-shadow:
+    0 8px 32px rgba(var(--miya-rgb), 0.4),
+    0 0 60px rgba(var(--miya-rgb), 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+}
+
+.btn-primary:hover::before {
+  animation: btn-shine 0.7s var(--ease) forwards;
+}
+
+@keyframes btn-shine {
+  from {
+    left: -100%;
+  }
+  to {
+    left: 150%;
+  }
+}
+
+.btn-primary:disabled {
+  background: var(--bg-4) !important;
+  color: var(--ink-faint) !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.btn-ghost {
+  border: 1px solid var(--line-strong) !important;
+  border-radius: var(--radius-lg) !important;
+  background: var(--bg-2) !important;
+  padding: 17px 28px !important;
+  font-family: var(--font-serif) !important;
+  letter-spacing: 0.04em;
+  color: var(--ink-dim) !important;
+  font-size: 0.95rem !important;
+}
+
+.btn-ghost:hover {
+  border-color: var(--line-strong) !important;
+  background: var(--bg-3) !important;
+  color: var(--ink) !important;
+  transform: translateY(-1px);
+}
+
+/* === 17. DIRECTOR PAGE === */
+.director-hero h1 {
+  font-size: 2.1rem !important;
+  font-weight: 900 !important;
+  background: linear-gradient(180deg, #fff8ea, var(--ink-dim));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.01em;
+}
+
+.director-hero p {
+  color: var(--ink-mute) !important;
+  font-size: 0.9rem !important;
+  font-family: var(--font-mono) !important;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.72rem !important;
+}
+
+/* AI emotion badge */
+[class*='emotion-badge'],
+[class*='ai-tag'],
+.ai-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  background: rgba(var(--miya-rgb), 0.12);
+  color: var(--miya);
+  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  letter-spacing: 0.1em;
+  border: 1px solid rgba(var(--miya-rgb), 0.2);
+}
+
+/* === 18. DIRECTOR TOOLBAR & TABS === */
+.director-toolbar,
+[class*='toolbar'],
+[class*='filter-bar'] {
+  background: rgba(19, 17, 14, 0.7) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--radius-lg) !important;
+  padding: 10px 14px !important;
+  backdrop-filter: blur(16px);
+}
+
+/* Segmented control — film gauge selector */
+.segmented-control,
+.tab-bar {
+  background: var(--bg-3) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--radius-full) !important;
+  padding: 3px !important;
+  gap: 2px !important;
+}
+
+.segmented-control button,
+.tab-bar button {
+  border-radius: var(--radius-full) !important;
+  padding: 7px 16px !important;
+  font-size: 0.78rem !important;
+  color: var(--ink-mute) !important;
+  font-family: var(--font-sans);
+  transition: all 0.25s var(--ease) !important;
+}
+
+.segmented-control button.active,
+.tab-bar button.active,
+.segmented-control button[aria-selected='true'] {
+  background: var(--bg-5) !important;
+  color: var(--ink) !important;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* === 19. SEARCH BAR — Film Finder === */
+.director-search input,
+input[type='search'],
+input[type='text'] {
+  background: rgba(19, 17, 14, 0.7) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--radius-lg) !important;
+  padding: 12px 16px 12px 42px !important;
+  color: var(--ink) !important;
+  font-size: 0.88rem !important;
+  transition: all 0.3s var(--ease) !important;
+}
+
+.director-search input:focus,
+input[type='search']:focus,
+input[type='text']:focus {
+  border-color: var(--miya) !important;
+  box-shadow: 0 0 0 3px rgba(var(--miya-rgb), 0.1) !important;
+  outline: none !important;
+  background: var(--bg-2) !important;
+}
+
+/* === 20. DIRECTOR CARDS — Mini Movie Posters === */
+.director-card {
+  border: 1px solid var(--line) !important;
+  border-radius: var(--radius-lg) !important;
+  background: linear-gradient(180deg, var(--bg-2) 0%, var(--bg-1) 100%) !important;
+  overflow: hidden;
+  transition: all 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+  position: relative;
+}
+
+/* Top color stripe like poster genre bar */
+.director-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--dir-c, var(--miya)), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.director-card::before {
+  background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.03), transparent 60%) !important;
+  opacity: 1 !important;
+}
+
+.director-card:hover {
+  border-color: var(--line-strong) !important;
+  transform: translateY(-6px) !important;
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.5),
+    0 0 0 1px var(--line-strong) !important;
+}
+
+.director-card:hover::after {
+  opacity: 1;
+}
+
+.director-card.selected {
+  border-color: var(--miya) !important;
+  background: linear-gradient(180deg, rgba(var(--miya-rgb), 0.08) 0%, var(--bg-2) 100%) !important;
+  box-shadow:
+    0 0 0 1px var(--miya),
+    0 8px 32px rgba(var(--miya-rgb), 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+}
+
+.director-card.selected::after {
+  opacity: 1;
+  background: linear-gradient(90deg, var(--miya), var(--miya-dim), transparent);
+}
+
+.director-card .name {
+  font-size: 1.1rem !important;
+  font-weight: 700 !important;
+  font-family: var(--font-serif) !important;
+  letter-spacing: 0.02em;
+}
+
+.director-card .en-name {
+  font-size: 0.68rem !important;
+  color: var(--ink-faint) !important;
+  letter-spacing: 0.12em;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+}
+
+.director-card .tagline {
+  font-size: 0.78rem !important;
+  color: var(--ink-mute) !important;
+  font-style: italic;
+  font-family: var(--font-serif);
+}
+
+.director-card .avatar {
+  border-radius: var(--radius-md) !important;
+  background: var(--bg-3) !important;
+  border: 1px solid var(--line);
+}
+
+/* Check mark */
+.director-card .check-mark {
+  background: var(--miya) !important;
+  color: var(--bg) !important;
+  box-shadow: 0 0 12px rgba(var(--miya-rgb), 0.5);
+}
+
+/* === 21. EMOTION SPECTRUM — Light Meter === */
+.emotion-spectrum {
+  background: rgba(19, 17, 14, 0.7) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--radius-lg) !important;
+  padding: 18px !important;
+  backdrop-filter: blur(16px);
+}
+
+.spectrum-bar {
+  height: 6px !important;
+  border-radius: var(--radius-full) !important;
+  background: var(--bg-4) !important;
+}
+
+.spectrum-keyword {
+  padding: 4px 12px !important;
+  border-radius: var(--radius-full) !important;
+  font-size: 0.72rem !important;
+  background: var(--bg-3) !important;
+  border: 1px solid var(--line);
+  color: var(--ink-dim) !important;
+  font-family: var(--font-mono) !important;
+  letter-spacing: 0.03em;
+}
+
+/* === 22. FEATURE CARDS — Coming Soon Posters === */
+.feature-card,
+.quick-action,
+[class*='feature-card'],
+[class*='lab-card'],
+[class*='extra-card'] {
+  border: 1px solid var(--line) !important;
+  border-radius: var(--radius-lg) !important;
+  background: linear-gradient(180deg, var(--bg-2) 0%, var(--bg-1) 100%) !important;
+  padding: 22px !important;
+  transition: all 0.3s var(--ease) !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.feature-card::before,
+.quick-action::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--miya), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.feature-card:hover,
+.quick-action:hover,
+[class*='feature-card']:hover,
+[class*='lab-card']:hover {
+  border-color: var(--line-strong) !important;
+  transform: translateY(-3px) !important;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.4);
+}
+
+.feature-card:hover::before,
+.quick-action:hover::before {
+  opacity: 1;
+}
+
+/* === 23. SECTION DIVIDERS — Intermission === */
+hr,
+.divider {
+  border: none;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--line-strong), transparent);
+  margin: 28px 0;
+}
+
+/* === 24. SELECTION TEXT === */
+::selection {
+  background: rgba(var(--miya-rgb), 0.35);
+  color: var(--ink);
+}
+
+/* === 25. SCROLLBAR — Subtle film reel === */
+::-webkit-scrollbar {
+  width: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--bg-4);
+  border-radius: var(--radius-full);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--bg-5);
+}
+
+/* === 26. FOCUS STATES === */
+:focus-visible {
+  outline: 2px solid var(--miya) !important;
+  outline-offset: 2px !important;
+  border-radius: var(--radius-sm) !important;
+}
+
+/* === 27. BACK BUTTON === */
+[class*='back-btn'],
+.nav-back {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: var(--radius-full) !important;
+  border: 1px solid var(--line) !important;
+  background: var(--bg-2) !important;
+  color: var(--ink-dim) !important;
+  transition: all 0.3s var(--ease) !important;
+}
+
+[class*='back-btn']:hover,
+.nav-back:hover {
+  border-color: var(--miya) !important;
+  color: var(--miya) !important;
+  background: rgba(var(--miya-rgb), 0.06) !important;
+}
+
+/* === 28. STAGGERED ENTRANCE ANIMATIONS === */
+.input-hero {
+  animation: cinema-fade-up 0.7s var(--ease) both;
+  animation-delay: 0.1s;
+}
+.input-box {
+  animation: cinema-fade-up 0.7s var(--ease) both;
+  animation-delay: 0.2s;
+}
+.example-prompts {
+  animation: cinema-fade-up 0.7s var(--ease) both;
+  animation-delay: 0.28s;
+}
+.voice-input-btn {
+  animation: cinema-fade-up 0.7s var(--ease) both;
+  animation-delay: 0.32s;
+}
+.mood-tags {
+  animation: cinema-fade-up 0.7s var(--ease) both;
+  animation-delay: 0.38s;
+}
+[class*='upload'] {
+  animation: cinema-fade-up 0.7s var(--ease) both;
+  animation-delay: 0.46s;
+}
+[class*='cta'],
+.cta-row,
+.input-actions {
+  animation: cinema-fade-up 0.7s var(--ease) both;
+  animation-delay: 0.54s;
+}
+
+@keyframes cinema-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+/* === 29. POSTER RESULT PAGE === */
+.poster-container {
+  border-radius: var(--radius-sm) !important;
+  overflow: hidden;
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.6),
+    0 0 0 1px var(--line),
+    0 0 0 4px var(--bg-2),
+    0 0 0 5px var(--line) !important;
+}
+
+/* === 30. HOT MOVIES BADGE — Special Screening === */
+.topbar .nav-links button[class*='hot'] {
+  border-color: rgba(var(--chow-rgb), 0.3) !important;
+  color: var(--chow) !important;
+  background: rgba(var(--chow-rgb), 0.08) !important;
+}
+
+/* === 31. ACCESSIBILITY === */
+@media (prefers-reduced-motion: reduce) {
+  body::after {
+    animation: none !important;
+  }
+  .page {
+    animation: none !important;
+  }
+  .input-hero,
+  .input-box,
+  .example-prompts,
+  .voice-input-btn,
+  .mood-tags,
+  [class*='upload'],
+  [class*='cta'] {
+    animation: none !important;
+  }
+  .btn-primary::before {
+    display: none !important;
+  }
+  .projector-dust {
+    display: none !important;
+  }
+  .hero-clapper {
+    animation: none !important;
+  }
+  * {
+    transition: none !important;
+  }
+}
+
+/* === 32. RESPONSIVE === */
+@media (max-width: 480px) {
+  .input-hero h1 {
+    font-size: 1.9rem !important;
+  }
+
+  .topbar {
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
+
+  .page-inner {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
+  .input-box textarea {
+    padding: 22px 36px !important;
+    font-size: 1rem !important;
+  }
+
+  .char-count {
+    right: 36px !important;
+  }
+
+  .mood-tag {
+    padding: 7px 13px !important;
+    font-size: 0.8rem !important;
+  }
+
+  .director-card {
+    padding: 18px !important;
+  }
+}
