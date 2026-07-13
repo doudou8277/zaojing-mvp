@@ -17,7 +17,7 @@ import {
 } from './utils/dna.js';
 import { logger } from './utils/logger.js';
 import { lazyLoadAll } from './utils/lazy-load.js';
-import { $, toast, openModal, closeModal } from './shared.js';
+import { $, toast, openModal, closeModal, state as appState } from './shared.js';
 import { HEAT_WARM_THRESHOLD, HEAT_HOT_THRESHOLD, HEAT_EXTREME_THRESHOLD } from './utils/constants.js';
 
 // ========== 依赖注入：向 PosterEngine 注入 getServerMovies ==========
@@ -97,6 +97,13 @@ let _eventsBound = false;
 async function init() {
   bindEvents();
   await loadMovies();
+  window.__movieModule = {
+    state,
+    getSelectedMovie,
+    clearSelection: clearSelectedMovie,
+    selectMovieForGeneration,
+  };
+  window.__movieData = state.movies;
 }
 
 function bindEvents() {
@@ -140,10 +147,10 @@ function bindEvents() {
     $('movies-carousel').scrollBy({ left: 440, behavior: 'smooth' });
   };
 
-  // Hero CTA
+  // Hero CTA - 直接选择本周冠军电影进入生成流程
   $('movies-hero-cta').onclick = () => {
     const featured = state.movies.find((m) => m.featured) || state.movies[0];
-    if (featured) openMovieDetail(featured.id);
+    if (featured) selectMovieForGeneration(featured.id);
   };
 
   // 详情面板
@@ -379,6 +386,23 @@ async function loadMovies() {
   renderRankings();
   loadChallenge();
   loadSeason();
+
+  // 从全局 state 恢复电影选择状态
+  if (appState.selectedMovieId) {
+    state.selectedMovieId = appState.selectedMovieId;
+    state.customDNA = appState.movieCustomDNA || null;
+    state.customColors = appState.movieCustomColors || null;
+    state.customPrompt = appState.movieCustomPrompt || null;
+    state.swapLabel = appState.movieSwapLabel || null;
+
+    const movie = state.movies.find((m) => m.id === appState.selectedMovieId);
+    if (movie) {
+      const inputPage = $('page-input');
+      if (inputPage && inputPage.classList.contains('active')) {
+        showMovieTag(appState.selectedMovieId, appState.movieSwapLabel || undefined);
+      }
+    }
+  }
 }
 
 function generateLocalRanking() {
@@ -742,18 +766,41 @@ function drawDNARadar(movie, compareDirectorId) {
 
 // ========== 选择电影进入生成流程 ==========
 function selectMovieForGeneration(movieId) {
+  const movie = state.movies.find((m) => m.id === movieId);
   state.selectedMovieId = movieId;
+  state.customDNA = null;
+  state.customColors = null;
+  state.customPrompt = movie ? movie.stylePrompt : null;
+  state.swapLabel = null;
+
+  appState.selectedMovieId = movieId;
+  appState.movieCustomDNA = null;
+  appState.movieCustomColors = movie ? { ...movie.colors } : null;
+  appState.movieCustomPrompt = movie ? movie.stylePrompt : null;
+  appState.movieSwapLabel = null;
+
   closeMovieDetail();
 
-  // 跳转到输入页
   const inputPage = $('page-input');
   document.querySelectorAll('.page').forEach((p) => p.classList.remove('active'));
   inputPage.classList.add('active');
 
-  // 显示电影标签
   showMovieTag(movieId);
+  updateDirectorsBadge(movie);
 
   toast('已选择电影风格，输入文字后生成海报');
+}
+
+function updateDirectorsBadge(movie) {
+  const badge = $('movie-style-badge');
+  const titleEl = $('badge-movie-title');
+  if (!badge || !titleEl) return;
+  if (movie) {
+    titleEl.textContent = `《${movie.title}》`;
+    badge.style.display = 'flex';
+  } else {
+    badge.style.display = 'none';
+  }
 }
 
 function showMovieTag(movieId, label) {
@@ -792,8 +839,23 @@ function clearSelectedMovie() {
   state.customColors = null;
   state.customPrompt = null;
   state.swapLabel = null;
+
+  appState.selectedMovieId = null;
+  appState.movieCustomDNA = null;
+  appState.movieCustomColors = null;
+  appState.movieCustomPrompt = null;
+  appState.movieSwapLabel = null;
+
   const tag = $('movie-style-tag');
   if (tag) tag.style.display = 'none';
+
+  const dirBadge = $('movie-style-badge');
+  if (dirBadge) dirBadge.style.display = 'none';
+}
+
+// clearSelection 是 clearSelectedMovie 的别名（供外部调用）
+function clearSelection() {
+  clearSelectedMovie();
 }
 
 // ========== 导航 ==========
@@ -804,8 +866,9 @@ function navigateToMovies() {
 }
 
 function getSelectedMovie() {
-  if (!state.selectedMovieId) return null;
-  return state.movies.find((m) => m.id === state.selectedMovieId);
+  const movieId = state.selectedMovieId || appState.selectedMovieId;
+  if (!movieId) return null;
+  return state.movies.find((m) => m.id === movieId);
 }
 
 function refreshMovies() {
@@ -950,22 +1013,40 @@ function generateSwappedPoster() {
   const blendedDNA = PosterEngine.blendDNAs(movie.styleDNA, director.styleDNA, state.swapRatio);
   const blendedColors = PosterEngine.blendColors(movie.colors, director.colors, state.swapRatio);
   const blendedPrompt = PosterEngine.blendPrompts(movie.stylePrompt, director.promptCore, state.swapRatio);
+  const swapLabel = `如果${director.name}拍《${movie.title}》`;
 
-  // 存储融合风格供 PosterEngine 使用
   state.selectedMovieId = movie.id;
   state.customDNA = blendedDNA;
   state.customColors = blendedColors;
   state.customPrompt = blendedPrompt;
-  state.swapLabel = `如果${director.name}拍《${movie.title}》`;
+  state.swapLabel = swapLabel;
+
+  appState.selectedMovieId = movie.id;
+  appState.movieCustomDNA = { ...blendedDNA };
+  appState.movieCustomColors = { ...blendedColors };
+  appState.movieCustomPrompt = blendedPrompt;
+  appState.movieSwapLabel = swapLabel;
 
   closeDirectorSwap();
   closeMovieDetail();
 
-  // 跳转到输入页
   document.querySelectorAll('.page').forEach((p) => p.classList.remove('active'));
   $('page-input').classList.add('active');
-  showMovieTag(movie.id, state.swapLabel);
-  toast(`已选择：如果${director.name}拍《${movie.title}》`);
+  showMovieTag(movie.id, swapLabel);
+  updateDirectorsBadgeWithLabel(swapLabel);
+  toast(`已选择：${swapLabel}`);
+}
+
+function updateDirectorsBadgeWithLabel(label) {
+  const badge = $('movie-style-badge');
+  const titleEl = $('badge-movie-title');
+  if (!badge || !titleEl) return;
+  if (label) {
+    titleEl.textContent = `「${label}」`;
+    badge.style.display = 'flex';
+  } else {
+    badge.style.display = 'none';
+  }
 }
 
 // ========== Phase 2: H7 电影金句卡 ==========
@@ -1174,21 +1255,27 @@ function generateBlindBoxPoster() {
   const blendedDNA = PosterEngine.blendDNAs(movie.styleDNA, director.styleDNA, 0.5);
   const blendedColors = PosterEngine.blendColors(movie.colors, director.colors, 0.5);
   const blendedPrompt = PosterEngine.blendPrompts(movie.stylePrompt, director.promptCore, 0.5);
+  const blindLabel = `盲盒：${director.name} × 《${movie.title}》`;
 
   state.selectedMovieId = movie.id;
   state.customDNA = blendedDNA;
   state.customColors = blendedColors;
   state.customPrompt = blendedPrompt;
-  state.swapLabel = `盲盒：${director.name} × 《${movie.title}》`;
+  state.swapLabel = blindLabel;
 
-  // 重置盲盒 UI
+  appState.selectedMovieId = movie.id;
+  appState.movieCustomDNA = { ...blendedDNA };
+  appState.movieCustomColors = { ...blendedColors };
+  appState.movieCustomPrompt = blendedPrompt;
+  appState.movieSwapLabel = blindLabel;
+
   $('blindbox-result').style.display = 'none';
   $('blindbox-card').style.display = 'flex';
 
-  // 跳转到输入页
   document.querySelectorAll('.page').forEach((p) => p.classList.remove('active'));
   $('page-input').classList.add('active');
-  showMovieTag(movie.id, state.swapLabel);
+  showMovieTag(movie.id, blindLabel);
+  updateDirectorsBadgeWithLabel(blindLabel);
   toast(`盲盒组合：${director.name} × 《${movie.title}》`);
 }
 
@@ -1267,18 +1354,26 @@ function initDNASliders(movie) {
 function applyCustomDNA() {
   if (!state.currentMovie || !state.customDNA) return;
   const movie = state.currentMovie;
+  const customLabel = `自定义风格 · ${movie.title}`;
 
   state.selectedMovieId = movie.id;
   state.customDNA = { ...state.customDNA };
   state.customColors = movie.colors;
   state.customPrompt = movie.stylePrompt;
-  state.swapLabel = `自定义风格 · ${movie.title}`;
+  state.swapLabel = customLabel;
+
+  appState.selectedMovieId = movie.id;
+  appState.movieCustomDNA = { ...state.customDNA };
+  appState.movieCustomColors = { ...movie.colors };
+  appState.movieCustomPrompt = movie.stylePrompt;
+  appState.movieSwapLabel = customLabel;
 
   closeMovieDetail();
 
   document.querySelectorAll('.page').forEach((p) => p.classList.remove('active'));
   $('page-input').classList.add('active');
-  showMovieTag(movie.id, state.swapLabel);
+  showMovieTag(movie.id, customLabel);
+  updateDirectorsBadgeWithLabel(customLabel);
   toast('已应用自定义风格，输入文字后生成海报');
 }
 

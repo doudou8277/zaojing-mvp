@@ -46,24 +46,40 @@
 
     <!-- 关键 CSS：仅保留首屏不闪烁所需的最小结构样式；所有设计令牌统一由 /css/app.css 提供 -->
     <style>
-      * { margin: 0; padding: 0; box-sizing: border-box; }
-      html, body { min-height: 100vh; min-height: 100dvh; }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        min-height: 100vh;
+        min-height: 100dvh;
+      }
       body {
         background:
           radial-gradient(ellipse 70% 50% at 50% 0%, rgba(108, 212, 181, 0.05), transparent 60%),
           radial-gradient(ellipse 90% 40% at 50% 100%, rgba(212, 166, 74, 0.03), transparent 50%),
-          radial-gradient(ellipse at center, transparent 40%, rgba(0, 0, 0, 0.6) 100%),
-          #070605;
+          radial-gradient(ellipse at center, transparent 40%, rgba(0, 0, 0, 0.6) 100%), #070605;
         background-attachment: fixed;
         color: #f3ece0;
-        font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        font-family:
+          'Noto Sans SC',
+          -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          sans-serif;
         font-size: 16px;
         line-height: 1.7;
         -webkit-font-smoothing: antialiased;
         overflow-x: hidden;
       }
-      .page { display: none; }
-      .page.active { display: block; }
+      .page {
+        display: none;
+      }
+      .page.active {
+        display: block;
+      }
       .skip-link {
         position: absolute;
         top: -40px;
@@ -74,7 +90,9 @@
         color: #070605;
         font-size: 0.85rem;
       }
-      .skip-link:focus { top: 0; }
+      .skip-link:focus {
+        top: 0;
+      }
       .sr-only {
         position: absolute;
         width: 1px;
@@ -103,67 +121,324 @@
   </head>
   <body>
     <!-- SVG 图标 sprite（Lucide 风格，1.5px 线条，currentColor） -->
-    <svg style="display:none" aria-hidden="true">
-      <symbol id="i-clapper" viewBox="0 0 24 24"><path d="M20.2 6 3 11l-.8-2.4A2 2 0 0 1 3.5 6.1L17 3a2 2 0 0 1 2.4 1.3Z"/><path d="m6.2 5.3 3.1 3.9"/><path d="m12.4 3.4 3.1 4"/><path d="M3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></symbol>
-      <symbol id="i-flask" viewBox="0 0 24 24"><path d="M10 2v7.31"/><path d="M14 9.3V1.99"/><path d="M8.5 2h7"/><path d="M14 9.3a6.5 6.5 0 1 1-4 0"/><path d="M5.52 16h12.96"/></symbol>
-      <symbol id="i-grid" viewBox="0 0 24 24"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></symbol>
-      <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></symbol>
-      <symbol id="i-mic" viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><path d="M12 19v3"/></symbol>
-      <symbol id="i-camera" viewBox="0 0 24 24"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></symbol>
-      <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .962 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.962 0z"/></symbol>
-      <symbol id="i-palette" viewBox="0 0 24 24"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></symbol>
-      <symbol id="i-ticket" viewBox="0 0 24 24"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></symbol>
-      <symbol id="i-masks" viewBox="0 0 24 24"><path d="M20 4H4a2 2 0 0 0-2 2v4a8 8 0 0 0 16 0V6a2 2 0 0 0-2-2Z" transform="translate(0 -1)"/><path d="M16 12v2a6 6 0 0 1-12 0v-2"/><circle cx="7" cy="8" r=".5" fill="currentColor"/><circle cx="13" cy="8" r=".5" fill="currentColor"/></symbol>
-      <symbol id="i-clipboard" viewBox="0 0 24 24"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></symbol>
-      <symbol id="i-flame" viewBox="0 0 24 24"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></symbol>
-      <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></symbol>
-      <symbol id="i-bot" viewBox="0 0 24 24"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></symbol>
-      <symbol id="i-phone" viewBox="0 0 24 24"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></symbol>
-      <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol>
-      <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></symbol>
-      <symbol id="i-tag" viewBox="0 0 24 24"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></symbol>
-      <symbol id="i-type" viewBox="0 0 24 24"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" x2="15" y1="20" y2="20"/><line x1="12" x2="12" y1="4" y2="20"/></symbol>
-      <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
-      <symbol id="i-aperture" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m14.31 8 5.74 9.94"/><path d="M9.69 8h11.48"/><path d="m7.38 12 5.74-9.94"/><path d="M9.69 16H3.21"/><path d="m7.38 12-5.74 9.94"/></symbol>
-      <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></symbol>
-      <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></symbol>
-      <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol>
-      <symbol id="i-gift" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/></symbol>
-      <symbol id="i-film" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 3v18"/><path d="M3 7.5h4"/><path d="M3 12h18"/><path d="M3 16.5h4"/><path d="M17 3v18"/><path d="M17 7.5h4"/><path d="M17 16.5h4"/></symbol>
-      <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></symbol>
-      <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></symbol>
-      <symbol id="i-stop" viewBox="0 0 24 24"><rect width="16" height="16" x="4" y="4" rx="2"/></symbol>
-      <symbol id="i-skip" viewBox="0 0 24 24"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" x2="19" y1="5" y2="19"/></symbol>
-      <symbol id="i-file" viewBox="0 0 24 24"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></symbol>
-      <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></symbol>
-      <symbol id="i-save" viewBox="0 0 24 24"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></symbol>
-      <symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></symbol>
-      <symbol id="i-clip" viewBox="0 0 24 24"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 17.93 8.8l-8.57 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></symbol>
-      <symbol id="i-book" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></symbol>
-      <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
-      <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></symbol>
-      <symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></symbol>
-      <symbol id="i-check" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></symbol>
-      <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></symbol>
-      <symbol id="i-award" viewBox="0 0 24 24"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></symbol>
-      <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></symbol>
-      <symbol id="i-tv" viewBox="0 0 24 24"><rect width="20" height="15" x="2" y="3" rx="2"/><polyline points="8 21 12 17 16 21"/></symbol>
-      <symbol id="i-smile" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></symbol>
-      <symbol id="i-meh" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="8" x2="16" y1="15" y2="15"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></symbol>
-      <symbol id="i-zap" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></symbol>
-      <symbol id="i-heart" viewBox="0 0 24 24"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></symbol>
-      <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol>
-      <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></symbol>
-      <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></symbol>
-      <symbol id="i-star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></symbol>
-      <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></symbol>
-      <symbol id="i-disc" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="2"/></symbol>
-      <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></symbol>
-      <symbol id="i-feather" viewBox="0 0 24 24"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><line x1="16" x2="2" y1="8" y2="22"/><line x1="17.5" x2="9" y1="15" y2="15"/></symbol>
-      <symbol id="i-feather" viewBox="0 0 24 24"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><line x1="16" x2="2" y1="8" y2="22"/><line x1="17.5" x2="9" y1="15" y2="15"/></symbol>
-      <symbol id="i-mail" viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></symbol>
-      <symbol id="i-edit" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></symbol>
-      <symbol id="i-image" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></symbol>
+    <svg style="display: none" aria-hidden="true">
+      <symbol id="i-clapper" viewBox="0 0 24 24">
+        <path d="M20.2 6 3 11l-.8-2.4A2 2 0 0 1 3.5 6.1L17 3a2 2 0 0 1 2.4 1.3Z" />
+        <path d="m6.2 5.3 3.1 3.9" />
+        <path d="m12.4 3.4 3.1 4" />
+        <path d="M3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" />
+      </symbol>
+      <symbol id="i-flask" viewBox="0 0 24 24">
+        <path d="M10 2v7.31" />
+        <path d="M14 9.3V1.99" />
+        <path d="M8.5 2h7" />
+        <path d="M14 9.3a6.5 6.5 0 1 1-4 0" />
+        <path d="M5.52 16h12.96" />
+      </symbol>
+      <symbol id="i-grid" viewBox="0 0 24 24">
+        <rect width="7" height="7" x="3" y="3" rx="1" />
+        <rect width="7" height="7" x="14" y="3" rx="1" />
+        <rect width="7" height="7" x="14" y="14" rx="1" />
+        <rect width="7" height="7" x="3" y="14" rx="1" />
+      </symbol>
+      <symbol id="i-home" viewBox="0 0 24 24">
+        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+        <path d="M9 22V12h6v10" />
+      </symbol>
+      <symbol id="i-mic" viewBox="0 0 24 24">
+        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+        <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+        <path d="M12 19v3" />
+      </symbol>
+      <symbol id="i-camera" viewBox="0 0 24 24">
+        <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
+        <circle cx="12" cy="13" r="3" />
+      </symbol>
+      <symbol id="i-sparkles" viewBox="0 0 24 24">
+        <path
+          d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .962 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.962 0z"
+        />
+      </symbol>
+      <symbol id="i-palette" viewBox="0 0 24 24">
+        <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" />
+        <circle cx="17.5" cy="10.5" r=".5" fill="currentColor" />
+        <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />
+        <circle cx="6.5" cy="12.5" r=".5" fill="currentColor" />
+        <path
+          d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"
+        />
+      </symbol>
+      <symbol id="i-ticket" viewBox="0 0 24 24">
+        <path
+          d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"
+        />
+        <path d="M13 5v2" />
+        <path d="M13 17v2" />
+        <path d="M13 11v2" />
+      </symbol>
+      <symbol id="i-masks" viewBox="0 0 24 24">
+        <path d="M20 4H4a2 2 0 0 0-2 2v4a8 8 0 0 0 16 0V6a2 2 0 0 0-2-2Z" transform="translate(0 -1)" />
+        <path d="M16 12v2a6 6 0 0 1-12 0v-2" />
+        <circle cx="7" cy="8" r=".5" fill="currentColor" />
+        <circle cx="13" cy="8" r=".5" fill="currentColor" />
+      </symbol>
+      <symbol id="i-clipboard" viewBox="0 0 24 24">
+        <rect width="8" height="4" x="8" y="2" rx="1" />
+        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+        <path d="M12 11h4" />
+        <path d="M12 16h4" />
+        <path d="M8 11h.01" />
+        <path d="M8 16h.01" />
+      </symbol>
+      <symbol id="i-flame" viewBox="0 0 24 24">
+        <path
+          d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"
+        />
+      </symbol>
+      <symbol id="i-layers" viewBox="0 0 24 24">
+        <path
+          d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+        />
+        <path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65" />
+        <path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65" />
+      </symbol>
+      <symbol id="i-bot" viewBox="0 0 24 24">
+        <path d="M12 8V4H8" />
+        <rect width="16" height="12" x="4" y="8" rx="2" />
+        <path d="M2 14h2" />
+        <path d="M20 14h2" />
+        <path d="M15 13v2" />
+        <path d="M9 13v2" />
+      </symbol>
+      <symbol id="i-phone" viewBox="0 0 24 24">
+        <rect width="14" height="20" x="5" y="2" rx="2" ry="2" />
+        <path d="M12 18h.01" />
+      </symbol>
+      <symbol id="i-link" viewBox="0 0 24 24">
+        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+      </symbol>
+      <symbol id="i-bookmark" viewBox="0 0 24 24">
+        <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" />
+      </symbol>
+      <symbol id="i-tag" viewBox="0 0 24 24">
+        <path
+          d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"
+        />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+      </symbol>
+      <symbol id="i-type" viewBox="0 0 24 24">
+        <polyline points="4 7 4 4 20 4 20 7" />
+        <line x1="9" x2="15" y1="20" y2="20" />
+        <line x1="12" x2="12" y1="4" y2="20" />
+      </symbol>
+      <symbol id="i-trash" viewBox="0 0 24 24">
+        <path d="M3 6h18" />
+        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+      </symbol>
+      <symbol id="i-aperture" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" />
+        <path d="m14.31 8 5.74 9.94" />
+        <path d="M9.69 8h11.48" />
+        <path d="m7.38 12 5.74-9.94" />
+        <path d="M9.69 16H3.21" />
+        <path d="m7.38 12-5.74 9.94" />
+      </symbol>
+      <symbol id="i-refresh" viewBox="0 0 24 24">
+        <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+        <path d="M21 3v5h-5" />
+        <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+        <path d="M8 16H3v5" />
+      </symbol>
+      <symbol id="i-trophy" viewBox="0 0 24 24">
+        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+        <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+        <path d="M4 22h16" />
+        <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
+        <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
+        <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+      </symbol>
+      <symbol id="i-chat" viewBox="0 0 24 24">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+      </symbol>
+      <symbol id="i-gift" viewBox="0 0 24 24">
+        <rect x="3" y="8" width="18" height="4" rx="1" />
+        <path d="M12 8v13" />
+        <path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7" />
+        <path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5" />
+      </symbol>
+      <symbol id="i-film" viewBox="0 0 24 24">
+        <rect width="18" height="18" x="3" y="3" rx="2" />
+        <path d="M7 3v18" />
+        <path d="M3 7.5h4" />
+        <path d="M3 12h18" />
+        <path d="M3 16.5h4" />
+        <path d="M17 3v18" />
+        <path d="M17 7.5h4" />
+        <path d="M17 16.5h4" />
+      </symbol>
+      <symbol id="i-download" viewBox="0 0 24 24">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+        <polyline points="7 10 12 15 17 10" />
+        <line x1="12" x2="12" y1="15" y2="3" />
+      </symbol>
+      <symbol id="i-upload" viewBox="0 0 24 24">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+        <polyline points="17 8 12 3 7 8" />
+        <line x1="12" x2="12" y1="3" y2="15" />
+      </symbol>
+      <symbol id="i-stop" viewBox="0 0 24 24"><rect width="16" height="16" x="4" y="4" rx="2" /></symbol>
+      <symbol id="i-skip" viewBox="0 0 24 24">
+        <polygon points="5 4 15 12 5 20 5 4" />
+        <line x1="19" x2="19" y1="5" y2="19" />
+      </symbol>
+      <symbol id="i-file" viewBox="0 0 24 24">
+        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5z" />
+        <polyline points="14 2 14 8 20 8" />
+        <line x1="16" x2="8" y1="13" y2="13" />
+        <line x1="16" x2="8" y1="17" y2="17" />
+        <line x1="10" x2="8" y1="9" y2="9" />
+      </symbol>
+      <symbol id="i-bulb" viewBox="0 0 24 24">
+        <path
+          d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"
+        />
+        <path d="M9 18h6" />
+        <path d="M10 22h4" />
+      </symbol>
+      <symbol id="i-save" viewBox="0 0 24 24">
+        <path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" />
+        <path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7" />
+        <path d="M7 3v4a1 1 0 0 0 1 1h7" />
+      </symbol>
+      <symbol id="i-wrench" viewBox="0 0 24 24">
+        <path
+          d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"
+        />
+      </symbol>
+      <symbol id="i-clip" viewBox="0 0 24 24">
+        <path
+          d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 17.93 8.8l-8.57 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"
+        />
+      </symbol>
+      <symbol id="i-book" viewBox="0 0 24 24">
+        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+      </symbol>
+      <symbol id="i-search" viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="8" />
+        <path d="m21 21-4.3-4.3" />
+      </symbol>
+      <symbol id="i-eye" viewBox="0 0 24 24">
+        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+        <circle cx="12" cy="12" r="3" />
+      </symbol>
+      <symbol id="i-alert" viewBox="0 0 24 24">
+        <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+        <line x1="12" x2="12" y1="9" y2="13" />
+        <line x1="12" x2="12.01" y1="17" y2="17" />
+      </symbol>
+      <symbol id="i-check" viewBox="0 0 24 24">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+        <polyline points="22 4 12 14.01 9 11.01" />
+      </symbol>
+      <symbol id="i-target" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" />
+        <circle cx="12" cy="12" r="6" />
+        <circle cx="12" cy="12" r="2" />
+      </symbol>
+      <symbol id="i-award" viewBox="0 0 24 24">
+        <circle cx="12" cy="8" r="6" />
+        <path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11" />
+      </symbol>
+      <symbol id="i-music" viewBox="0 0 24 24">
+        <path d="M9 18V5l12-2v13" />
+        <circle cx="6" cy="18" r="3" />
+        <circle cx="18" cy="16" r="3" />
+      </symbol>
+      <symbol id="i-tv" viewBox="0 0 24 24">
+        <rect width="20" height="15" x="2" y="3" rx="2" />
+        <polyline points="8 21 12 17 16 21" />
+      </symbol>
+      <symbol id="i-smile" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" />
+        <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+        <line x1="9" x2="9.01" y1="9" y2="9" />
+        <line x1="15" x2="15.01" y1="9" y2="9" />
+      </symbol>
+      <symbol id="i-meh" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="8" x2="16" y1="15" y2="15" />
+        <line x1="9" x2="9.01" y1="9" y2="9" />
+        <line x1="15" x2="15.01" y1="9" y2="9" />
+      </symbol>
+      <symbol id="i-zap" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></symbol>
+      <symbol id="i-heart" viewBox="0 0 24 24">
+        <path
+          d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"
+        />
+      </symbol>
+      <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" /></symbol>
+      <symbol id="i-sun" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="4" />
+        <path d="M12 2v2" />
+        <path d="M12 20v2" />
+        <path d="m4.93 4.93 1.41 1.41" />
+        <path d="m17.66 17.66 1.41 1.41" />
+        <path d="M2 12h2" />
+        <path d="M20 12h2" />
+        <path d="m6.34 17.66-1.41 1.41" />
+        <path d="m19.07 4.93-1.41 1.41" />
+      </symbol>
+      <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" /></symbol>
+      <symbol id="i-star" viewBox="0 0 24 24">
+        <polygon
+          points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
+        />
+      </symbol>
+      <symbol id="i-globe" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" />
+        <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+        <path d="M2 12h20" />
+      </symbol>
+      <symbol id="i-disc" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" />
+        <circle cx="12" cy="12" r="2" />
+      </symbol>
+      <symbol id="i-pin" viewBox="0 0 24 24">
+        <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+        <circle cx="12" cy="10" r="3" />
+      </symbol>
+      <symbol id="i-feather" viewBox="0 0 24 24">
+        <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z" />
+        <line x1="16" x2="2" y1="8" y2="22" />
+        <line x1="17.5" x2="9" y1="15" y2="15" />
+      </symbol>
+      <symbol id="i-feather" viewBox="0 0 24 24">
+        <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z" />
+        <line x1="16" x2="2" y1="8" y2="22" />
+        <line x1="17.5" x2="9" y1="15" y2="15" />
+      </symbol>
+      <symbol id="i-mail" viewBox="0 0 24 24">
+        <rect width="20" height="16" x="2" y="4" rx="2" />
+        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+      </symbol>
+      <symbol id="i-edit" viewBox="0 0 24 24">
+        <path d="M12 20h9" />
+        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
+      </symbol>
+      <symbol id="i-users" viewBox="0 0 24 24">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      </symbol>
+      <symbol id="i-image" viewBox="0 0 24 24">
+        <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+        <circle cx="9" cy="9" r="2" />
+        <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+      </symbol>
     </svg>
     <!-- 放映厅氛围层：漂浮灰尘 + 扫描线 -->
     <div class="projector-dust" aria-hidden="true"></div>
@@ -175,15 +450,21 @@
     <nav class="sidebar-nav" aria-label="主导航">
       <a href="#input" class="sidebar-logo" id="sidebar-logo" title="造境">造</a>
       <button class="sidebar-nav-item active" data-section="create" data-page="input" title="创作">
-        <span><svg class="ico"><use href="#i-clapper"/></svg></span>
+        <span
+          ><svg class="ico"><use href="#i-clapper" /></svg
+        ></span>
         <span class="nav-label">创作</span>
       </button>
       <button class="sidebar-nav-item" data-section="lab" data-page="input" title="实验室">
-        <span><svg class="ico"><use href="#i-flask"/></svg></span>
+        <span
+          ><svg class="ico"><use href="#i-flask" /></svg
+        ></span>
         <span class="nav-label">实验室</span>
       </button>
       <button class="sidebar-nav-item" data-section="my" data-page="wall" title="我的">
-        <span><svg class="ico"><use href="#i-grid"/></svg></span>
+        <span
+          ><svg class="ico"><use href="#i-grid" /></svg
+        ></span>
         <span class="nav-label">我的</span>
       </button>
       <div class="sidebar-nav-spacer"></div>
@@ -196,1305 +477,1633 @@
     <!-- ========== 底部Tab栏（移动端） ========== -->
     <nav class="bottom-tabs" aria-label="主导航">
       <button class="bottom-tab-item active" data-section="create" data-page="input">
-        <span><svg class="ico"><use href="#i-clapper"/></svg></span>
+        <span
+          ><svg class="ico"><use href="#i-clapper" /></svg
+        ></span>
         <span class="tab-label">创作</span>
       </button>
       <button class="bottom-tab-item" data-section="lab" data-page="input">
-        <span><svg class="ico"><use href="#i-flask"/></svg></span>
+        <span
+          ><svg class="ico"><use href="#i-flask" /></svg
+        ></span>
         <span class="tab-label">实验室</span>
       </button>
       <button class="bottom-tab-fab" id="fab-create" aria-label="新建创作" title="新建创作">+</button>
       <button class="bottom-tab-item" data-section="my" data-page="wall">
-        <span><svg class="ico"><use href="#i-grid"/></svg></span>
+        <span
+          ><svg class="ico"><use href="#i-grid" /></svg
+        ></span>
         <span class="tab-label">我的</span>
       </button>
       <button class="bottom-tab-item" data-section="settings" title="返回展示页">
-        <span><svg class="ico"><use href="#i-home"/></svg></span>
+        <span
+          ><svg class="ico"><use href="#i-home" /></svg
+        ></span>
         <span class="tab-label">展示页</span>
       </button>
     </nav>
 
     <div class="app-shell">
-
-    <!-- ========== 顶部导航 ========== -->
-    <nav class="topbar" aria-label="页面导航">
-      <div class="topbar-left">
-        <button class="btn btn-ghost btn-sm btn-back" id="btn-back" aria-label="返回" style="display:none">←</button>
-        <span class="topbar-title" id="topbar-title">创作</span>
-      </div>
-      <div class="nav-links">
-        <button class="btn btn-tertiary btn-sm" id="btn-hot-movies"><svg class="ico"><use href="#i-clapper"/></svg> 热门电影</button>
-      </div>
-    </nav>
-
-    <main>
-      <!-- ========== 输入页 ========== -->
-      <div class="page" id="page-input">
-        <div class="page-inner">
-          <div class="input-hero">
-            <span class="hero-clapper" aria-hidden="true"><svg class="ico"><use href="#i-clapper"/></svg></span>
-            <h1>今天想说什么？</h1>
-            <p>一句话，让你的情绪变成电影海报</p>
-          </div>
-
-          <div class="input-box film-frame">
-            <div class="film-perfs film-perfs-top" aria-hidden="true"></div>
-            <div class="film-frame-label" aria-hidden="true">FRAME 01 · 35mm</div>
-            <textarea id="input-text" placeholder="写下你的心情、场景、心里话…" maxlength="500" rows="5"></textarea>
-            <span class="char-count" id="char-count">0/500</span>
-            <div class="film-grain" aria-hidden="true"></div>
-            <div class="film-perfs film-perfs-bottom" aria-hidden="true"></div>
-          </div>
-
-          <div class="example-prompts" id="example-prompts">
-            <span class="example-label">试试这些 →</span>
-            <button class="example-chip" data-text="深夜加班后走出写字楼，抬头看见月亮">深夜加班的孤独</button>
-            <button class="example-chip" data-text="和好朋友大吵一架后的后悔，想道歉又开不了口">吵架后的后悔</button>
-            <button class="example-chip" data-text="毕业最后一晚的宿舍，空荡荡的床铺和关不掉的灯">毕业最后一晚</button>
-            <button class="example-chip" data-text="在异乡的公交车上，窗外下着雨，耳机里是老歌">异乡的雨夜</button>
-          </div>
-
-          <!-- 内容合规警告 -->
-          <div class="compliance-warning" id="compliance-warning" style="display: none">
-            <div class="compliance-warning-content" id="compliance-warning-content"></div>
-            <div class="compliance-warning-actions" id="compliance-warning-actions"></div>
-          </div>
-
-          <div class="voice-input-section">
-            <button class="btn btn-ghost btn-sm" id="btn-voice-input">
-              <span class="voice-icon"><svg class="ico"><use href="#i-mic"/></svg></span> 说出你的心情
-            </button>
-            <div class="voice-status" id="voice-status" style="display: none">
-              <span class="voice-pulse"></span>
-              正在聆听... 点击停止
-            </div>
-          </div>
-
-          <div class="section-label">或选择一个心情标签</div>
-          <div class="mood-scroll-wrap">
-            <div class="mood-tags mood-tags-scroll" id="mood-tags"></div>
-          </div>
-
-          <!-- 图片上传（内联显示，不再折叠） -->
-          <div class="upload-inline">
-            <input type="file" id="upload-input" accept="image/*" style="display: none" />
-            <button class="upload-inline-btn" id="btn-upload-image">
-              <span><svg class="ico"><use href="#i-camera"/></svg></span>
-              <span id="upload-label">上传图片理解情绪</span>
-            </button>
-            <img id="upload-preview" class="upload-inline-preview" style="display:none" alt="已上传图片预览" />
-            <span style="font-size:0.75rem;color:var(--ink-faint);margin-left:4px;">AI 将分析图片情绪</span>
-          </div>
-          <div class="upload-analysis" id="upload-analysis" style="display: none">
-            <div class="analysis-header">
-              <span class="analysis-label">AI 图片情绪分析</span>
-              <span class="analysis-badge">Vision</span>
-            </div>
-            <div class="analysis-body">
-              <div class="analysis-emotion" id="analysis-emotion"></div>
-              <div class="analysis-keywords" id="analysis-keywords"></div>
-              <div class="analysis-hint" id="analysis-hint"></div>
-            </div>
-          </div>
-
-          <div class="input-actions">
-            <!-- 引擎选择开关 -->
-            <div class="engine-switch-wrap" id="engine-switch-wrap">
-              <span class="engine-switch-label">生成引擎</span>
-              <div class="engine-switch" role="radiogroup" aria-label="选择生成引擎">
-                <button class="engine-option active" data-engine="seedream" role="radio" aria-checked="true">
-                  <span class="engine-icon"><svg class="ico"><use href="#i-sparkles"/></svg></span>
-                  <span class="engine-name">AI 生图</span>
-                </button>
-                <button class="engine-option" data-engine="canvas" role="radio" aria-checked="false">
-                  <span class="engine-icon"><svg class="ico"><use href="#i-palette"/></svg></span>
-                  <span class="engine-name">Canvas</span>
-                </button>
-              </div>
-            </div>
-
-            <button class="btn btn-primary btn-full btn-lg" id="btn-to-directors">
-              开始创作 →<span class="kbd-hint"><span class="kbd-key">2</span></span>
-            </button>
-          </div>
-
-          <!-- 创作实验室：功能卡片（替代原来的"更多功能"折叠） -->
-          <div class="lab-section" id="lab-section">
-            <div class="lab-section-title">创作实验室</div>
-            <div class="lab-cards">
-              <button class="lab-card" id="btn-to-ticket">
-                <span class="lab-card-icon"><svg class="ico"><use href="#i-ticket"/></svg></span>
-                <span class="lab-card-name">旅行票根</span>
-                <span class="lab-card-desc">照片变电影票根</span>
-              </button>
-              <button class="lab-card" id="btn-to-cocreate">
-                <span class="lab-card-icon"><svg class="ico"><use href="#i-masks"/></svg></span>
-                <span class="lab-card-name">多人共创</span>
-                <span class="lab-card-desc">和朋友融合情绪</span>
-              </button>
-              <button class="lab-card" id="btn-to-batch">
-                <span class="lab-card-icon"><svg class="ico"><use href="#i-clipboard"/></svg></span>
-                <span class="lab-card-name">批量生成</span>
-                <span class="lab-card-desc">一次生成多张</span>
-              </button>
-              <button class="lab-card" id="btn-to-hot-topics">
-                <span class="lab-card-icon"><svg class="ico"><use href="#i-flame"/></svg></span>
-                <span class="lab-card-name">热点话题</span>
-                <span class="lab-card-desc">热搜获取灵感</span>
-              </button>
-              <button class="lab-card" id="btn-to-templates">
-                <span class="lab-card-icon"><svg class="ico"><use href="#i-layers"/></svg></span>
-                <span class="lab-card-name">模板库</span>
-                <span class="lab-card-desc">预设风格快速用</span>
-              </button>
-              <button class="lab-card" id="btn-to-wall">
-                <span class="lab-card-icon"><svg class="ico"><use href="#i-grid"/></svg></span>
-                <span class="lab-card-name">我的电影墙</span>
-                <span class="lab-card-desc">查看历史作品</span>
-              </button>
-            </div>
-          </div>
+      <!-- ========== 顶部导航 ========== -->
+      <nav class="topbar" aria-label="页面导航">
+        <div class="topbar-left">
+          <button class="btn btn-ghost btn-sm btn-back" id="btn-back" aria-label="返回" style="display: none">←</button>
+          <span class="topbar-title" id="topbar-title">创作</span>
         </div>
-      </div>
-
-      <!-- ========== 选导演页 ========== -->
-      <div class="page" id="page-directors">
-        <div class="page-inner">
-          <div class="director-hero">
-            <h1>选择你的导演</h1>
-            <p>选一位，或多位一起拍系列海报</p>
-          </div>
-
-          <!-- ========== 风格工具栏 ========== -->
-          <div class="style-tools">
-            <button class="style-tool-btn" id="btn-create-style">
-              <span class="tool-icon"><svg class="ico"><use href="#i-sparkles"/></svg></span>
-              <span class="tool-label">创建风格</span>
-            </button>
-            <button class="style-tool-btn" id="btn-movie-style">
-              <span class="tool-icon"><svg class="ico"><use href="#i-clapper"/></svg></span>
-              <span class="tool-label">从电影生成</span>
-            </button>
-            <button class="style-tool-btn" id="btn-blend-style">
-              <span class="tool-icon"><svg class="ico"><use href="#i-palette"/></svg></span>
-              <span class="tool-label">风格混搭</span>
-            </button>
-          </div>
-
-          <!-- 风格来源切换 -->
-          <div class="style-source-tabs">
-            <button class="source-tab active" data-source="preset">预设导演</button>
-            <button class="source-tab" data-source="custom">我的风格</button>
-            <button class="source-tab" data-source="movie">电影分析</button>
-            <button class="source-tab" data-source="blend">风格混搭</button>
-          </div>
-
-          <!-- 搜索框 -->
-          <div class="director-search" id="director-search-wrap">
-            <input
-              type="text"
-              id="director-search-input"
-              placeholder="搜索导演或风格关键词..."
-              class="search-input"
-              autocomplete="off"
-            />
-          </div>
-
-          <div class="director-toolbar">
-            <button class="btn btn-ghost btn-sm" id="btn-select-all">全选</button>
-            <button class="btn btn-ghost btn-sm" id="btn-clear-all">清除</button>
-            <span class="select-count" id="select-count">已选 0 位</span>
-          </div>
-
-          <!-- AI 引擎选择器 -->
-          <div class="ai-engine-selector" id="ai-engine-selector" style="display: none">
-            <span style="font-size: 0.8rem; color: var(--ink-mute); align-self: center">AI 生图引擎：</span>
-            <button class="ai-engine-chip active" data-engine="seedream">Seedream 5.0 Pro</button>
-            <button class="ai-engine-chip" data-engine="canvas">Canvas 经典模式</button>
-          </div>
-
-          <!-- 情绪光谱可视化 -->
-          <div class="emotion-spectrum" id="emotion-spectrum" style="display: none">
-            <div class="spectrum-header">
-              <span class="spectrum-label">情绪光谱</span>
-              <span class="spectrum-intensity" id="spectrum-intensity">强度 7/10</span>
-            </div>
-            <div class="spectrum-track" id="spectrum-track">
-              <div class="spectrum-bar" id="spectrum-bar"></div>
-              <div class="spectrum-slider" id="spectrum-slider"></div>
-            </div>
-            <div class="spectrum-emotions" id="spectrum-emotions">
-              <!-- 情绪类型快捷选择 -->
-            </div>
-            <div class="spectrum-keywords" id="spectrum-keywords"></div>
-          </div>
-
-          <!-- 情绪→风格推荐列表 -->
-          <div class="style-recommendations-wrap" id="style-recommendations-wrap" style="display: none">
-            <div class="rec-section-label">情绪推荐风格</div>
-            <div class="style-recommendations" id="style-recommendations"></div>
-          </div>
-
-          <!-- 预设导演网格 -->
-          <div class="director-grid" id="director-grid"></div>
-
-          <!-- 自定义风格创建区（source=custom 时显示） -->
-          <div class="custom-style-panel" id="custom-style-panel" style="display: none">
-            <div class="custom-style-create">
-              <h2 style="margin-bottom: 12px">创建你的风格</h2>
-              <div class="style-input-group">
-                <label class="style-input-label">描述你想要的风格</label>
-                <textarea
-                  class="style-textarea"
-                  id="custom-style-input"
-                  placeholder="例如：赛博朋克、霓虹灯、雨夜、未来都市..."
-                ></textarea>
-                <div class="style-presets">
-                  <span class="style-preset-chip" data-preset="赛博朋克、霓虹灯、雨夜"><svg class="ico"><use href="#i-moon"/></svg> 赛博朋克</span>
-                  <span class="style-preset-chip" data-preset="水墨画、留白、东方意境、山水"><svg class="ico"><use href="#i-palette"/></svg> 水墨东方</span>
-                  <span class="style-preset-chip" data-preset="复古胶片、暖黄、颗粒感、80年代"><svg class="ico"><use href="#i-aperture"/></svg> 复古胶片</span>
-                  <span class="style-preset-chip" data-preset="极简、黑白、高对比、几何"><svg class="ico"><use href="#i-disc"/></svg> 极简黑白</span>
-                  <span class="style-preset-chip" data-preset="梦幻、粉彩、柔光、童话"><svg class="ico"><use href="#i-star"/></svg> 梦幻童话</span>
-                </div>
-              </div>
-              <button class="btn btn-primary" id="btn-parse-style-inline">AI 解析风格 →</button>
-            </div>
-
-            <!-- 风格预览 -->
-            <div class="style-preview" id="custom-style-preview" style="display: none">
-              <!-- 动态填充 -->
-            </div>
-
-            <!-- 已保存的自定义风格 -->
-            <div class="saved-styles" id="saved-styles">
-              <h3 style="margin: 16px 0 8px; font-size: 0.9rem; color: var(--ink-dim)">我的风格库</h3>
-              <div id="saved-styles-list"></div>
-            </div>
-          </div>
-
-          <!-- 电影分析区（source=movie 时显示） -->
-          <div class="movie-style-panel" id="movie-style-panel" style="display: none">
-            <div class="custom-style-create">
-              <h2 style="margin-bottom: 12px">从电影生成风格</h2>
-              <div class="style-input-group">
-                <label class="style-input-label">输入你喜欢的电影</label>
-                <input
-                  type="text"
-                  class="search-input"
-                  id="movie-name-input-inline"
-                  placeholder="例如：银翼杀手2049、千与千寻、花样年华..."
-                />
-              </div>
-              <button class="btn btn-primary" id="btn-analyze-movie-inline">AI 分析电影风格 →</button>
-            </div>
-
-            <div class="style-preview" id="movie-style-preview" style="display: none">
-              <!-- 动态填充 -->
-            </div>
-          </div>
-
-          <!-- 风格混搭区（source=blend 时显示） -->
-          <div class="blend-style-panel" id="blend-style-panel" style="display: none">
-            <div class="blend-controls">
-              <h2 style="margin-bottom: 12px">混搭两位导演的风格</h2>
-              <div class="blend-selector">
-                <select class="search-input" id="blend-director-a-inline">
-                  <option value="">选择导演A</option>
-                </select>
-                <span class="blend-arrow">×</span>
-                <select class="search-input" id="blend-director-b-inline">
-                  <option value="">选择导演B</option>
-                </select>
-              </div>
-              <div class="blend-slider-wrap">
-                <div class="blend-slider-label">
-                  <span id="blend-label-a">导演A 50%</span>
-                  <span id="blend-label-b">导演B 50%</span>
-                </div>
-                <input type="range" class="blend-slider" id="blend-ratio" min="0" max="100" value="50" />
-              </div>
-              <button class="btn btn-primary" id="btn-blend-style-inline">生成混搭风格 →</button>
-            </div>
-
-            <div class="style-preview" id="blend-style-preview" style="display: none">
-              <!-- 动态填充 -->
-            </div>
-          </div>
-
-          <div class="director-actions">
-            <button class="btn btn-ghost" id="btn-back-input">← 重新输入</button>
-            <button class="btn btn-primary" id="btn-generate" disabled>
-              让 AI 拍摄你的电影 →<span class="kbd-hint"><span class="kbd-key">G</span></span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- ========== 生成中页 ========== -->
-      <div class="page generating-page" id="page-generating">
-        <div class="gen-animation">
-          <div class="gen-reel"></div>
-          <div class="gen-aperture"></div>
-        </div>
-        <h1 class="gen-text" id="gen-text" aria-live="polite">导演正在为你选景…</h1>
-        <div class="gen-subtext" id="gen-subtext" aria-live="polite">正在分析你的情绪</div>
-        <div class="gen-progress">
-          <div
-            class="gen-progress-bar"
-            id="gen-progress-bar"
-            role="progressbar"
-            aria-valuenow="0"
-            aria-valuemin="0"
-            aria-valuemax="100"
-          ></div>
-        </div>
-        <div class="gen-steps" id="gen-steps">
-          <div class="gen-step-dot active"></div>
-          <div class="gen-step-dot"></div>
-          <div class="gen-step-dot"></div>
-          <div class="gen-step-dot"></div>
-          <div class="gen-step-dot"></div>
-          <div class="gen-step-dot"></div>
-        </div>
-        <button id="gen-cancel-btn" class="btn-ghost" style="display: none; margin-top: 16px">取消</button>
-
-        <!-- Agent 推理过程面板（可折叠） -->
-        <div class="agent-reasoning" id="agent-reasoning-panel" style="display: none">
-          <button
-            class="agent-reasoning-toggle"
-            id="agent-reasoning-toggle"
-            aria-expanded="false"
-            aria-controls="agent-reasoning-body"
-          >
-            <span class="agent-reasoning-icon"><svg class="ico"><use href="#i-bot"/></svg></span>
-            <span class="agent-reasoning-label">AI 推理过程</span>
-            <span class="agent-reasoning-count" id="agent-reasoning-count">0</span>
-            <span class="agent-reasoning-chevron">▸</span>
+        <div class="nav-links">
+          <button class="btn btn-tertiary btn-sm" id="btn-hot-movies">
+            <svg class="ico"><use href="#i-clapper" /></svg> 热门电影
           </button>
-          <div class="agent-reasoning-body" id="agent-reasoning-body" hidden>
-            <div class="agent-reasoning-chain" id="agent-reasoning-chain" role="log" aria-live="polite"></div>
+        </div>
+      </nav>
+
+      <main>
+        <!-- ========== 输入页 ========== -->
+        <div class="page" id="page-input">
+          <div class="page-inner">
+            <div class="input-hero">
+              <span class="hero-clapper" aria-hidden="true"
+                ><svg class="ico"><use href="#i-clapper" /></svg
+              ></span>
+              <h1>今天想说什么？</h1>
+              <p>一句话，让你的情绪变成电影海报</p>
+            </div>
+
+            <div class="input-box film-frame">
+              <div class="film-perfs film-perfs-top" aria-hidden="true"></div>
+              <div class="film-frame-label" aria-hidden="true">FRAME 01 · 35mm</div>
+              <textarea id="input-text" placeholder="写下你的心情、场景、心里话…" maxlength="500" rows="5"></textarea>
+              <span class="char-count" id="char-count">0/500</span>
+              <div class="film-grain" aria-hidden="true"></div>
+              <div class="film-perfs film-perfs-bottom" aria-hidden="true"></div>
+            </div>
+
+            <div class="example-prompts" id="example-prompts">
+              <span class="example-label">试试这些 →</span>
+              <button class="example-chip" data-text="深夜加班后走出写字楼，抬头看见月亮">深夜加班的孤独</button>
+              <button class="example-chip" data-text="和好朋友大吵一架后的后悔，想道歉又开不了口">吵架后的后悔</button>
+              <button class="example-chip" data-text="毕业最后一晚的宿舍，空荡荡的床铺和关不掉的灯">
+                毕业最后一晚
+              </button>
+              <button class="example-chip" data-text="在异乡的公交车上，窗外下着雨，耳机里是老歌">异乡的雨夜</button>
+            </div>
+
+            <!-- 内容合规警告 -->
+            <div class="compliance-warning" id="compliance-warning" style="display: none">
+              <div class="compliance-warning-content" id="compliance-warning-content"></div>
+              <div class="compliance-warning-actions" id="compliance-warning-actions"></div>
+            </div>
+
+            <div class="voice-input-section">
+              <button class="btn btn-ghost btn-sm" id="btn-voice-input">
+                <span class="voice-icon"
+                  ><svg class="ico"><use href="#i-mic" /></svg
+                ></span>
+                说出你的心情
+              </button>
+              <div class="voice-status" id="voice-status" style="display: none">
+                <span class="voice-pulse"></span>
+                正在聆听... 点击停止
+              </div>
+            </div>
+
+            <div class="section-label">或选择一个心情标签</div>
+            <div class="mood-scroll-wrap">
+              <div class="mood-tags mood-tags-scroll" id="mood-tags"></div>
+            </div>
+
+            <!-- 图片上传（内联显示，不再折叠） -->
+            <div class="upload-inline">
+              <input type="file" id="upload-input" accept="image/*" style="display: none" />
+              <button class="upload-inline-btn" id="btn-upload-image">
+                <span
+                  ><svg class="ico"><use href="#i-camera" /></svg
+                ></span>
+                <span id="upload-label">上传图片理解情绪</span>
+              </button>
+              <img id="upload-preview" class="upload-inline-preview" style="display: none" alt="已上传图片预览" />
+              <span style="font-size: 0.75rem; color: var(--ink-faint); margin-left: 4px">AI 将分析图片情绪</span>
+            </div>
+            <div class="upload-analysis" id="upload-analysis" style="display: none">
+              <div class="analysis-header">
+                <span class="analysis-label">AI 图片情绪分析</span>
+                <span class="analysis-badge">Vision</span>
+              </div>
+              <div class="analysis-body">
+                <div class="analysis-emotion" id="analysis-emotion"></div>
+                <div class="analysis-keywords" id="analysis-keywords"></div>
+                <div class="analysis-hint" id="analysis-hint"></div>
+              </div>
+            </div>
+
+            <div class="input-actions">
+              <!-- 引擎选择开关 -->
+              <div class="engine-switch-wrap" id="engine-switch-wrap">
+                <span class="engine-switch-label">生成引擎</span>
+                <div class="engine-switch" role="radiogroup" aria-label="选择生成引擎">
+                  <button class="engine-option active" data-engine="seedream" role="radio" aria-checked="true">
+                    <span class="engine-icon"
+                      ><svg class="ico"><use href="#i-sparkles" /></svg
+                    ></span>
+                    <span class="engine-name">AI 生图</span>
+                  </button>
+                  <button class="engine-option" data-engine="canvas" role="radio" aria-checked="false">
+                    <span class="engine-icon"
+                      ><svg class="ico"><use href="#i-palette" /></svg
+                    ></span>
+                    <span class="engine-name">Canvas</span>
+                  </button>
+                </div>
+              </div>
+
+              <button class="btn btn-primary btn-full btn-lg" id="btn-to-directors">
+                开始创作 →<span class="kbd-hint"><span class="kbd-key">2</span></span>
+              </button>
+            </div>
+
+            <!-- 创作实验室：功能卡片（替代原来的"更多功能"折叠） -->
+            <div class="lab-section" id="lab-section">
+              <div class="lab-section-title">创作实验室</div>
+              <div class="lab-cards">
+                <button class="lab-card" id="btn-to-ticket">
+                  <span class="lab-card-icon"
+                    ><svg class="ico"><use href="#i-ticket" /></svg
+                  ></span>
+                  <span class="lab-card-name">旅行票根</span>
+                  <span class="lab-card-desc">照片变电影票根</span>
+                </button>
+                <button class="lab-card" id="btn-to-cocreate">
+                  <span class="lab-card-icon"
+                    ><svg class="ico"><use href="#i-masks" /></svg
+                  ></span>
+                  <span class="lab-card-name">多人共创</span>
+                  <span class="lab-card-desc">和朋友融合情绪</span>
+                </button>
+                <button class="lab-card" id="btn-to-batch">
+                  <span class="lab-card-icon"
+                    ><svg class="ico"><use href="#i-clipboard" /></svg
+                  ></span>
+                  <span class="lab-card-name">批量生成</span>
+                  <span class="lab-card-desc">一次生成多张</span>
+                </button>
+                <button class="lab-card" id="btn-to-hot-topics">
+                  <span class="lab-card-icon"
+                    ><svg class="ico"><use href="#i-flame" /></svg
+                  ></span>
+                  <span class="lab-card-name">热点话题</span>
+                  <span class="lab-card-desc">热搜获取灵感</span>
+                </button>
+                <button class="lab-card" id="btn-to-templates">
+                  <span class="lab-card-icon"
+                    ><svg class="ico"><use href="#i-layers" /></svg
+                  ></span>
+                  <span class="lab-card-name">模板库</span>
+                  <span class="lab-card-desc">预设风格快速用</span>
+                </button>
+                <button class="lab-card" id="btn-to-wall">
+                  <span class="lab-card-icon"
+                    ><svg class="ico"><use href="#i-grid" /></svg
+                  ></span>
+                  <span class="lab-card-name">我的电影墙</span>
+                  <span class="lab-card-desc">查看历史作品</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- ========== 结果页 ========== -->
-      <div class="page result-page" id="page-result">
-        <div class="result-inner">
-          <div class="result-header">
-            <h1 id="result-title">你的电影海报</h1>
-            <p id="result-meta">宫崎骏风格 · 竖版</p>
-          </div>
+        <!-- ========== 选导演页 ========== -->
+        <div class="page" id="page-directors">
+          <div class="page-inner">
+            <div class="director-hero">
+              <h1>选择你的导演</h1>
+              <p>选一位，或多位一起拍系列海报</p>
+            </div>
 
-          <!-- 单张海报展示 -->
-          <div class="poster-display" id="poster-single">
-            <img
-              id="poster-img"
-              src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='600'%3E%3C/svg%3E"
-              alt="生成的电影海报"
-              style="display: none"
-            />
-          </div>
-
-          <!-- 系列海报展示（多导演模式） -->
-          <div class="poster-series" id="poster-series" style="display: none">
-            <div class="series-grid" id="series-grid"></div>
-          </div>
-
-          <div class="poster-info">
-            <span id="poster-format-info">720 × 1080</span>
-            <span class="divider"></span>
-            <span id="poster-director-info">宫崎骏</span>
-            <span class="divider"></span>
-            <span id="poster-time-info">刚刚</span>
-          </div>
-
-          <!-- 多平台文案 -->
-          <div class="platform-copy-section" id="platform-copy-section" style="display: none">
-            <h3 class="section-subtitle"><svg class="ico"><use href="#i-phone"/></svg> 多平台文案</h3>
-            <div id="platform-copy"></div>
-          </div>
-
-          <div class="result-actions">
-            <button class="btn btn-primary btn-lg btn-full" id="btn-download">
-              <svg class="ico"><use href="#i-download"/></svg> 下载高清海报<span class="kbd-hint"><span class="kbd-key">D</span></span>
-            </button>
-            <button class="btn btn-secondary btn-full" id="btn-regenerate">
-              ↻ 再拍一张<span class="kbd-hint"><span class="kbd-key">R</span></span>
-            </button>
-            <!-- 工具栏：所有工具直接展示，废弃⋯溢出菜单 -->
-            <div class="result-toolbar result-toolbar-expanded">
-              <button class="btn btn-tertiary" id="btn-trailer" title="播放预告片" aria-label="播放预告片">
-                ▶ 预告片
-              </button>
-              <button class="btn btn-tertiary" id="btn-animate" title="动效预览" aria-label="动效预览">
-                <svg class="ico"><use href="#i-clapper"/></svg> 动效
-              </button>
-              <button class="btn btn-tertiary" id="btn-share" title="复制分享链接" aria-label="复制分享链接">
-                <svg class="ico"><use href="#i-link"/></svg> 分享
-              </button>
-              <button class="btn btn-tertiary" id="btn-save-template" title="存为模板" aria-label="存为模板">
-                <svg class="ico"><use href="#i-bookmark"/></svg> 模板
-              </button>
-              <button class="btn btn-tertiary" id="btn-brand" title="品牌工具" aria-label="品牌工具">
-                <svg class="ico"><use href="#i-tag"/></svg> 品牌
-              </button>
-              <button class="btn btn-tertiary" id="btn-typography" title="字体排版" aria-label="字体排版">
-                <svg class="ico"><use href="#i-type"/></svg> 排版
+            <!-- 选中电影风格提示条 -->
+            <div class="movie-style-badge" id="movie-style-badge" style="display: none">
+              <span class="badge-icon"
+                ><svg class="ico"><use href="#i-clapper" /></svg
+              ></span>
+              <span class="badge-text">正在以<span class="badge-movie" id="badge-movie-title"></span>风格创作</span>
+              <button class="badge-clear" id="badge-clear-movie">
+                <svg class="ico"><use href="#i-x" /></svg>
               </button>
             </div>
-          </div>
 
-          <!-- 二次创作区 -->
-          <div class="result-options" id="result-options">
-            <h2>二次创作</h2>
-
-            <!-- 备选标题切换 -->
-            <div class="option-row option-col">
-              <label>标题文案</label>
-              <div class="title-selector" id="title-selector"></div>
+            <!-- ========== 风格工具栏 ========== -->
+            <div class="style-tools">
+              <button class="style-tool-btn" id="btn-create-style">
+                <span class="tool-icon"
+                  ><svg class="ico"><use href="#i-sparkles" /></svg
+                ></span>
+                <span class="tool-label">创建风格</span>
+              </button>
+              <button class="style-tool-btn" id="btn-movie-style">
+                <span class="tool-icon"
+                  ><svg class="ico"><use href="#i-clapper" /></svg
+                ></span>
+                <span class="tool-label">从电影生成</span>
+              </button>
+              <button class="style-tool-btn" id="btn-blend-style">
+                <span class="tool-icon"
+                  ><svg class="ico"><use href="#i-palette" /></svg
+                ></span>
+                <span class="tool-label">风格混搭</span>
+              </button>
             </div>
 
-            <!-- 导演说开关 -->
-            <div class="option-row" id="quote-toggle-row">
-              <label>显示「导演说」金句</label>
-              <div
-                class="toggle on"
-                id="toggle-quote"
-                role="switch"
-                aria-checked="true"
-                aria-label="显示导演说金句"
-                tabindex="0"
-              ></div>
+            <!-- 风格来源切换 -->
+            <div class="style-source-tabs">
+              <button class="source-tab active" data-source="preset">预设导演</button>
+              <button class="source-tab" data-source="custom">我的风格</button>
+              <button class="source-tab" data-source="movie">电影分析</button>
+              <button class="source-tab" data-source="blend">风格混搭</button>
             </div>
 
-            <!-- 换一句金句 -->
-            <div class="option-row" id="quote-refresh-row">
-              <label>换一句导演金句</label>
-              <button class="btn btn-ghost btn-sm" id="btn-refresh-quote">↻ 换一句</button>
-            </div>
-
-            <!-- 海报版式 -->
-            <div class="option-row option-col">
-              <label>海报版式</label>
-              <div class="format-selector" id="format-selector"></div>
-            </div>
-          </div>
-
-          <!-- 导演说金句展示 -->
-          <div class="quote-display" id="quote-display">
-            <div class="quote-label">导演说</div>
-            <div class="quote-text" id="quote-text"></div>
-            <div class="quote-author" id="quote-author"></div>
-          </div>
-
-          <!-- 电影信息卡片 -->
-          <div class="movie-info-card" id="movie-info-card" style="display: none">
-            <div class="movie-info-header">
-              <span class="movie-info-label">电影信息</span>
-              <span class="movie-info-badge">即将上映</span>
-            </div>
-            <div class="movie-info-body">
-              <div class="movie-info-row">
-                <span class="movie-info-key">片名</span>
-                <span class="movie-info-val" id="movie-title"></span>
-              </div>
-              <div class="movie-info-row">
-                <span class="movie-info-key">导演</span>
-                <span class="movie-info-val" id="movie-director"></span>
-              </div>
-              <div class="movie-info-row">
-                <span class="movie-info-key">上映</span>
-                <span class="movie-info-val" id="movie-release-date"></span>
-              </div>
-              <div class="movie-info-row">
-                <span class="movie-info-key">评分</span>
-                <span class="movie-info-val movie-rating" id="movie-rating"></span>
-              </div>
-              <div class="movie-info-row">
-                <span class="movie-info-key">票房</span>
-                <span class="movie-info-val" id="movie-box-office"></span>
-              </div>
-              <div class="movie-info-row">
-                <span class="movie-info-key">类型</span>
-                <span class="movie-info-val movie-genres" id="movie-genres"></span>
-              </div>
-            </div>
-          </div>
-
-          <!-- AI 影评区域 -->
-          <div class="review-section" id="review-section" style="display: none">
-            <div class="review-header">
-              <span class="review-label">AI 影评</span>
-              <span class="review-score-wrap">
-                <span class="review-score" id="review-score">8.5</span>
-                <span class="review-score-suffix">/10</span>
-              </span>
-              <button class="btn btn-ghost btn-sm" id="btn-refresh-review">换一段影评</button>
-            </div>
-            <div class="review-text" id="review-text"></div>
-          </div>
-
-          <!-- 导演手记区域 -->
-          <div class="director-notes-section" id="director-notes-section" style="display: none">
-            <div class="notes-header">
-              <span class="notes-label">导演手记</span>
-              <button class="btn btn-ghost btn-sm" id="btn-refresh-notes">刷新手记</button>
-            </div>
-            <div class="notes-text" id="director-notes-text"></div>
-          </div>
-
-          <div class="result-footer">
-            <button class="btn btn-link" id="btn-home">← 回到首页</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- ========== 电影墙页 ========== -->
-      <div class="page" id="page-wall">
-        <div class="page-inner">
-          <div class="wall-hero">
-            <h1>我的电影墙</h1>
-            <p id="wall-count">你的电影海报作品集</p>
-          </div>
-
-          <div class="wall-stats" id="wall-stats" style="display:none">
-            <div class="wall-stat">
-              <div class="wall-stat-value" id="stat-count">0</div>
-              <div class="wall-stat-label">作品</div>
-            </div>
-            <div class="wall-stat">
-              <div class="wall-stat-value" id="stat-directors">0</div>
-              <div class="wall-stat-label">导演</div>
-            </div>
-            <div class="wall-stat">
-              <div class="wall-stat-value" id="stat-days">0</div>
-              <div class="wall-stat-label">天创作</div>
-            </div>
-          </div>
-
-          <div class="wall-grid" id="wall-grid"></div>
-
-          <div class="wall-empty" id="wall-empty" style="display: none">
-            <div class="wall-empty-icon"><svg class="ico"><use href="#i-clapper"/></svg></div>
-            <h3>还没有作品</h3>
-            <p>写下你的心情，选择一位导演，开始创作你的第一张电影海报吧</p>
-            <button class="btn btn-primary" id="btn-wall-to-input">开始创作 →</button>
-          </div>
-
-          <div class="wall-actions" id="wall-actions" style="display: none">
-            <button class="btn btn-ghost" id="btn-wall-back">← 返回首页</button>
-            <button class="btn btn-ghost" id="btn-wall-clear"><svg class="ico"><use href="#i-trash"/></svg> 清空电影墙</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- ========== 旅行票根页 ========== -->
-      <div class="page" id="page-ticket">
-        <div class="page-inner">
-          <!-- 顶部导航 -->
-          <div class="ticket-topnav">
-            <button class="btn btn-ghost btn-sm" id="ticket-back-btn">← 返回首页</button>
-            <button class="btn btn-ghost btn-sm" id="ticket-wall-btn"><svg class="ico"><use href="#i-grid"/></svg> 我的票根墙</button>
-          </div>
-
-          <div class="ticket-hero">
-            <h1>旅行票根</h1>
-            <p>上传一张旅行照片，AI为你封存一段旅途</p>
-          </div>
-
-          <!-- 上传区域 -->
-          <div id="ticket-upload-section" class="ticket-section">
-            <!-- 模式切换 -->
-            <div class="ticket-mode-switch">
-              <button class="ticket-mode-btn active" id="ticket-mode-smart">智能模式 · 上传即出</button>
-              <button class="ticket-mode-btn" id="ticket-mode-manual">手动模式 · 自定义信息</button>
-            </div>
-
-            <!-- 手动模式额外字段 -->
-            <div id="ticket-manual-fields" style="display: none" class="ticket-manual-fields">
+            <!-- 搜索框 -->
+            <div class="director-search" id="director-search-wrap">
               <input
                 type="text"
-                id="ticket-destination-input"
-                placeholder="目的地，如：大理·洱海"
-                class="ticket-text-input"
-                maxlength="50"
+                id="director-search-input"
+                placeholder="搜索导演或风格关键词..."
+                class="search-input"
+                autocomplete="off"
               />
-              <input type="date" id="ticket-date-input" class="ticket-text-input" />
             </div>
 
-            <!-- 上传区 -->
-            <div class="ticket-upload-zone" id="ticket-upload-zone">
-              <div class="ticket-upload-icon"><svg class="ico"><use href="#i-aperture"/></svg></div>
-              <p class="ticket-upload-text">点击或拖拽上传旅行照片</p>
-              <p class="ticket-upload-hint">支持 JPG / PNG / WebP，最大 10MB</p>
-              <input type="file" id="ticket-file-input" accept="image/*" style="display: none" />
+            <div class="director-toolbar">
+              <button class="btn btn-ghost btn-sm" id="btn-select-all">全选</button>
+              <button class="btn btn-ghost btn-sm" id="btn-clear-all">清除</button>
+              <span class="select-count" id="select-count">已选 0 位</span>
             </div>
 
-            <!-- 已选照片预览 -->
-            <div id="ticket-photo-selected" class="ticket-photo-selected" style="display: none">
-              <img id="ticket-upload-preview" class="ticket-upload-preview" alt="已选照片" />
-              <button class="btn btn-ghost btn-sm" id="ticket-change-photo">换一张</button>
+            <!-- AI 引擎选择器 -->
+            <div class="ai-engine-selector" id="ai-engine-selector" style="display: none">
+              <span style="font-size: 0.8rem; color: var(--ink-mute); align-self: center">AI 生图引擎：</span>
+              <button class="ai-engine-chip active" data-engine="seedream">Seedream 5.0 Pro</button>
+              <button class="ai-engine-chip" data-engine="canvas">Canvas 经典模式</button>
             </div>
 
-            <!-- 生成按钮 -->
-            <button class="btn btn-primary ticket-generate-btn" id="ticket-generate-btn"><svg class="ico"><use href="#i-sparkles"/></svg> 生成旅行票根</button>
-          </div>
-
-          <!-- 生成中状态 -->
-          <div id="ticket-generating-section" class="ticket-section" style="display: none">
-            <div class="ticket-generating">
-              <div class="ticket-gen-spinner"></div>
-              <p class="ticket-gen-text" id="ticket-gen-text">正在分析照片情绪...</p>
-              <div class="ticket-gen-steps">
-                <div class="ticket-gen-step">分析情绪</div>
-                <div class="ticket-gen-step">生成文案</div>
-                <div class="ticket-gen-step">匹配风格</div>
-                <div class="ticket-gen-step">渲染票根</div>
+            <!-- 情绪光谱可视化 -->
+            <div class="emotion-spectrum" id="emotion-spectrum" style="display: none">
+              <div class="spectrum-header">
+                <span class="spectrum-label">情绪光谱</span>
+                <span class="spectrum-intensity" id="spectrum-intensity">强度 7/10</span>
               </div>
-              <p class="ticket-gen-streaming" id="ticket-mood-streaming"></p>
+              <div class="spectrum-track" id="spectrum-track">
+                <div class="spectrum-bar" id="spectrum-bar"></div>
+                <div class="spectrum-slider" id="spectrum-slider"></div>
+              </div>
+              <div class="spectrum-emotions" id="spectrum-emotions">
+                <!-- 情绪类型快捷选择 -->
+              </div>
+              <div class="spectrum-keywords" id="spectrum-keywords"></div>
             </div>
-          </div>
 
-          <!-- 结果展示 -->
-          <div id="ticket-result-section" class="ticket-section" style="display: none">
-            <div class="ticket-result-layout">
-              <!-- 票根画布 -->
-              <div class="ticket-canvas-wrap">
-                <canvas id="ticket-canvas" width="1080" height="1440"></canvas>
+            <!-- 情绪→风格推荐列表 -->
+            <div class="style-recommendations-wrap" id="style-recommendations-wrap" style="display: none">
+              <div class="rec-section-label">情绪推荐风格</div>
+              <div class="style-recommendations" id="style-recommendations"></div>
+            </div>
+
+            <!-- 预设导演网格 -->
+            <div class="director-grid" id="director-grid"></div>
+
+            <!-- 自定义风格创建区（source=custom 时显示） -->
+            <div class="custom-style-panel" id="custom-style-panel" style="display: none">
+              <div class="custom-style-create">
+                <h2 style="margin-bottom: 12px">创建你的风格</h2>
+                <div class="style-input-group">
+                  <label class="style-input-label">描述你想要的风格</label>
+                  <textarea
+                    class="style-textarea"
+                    id="custom-style-input"
+                    placeholder="例如：赛博朋克、霓虹灯、雨夜、未来都市..."
+                  ></textarea>
+                  <div class="style-presets">
+                    <span class="style-preset-chip" data-preset="赛博朋克、霓虹灯、雨夜"
+                      ><svg class="ico"><use href="#i-moon" /></svg> 赛博朋克</span
+                    >
+                    <span class="style-preset-chip" data-preset="水墨画、留白、东方意境、山水"
+                      ><svg class="ico"><use href="#i-palette" /></svg> 水墨东方</span
+                    >
+                    <span class="style-preset-chip" data-preset="复古胶片、暖黄、颗粒感、80年代"
+                      ><svg class="ico"><use href="#i-aperture" /></svg> 复古胶片</span
+                    >
+                    <span class="style-preset-chip" data-preset="极简、黑白、高对比、几何"
+                      ><svg class="ico"><use href="#i-disc" /></svg> 极简黑白</span
+                    >
+                    <span class="style-preset-chip" data-preset="梦幻、粉彩、柔光、童话"
+                      ><svg class="ico"><use href="#i-star" /></svg> 梦幻童话</span
+                    >
+                  </div>
+                </div>
+                <button class="btn btn-primary" id="btn-parse-style-inline">AI 解析风格 →</button>
               </div>
 
-              <!-- 操作面板 -->
-              <div class="ticket-controls">
-                <!-- 信息展示 -->
-                <div class="ticket-info-card">
-                  <div class="ticket-info-row">
-                    <span class="ticket-info-label">目的地</span>
-                    <span class="ticket-info-value" id="ticket-result-destination">—</span>
-                  </div>
-                  <div class="ticket-info-row">
-                    <span class="ticket-info-label">日期</span>
-                    <span class="ticket-info-value" id="ticket-result-date">—</span>
-                  </div>
-                  <div class="ticket-info-row">
-                    <span class="ticket-info-label">场景</span>
-                    <span class="ticket-info-value" id="ticket-result-scene">—</span>
-                  </div>
-                  <div class="ticket-info-row">
-                    <span class="ticket-info-label">情绪</span>
-                    <div class="ticket-info-value ticket-emotion-tags" id="ticket-result-emotion"></div>
-                  </div>
-                  <div class="ticket-info-row" id="ticket-style-reason-row">
-                    <span class="ticket-info-label">推荐理由</span>
-                    <span class="ticket-info-value ticket-style-reason" id="ticket-style-reason">—</span>
-                  </div>
-                </div>
+              <!-- 风格预览 -->
+              <div class="style-preview" id="custom-style-preview" style="display: none">
+                <!-- 动态填充 -->
+              </div>
 
-                <!-- 风格选择 -->
-                <div class="ticket-control-group">
-                  <label class="ticket-control-label">导演风格</label>
-                  <div class="ticket-chips">
-                    <button class="ticket-style-chip active" data-style="miyazaki">宫崎骏</button>
-                    <button class="ticket-style-chip" data-style="wkw">王家卫</button>
-                    <button class="ticket-style-chip" data-style="koreeda">是枝裕和</button>
-                    <button class="ticket-style-chip" data-style="wes">韦斯·安德森</button>
-                    <button class="ticket-style-chip" data-style="nolan">诺兰</button>
-                    <button class="ticket-style-chip" data-style="chazelle">查泽雷</button>
-                    <button class="ticket-style-chip" data-style="lee">李安</button>
-                    <button class="ticket-style-chip" data-style="coppola">科波拉</button>
-                    <button class="ticket-style-chip" data-style="chow">周星驰</button>
-                    <button class="ticket-style-chip" data-style="jia">贾樟柯</button>
-                    <button class="ticket-style-chip" data-style="kurosawa">黑泽明</button>
-                    <button class="ticket-style-chip" data-style="tarantino">昆汀</button>
-                  </div>
-                </div>
+              <!-- 已保存的自定义风格 -->
+              <div class="saved-styles" id="saved-styles">
+                <h3 style="margin: 16px 0 8px; font-size: 0.9rem; color: var(--ink-dim)">我的风格库</h3>
+                <div id="saved-styles-list"></div>
+              </div>
+            </div>
 
-                <!-- 版式选择 -->
-                <div class="ticket-control-group">
-                  <label class="ticket-control-label">版式</label>
-                  <div class="ticket-chips">
-                    <button class="ticket-format-chip active" data-format="vertical">竖版 · 小红书</button>
-                    <button class="ticket-format-chip" data-format="square">方形 · 朋友圈</button>
-                    <button class="ticket-format-chip" data-format="horizontal">横版 · 收藏</button>
-                  </div>
-                </div>
-
-                <!-- 文案编辑 -->
-                <div class="ticket-control-group">
-                  <label class="ticket-control-label">心情文案</label>
-                  <p class="ticket-mood-text" id="ticket-mood-display"></p>
-                  <div class="ticket-mood-actions">
-                    <button class="btn btn-ghost btn-sm" id="ticket-regen-copy">换一句</button>
-                    <button class="btn btn-ghost btn-sm" id="ticket-edit-copy">编辑</button>
-                  </div>
+            <!-- 电影分析区（source=movie 时显示） -->
+            <div class="movie-style-panel" id="movie-style-panel" style="display: none">
+              <div class="custom-style-create">
+                <h2 style="margin-bottom: 12px">从电影生成风格</h2>
+                <div class="style-input-group">
+                  <label class="style-input-label">输入你喜欢的电影</label>
                   <input
                     type="text"
-                    id="ticket-mood-input"
-                    class="ticket-text-input"
-                    style="display: none"
-                    placeholder="输入你的文案（30字内）"
-                    maxlength="30"
+                    class="search-input"
+                    id="movie-name-input-inline"
+                    placeholder="例如：银翼杀手2049、千与千寻、花样年华..."
                   />
                 </div>
+                <button class="btn btn-primary" id="btn-analyze-movie-inline">AI 分析电影风格 →</button>
+              </div>
 
-                <!-- 操作按钮 -->
-                <div class="ticket-actions">
-                  <button class="btn btn-primary" id="ticket-save-btn">保存到票根墙</button>
-                  <div class="ticket-actions-row">
-                    <button class="btn btn-ghost" id="ticket-regenerate-btn">重新生成</button>
-                    <button class="btn btn-ghost" id="ticket-newphoto-btn">换张照片</button>
+              <div class="style-preview" id="movie-style-preview" style="display: none">
+                <!-- 动态填充 -->
+              </div>
+            </div>
+
+            <!-- 风格混搭区（source=blend 时显示） -->
+            <div class="blend-style-panel" id="blend-style-panel" style="display: none">
+              <div class="blend-controls">
+                <h2 style="margin-bottom: 12px">混搭两位导演的风格</h2>
+                <div class="blend-selector">
+                  <select class="search-input" id="blend-director-a-inline">
+                    <option value="">选择导演A</option>
+                  </select>
+                  <span class="blend-arrow">×</span>
+                  <select class="search-input" id="blend-director-b-inline">
+                    <option value="">选择导演B</option>
+                  </select>
+                </div>
+                <div class="blend-slider-wrap">
+                  <div class="blend-slider-label">
+                    <span id="blend-label-a">导演A 50%</span>
+                    <span id="blend-label-b">导演B 50%</span>
                   </div>
-                  <div class="ticket-actions-row">
-                    <button class="btn btn-ghost" id="ticket-copy-btn">复制图片</button>
-                    <button class="btn btn-ghost" id="ticket-download-btn">下载</button>
+                  <input type="range" class="blend-slider" id="blend-ratio" min="0" max="100" value="50" />
+                </div>
+                <button class="btn btn-primary" id="btn-blend-style-inline">生成混搭风格 →</button>
+              </div>
+
+              <div class="style-preview" id="blend-style-preview" style="display: none">
+                <!-- 动态填充 -->
+              </div>
+            </div>
+
+            <div class="director-actions">
+              <button class="btn btn-ghost" id="btn-back-input">← 重新输入</button>
+              <button class="btn btn-primary" id="btn-generate" disabled>
+                让 AI 拍摄你的电影 →<span class="kbd-hint"><span class="kbd-key">G</span></span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========== 生成中页 ========== -->
+        <div class="page generating-page" id="page-generating">
+          <div class="gen-animation">
+            <div class="gen-reel"></div>
+            <div class="gen-aperture"></div>
+          </div>
+          <h1 class="gen-text" id="gen-text" aria-live="polite">导演正在为你选景…</h1>
+          <div class="gen-subtext" id="gen-subtext" aria-live="polite">正在分析你的情绪</div>
+          <div class="gen-progress">
+            <div
+              class="gen-progress-bar"
+              id="gen-progress-bar"
+              role="progressbar"
+              aria-valuenow="0"
+              aria-valuemin="0"
+              aria-valuemax="100"
+            ></div>
+          </div>
+          <div class="gen-steps" id="gen-steps">
+            <div class="gen-step-dot active"></div>
+            <div class="gen-step-dot"></div>
+            <div class="gen-step-dot"></div>
+            <div class="gen-step-dot"></div>
+            <div class="gen-step-dot"></div>
+            <div class="gen-step-dot"></div>
+          </div>
+          <button id="gen-cancel-btn" class="btn-ghost" style="display: none; margin-top: 16px">取消</button>
+
+          <!-- Agent 推理过程面板（可折叠） -->
+          <div class="agent-reasoning" id="agent-reasoning-panel" style="display: none">
+            <button
+              class="agent-reasoning-toggle"
+              id="agent-reasoning-toggle"
+              aria-expanded="false"
+              aria-controls="agent-reasoning-body"
+            >
+              <span class="agent-reasoning-icon"
+                ><svg class="ico"><use href="#i-bot" /></svg
+              ></span>
+              <span class="agent-reasoning-label">AI 推理过程</span>
+              <span class="agent-reasoning-count" id="agent-reasoning-count">0</span>
+              <span class="agent-reasoning-chevron">▸</span>
+            </button>
+            <div class="agent-reasoning-body" id="agent-reasoning-body" hidden>
+              <div class="agent-reasoning-chain" id="agent-reasoning-chain" role="log" aria-live="polite"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========== 结果页 ========== -->
+        <div class="page result-page" id="page-result">
+          <div class="result-inner">
+            <div class="result-header">
+              <h1 id="result-title">你的电影海报</h1>
+              <p id="result-meta">宫崎骏风格 · 竖版</p>
+            </div>
+
+            <!-- 单张海报展示 -->
+            <div class="poster-display" id="poster-single">
+              <img
+                id="poster-img"
+                src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='600'%3E%3C/svg%3E"
+                alt="生成的电影海报"
+                style="display: none"
+              />
+            </div>
+
+            <!-- 系列海报展示（多导演模式） -->
+            <div class="poster-series" id="poster-series" style="display: none">
+              <div class="series-grid" id="series-grid"></div>
+            </div>
+
+            <div class="poster-info">
+              <span id="poster-format-info">720 × 1080</span>
+              <span class="divider"></span>
+              <span id="poster-director-info">宫崎骏</span>
+              <span class="divider"></span>
+              <span id="poster-time-info">刚刚</span>
+            </div>
+
+            <!-- 多平台文案 -->
+            <div class="platform-copy-section" id="platform-copy-section" style="display: none">
+              <h3 class="section-subtitle">
+                <svg class="ico"><use href="#i-phone" /></svg> 多平台文案
+              </h3>
+              <div id="platform-copy"></div>
+            </div>
+
+            <div class="result-actions">
+              <button class="btn btn-primary btn-lg btn-full" id="btn-download">
+                <svg class="ico"><use href="#i-download" /></svg> 下载高清海报<span class="kbd-hint"
+                  ><span class="kbd-key">D</span></span
+                >
+              </button>
+              <button class="btn btn-secondary btn-full" id="btn-regenerate">
+                ↻ 再拍一张<span class="kbd-hint"><span class="kbd-key">R</span></span>
+              </button>
+              <!-- 工具栏：所有工具直接展示，废弃⋯溢出菜单 -->
+              <div class="result-toolbar result-toolbar-expanded">
+                <button class="btn btn-tertiary" id="btn-trailer" title="播放预告片" aria-label="播放预告片">
+                  ▶ 预告片
+                </button>
+                <button class="btn btn-tertiary" id="btn-animate" title="动效预览" aria-label="动效预览">
+                  <svg class="ico"><use href="#i-clapper" /></svg> 动效
+                </button>
+                <button class="btn btn-tertiary" id="btn-share" title="复制分享链接" aria-label="复制分享链接">
+                  <svg class="ico"><use href="#i-link" /></svg> 分享
+                </button>
+                <button class="btn btn-tertiary" id="btn-save-template" title="存为模板" aria-label="存为模板">
+                  <svg class="ico"><use href="#i-bookmark" /></svg> 模板
+                </button>
+                <button class="btn btn-tertiary" id="btn-brand" title="品牌工具" aria-label="品牌工具">
+                  <svg class="ico"><use href="#i-tag" /></svg> 品牌
+                </button>
+                <button class="btn btn-tertiary" id="btn-typography" title="字体排版" aria-label="字体排版">
+                  <svg class="ico"><use href="#i-type" /></svg> 排版
+                </button>
+              </div>
+            </div>
+
+            <!-- 二次创作区 -->
+            <div class="result-options" id="result-options">
+              <h2>二次创作</h2>
+
+              <!-- 备选标题切换 -->
+              <div class="option-row option-col">
+                <label>标题文案</label>
+                <div class="title-selector" id="title-selector"></div>
+              </div>
+
+              <!-- 导演说开关 -->
+              <div class="option-row" id="quote-toggle-row">
+                <label>显示「导演说」金句</label>
+                <div
+                  class="toggle on"
+                  id="toggle-quote"
+                  role="switch"
+                  aria-checked="true"
+                  aria-label="显示导演说金句"
+                  tabindex="0"
+                ></div>
+              </div>
+
+              <!-- 换一句金句 -->
+              <div class="option-row" id="quote-refresh-row">
+                <label>换一句导演金句</label>
+                <button class="btn btn-ghost btn-sm" id="btn-refresh-quote">↻ 换一句</button>
+              </div>
+
+              <!-- 海报版式 -->
+              <div class="option-row option-col">
+                <label>海报版式</label>
+                <div class="format-selector" id="format-selector"></div>
+              </div>
+            </div>
+
+            <!-- 导演说金句展示 -->
+            <div class="quote-display" id="quote-display">
+              <div class="quote-label">导演说</div>
+              <div class="quote-text" id="quote-text"></div>
+              <div class="quote-author" id="quote-author"></div>
+            </div>
+
+            <!-- 电影信息卡片 -->
+            <div class="movie-info-card" id="movie-info-card" style="display: none">
+              <div class="movie-info-header">
+                <span class="movie-info-label">电影信息</span>
+                <span class="movie-info-badge">即将上映</span>
+              </div>
+              <div class="movie-info-body">
+                <div class="movie-info-row">
+                  <span class="movie-info-key">片名</span>
+                  <span class="movie-info-val" id="movie-title"></span>
+                </div>
+                <div class="movie-info-row">
+                  <span class="movie-info-key">导演</span>
+                  <span class="movie-info-val" id="movie-director"></span>
+                </div>
+                <div class="movie-info-row">
+                  <span class="movie-info-key">上映</span>
+                  <span class="movie-info-val" id="movie-release-date"></span>
+                </div>
+                <div class="movie-info-row">
+                  <span class="movie-info-key">评分</span>
+                  <span class="movie-info-val movie-rating" id="movie-rating"></span>
+                </div>
+                <div class="movie-info-row">
+                  <span class="movie-info-key">票房</span>
+                  <span class="movie-info-val" id="movie-box-office"></span>
+                </div>
+                <div class="movie-info-row">
+                  <span class="movie-info-key">类型</span>
+                  <span class="movie-info-val movie-genres" id="movie-genres"></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- AI 影评区域 -->
+            <div class="review-section" id="review-section" style="display: none">
+              <div class="review-header">
+                <span class="review-label">AI 影评</span>
+                <span class="review-score-wrap">
+                  <span class="review-score" id="review-score">8.5</span>
+                  <span class="review-score-suffix">/10</span>
+                </span>
+                <button class="btn btn-ghost btn-sm" id="btn-refresh-review">换一段影评</button>
+              </div>
+              <div class="review-text" id="review-text"></div>
+            </div>
+
+            <!-- 导演手记区域 -->
+            <div class="director-notes-section" id="director-notes-section" style="display: none">
+              <div class="notes-header">
+                <span class="notes-label">导演手记</span>
+                <button class="btn btn-ghost btn-sm" id="btn-refresh-notes">刷新手记</button>
+              </div>
+              <div class="notes-text" id="director-notes-text"></div>
+            </div>
+
+            <div class="result-footer">
+              <button class="btn btn-link" id="btn-home">← 回到首页</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========== 电影墙页 ========== -->
+        <div class="page" id="page-wall">
+          <div class="page-inner">
+            <div class="wall-hero">
+              <h1>我的电影墙</h1>
+              <p id="wall-count">你的电影海报作品集</p>
+            </div>
+
+            <div class="wall-stats" id="wall-stats" style="display: none">
+              <div class="wall-stat">
+                <div class="wall-stat-value" id="stat-count">0</div>
+                <div class="wall-stat-label">作品</div>
+              </div>
+              <div class="wall-stat">
+                <div class="wall-stat-value" id="stat-directors">0</div>
+                <div class="wall-stat-label">导演</div>
+              </div>
+              <div class="wall-stat">
+                <div class="wall-stat-value" id="stat-days">0</div>
+                <div class="wall-stat-label">天创作</div>
+              </div>
+            </div>
+
+            <div class="wall-grid" id="wall-grid"></div>
+
+            <div class="wall-empty" id="wall-empty" style="display: none">
+              <div class="wall-empty-icon">
+                <svg class="ico"><use href="#i-clapper" /></svg>
+              </div>
+              <h3>还没有作品</h3>
+              <p>写下你的心情，选择一位导演，开始创作你的第一张电影海报吧</p>
+              <button class="btn btn-primary" id="btn-wall-to-input">开始创作 →</button>
+            </div>
+
+            <div class="wall-actions" id="wall-actions" style="display: none">
+              <button class="btn btn-ghost" id="btn-wall-back">← 返回首页</button>
+              <button class="btn btn-ghost" id="btn-wall-clear">
+                <svg class="ico"><use href="#i-trash" /></svg> 清空电影墙
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========== 旅行票根页 ========== -->
+        <div class="page" id="page-ticket">
+          <div class="page-inner">
+            <!-- 顶部导航 -->
+            <div class="ticket-topnav">
+              <button class="btn btn-ghost btn-sm" id="ticket-back-btn">← 返回首页</button>
+              <button class="btn btn-ghost btn-sm" id="ticket-wall-btn">
+                <svg class="ico"><use href="#i-grid" /></svg> 我的票根墙
+              </button>
+            </div>
+
+            <div class="ticket-hero">
+              <h1>旅行票根</h1>
+              <p>上传一张旅行照片，AI为你封存一段旅途</p>
+            </div>
+
+            <!-- 上传区域 -->
+            <div id="ticket-upload-section" class="ticket-section">
+              <!-- 模式切换 -->
+              <div class="ticket-mode-switch">
+                <button class="ticket-mode-btn active" id="ticket-mode-smart">智能模式 · 上传即出</button>
+                <button class="ticket-mode-btn" id="ticket-mode-manual">手动模式 · 自定义信息</button>
+              </div>
+
+              <!-- 手动模式额外字段 -->
+              <div id="ticket-manual-fields" style="display: none" class="ticket-manual-fields">
+                <input
+                  type="text"
+                  id="ticket-destination-input"
+                  placeholder="目的地，如：大理·洱海"
+                  class="ticket-text-input"
+                  maxlength="50"
+                />
+                <input type="date" id="ticket-date-input" class="ticket-text-input" />
+              </div>
+
+              <!-- 上传区 -->
+              <div class="ticket-upload-zone" id="ticket-upload-zone">
+                <div class="ticket-upload-icon">
+                  <svg class="ico"><use href="#i-aperture" /></svg>
+                </div>
+                <p class="ticket-upload-text">点击或拖拽上传旅行照片</p>
+                <p class="ticket-upload-hint">支持 JPG / PNG / WebP，最大 10MB</p>
+                <input type="file" id="ticket-file-input" accept="image/*" style="display: none" />
+              </div>
+
+              <!-- 已选照片预览 -->
+              <div id="ticket-photo-selected" class="ticket-photo-selected" style="display: none">
+                <img id="ticket-upload-preview" class="ticket-upload-preview" alt="已选照片" />
+                <button class="btn btn-ghost btn-sm" id="ticket-change-photo">换一张</button>
+              </div>
+
+              <!-- 生成按钮 -->
+              <button class="btn btn-primary ticket-generate-btn" id="ticket-generate-btn">
+                <svg class="ico"><use href="#i-sparkles" /></svg> 生成旅行票根
+              </button>
+            </div>
+
+            <!-- 生成中状态 -->
+            <div id="ticket-generating-section" class="ticket-section" style="display: none">
+              <div class="ticket-generating">
+                <div class="ticket-gen-spinner"></div>
+                <p class="ticket-gen-text" id="ticket-gen-text">正在分析照片情绪...</p>
+                <div class="ticket-gen-steps">
+                  <div class="ticket-gen-step">分析情绪</div>
+                  <div class="ticket-gen-step">生成文案</div>
+                  <div class="ticket-gen-step">匹配风格</div>
+                  <div class="ticket-gen-step">渲染票根</div>
+                </div>
+                <p class="ticket-gen-streaming" id="ticket-mood-streaming"></p>
+              </div>
+            </div>
+
+            <!-- 结果展示 -->
+            <div id="ticket-result-section" class="ticket-section" style="display: none">
+              <div class="ticket-result-layout">
+                <!-- 票根画布 -->
+                <div class="ticket-canvas-wrap">
+                  <canvas id="ticket-canvas" width="1080" height="1440"></canvas>
+                </div>
+
+                <!-- 操作面板 -->
+                <div class="ticket-controls">
+                  <!-- 信息展示 -->
+                  <div class="ticket-info-card">
+                    <div class="ticket-info-row">
+                      <span class="ticket-info-label">目的地</span>
+                      <span class="ticket-info-value" id="ticket-result-destination">—</span>
+                    </div>
+                    <div class="ticket-info-row">
+                      <span class="ticket-info-label">日期</span>
+                      <span class="ticket-info-value" id="ticket-result-date">—</span>
+                    </div>
+                    <div class="ticket-info-row">
+                      <span class="ticket-info-label">场景</span>
+                      <span class="ticket-info-value" id="ticket-result-scene">—</span>
+                    </div>
+                    <div class="ticket-info-row">
+                      <span class="ticket-info-label">情绪</span>
+                      <div class="ticket-info-value ticket-emotion-tags" id="ticket-result-emotion"></div>
+                    </div>
+                    <div class="ticket-info-row" id="ticket-style-reason-row">
+                      <span class="ticket-info-label">推荐理由</span>
+                      <span class="ticket-info-value ticket-style-reason" id="ticket-style-reason">—</span>
+                    </div>
+                  </div>
+
+                  <!-- 风格选择 -->
+                  <div class="ticket-control-group">
+                    <label class="ticket-control-label">导演风格</label>
+                    <div class="ticket-chips">
+                      <button class="ticket-style-chip active" data-style="miyazaki">宫崎骏</button>
+                      <button class="ticket-style-chip" data-style="wkw">王家卫</button>
+                      <button class="ticket-style-chip" data-style="koreeda">是枝裕和</button>
+                      <button class="ticket-style-chip" data-style="wes">韦斯·安德森</button>
+                      <button class="ticket-style-chip" data-style="nolan">诺兰</button>
+                      <button class="ticket-style-chip" data-style="chazelle">查泽雷</button>
+                      <button class="ticket-style-chip" data-style="lee">李安</button>
+                      <button class="ticket-style-chip" data-style="coppola">科波拉</button>
+                      <button class="ticket-style-chip" data-style="chow">周星驰</button>
+                      <button class="ticket-style-chip" data-style="jia">贾樟柯</button>
+                      <button class="ticket-style-chip" data-style="kurosawa">黑泽明</button>
+                      <button class="ticket-style-chip" data-style="tarantino">昆汀</button>
+                    </div>
+                  </div>
+
+                  <!-- 版式选择 -->
+                  <div class="ticket-control-group">
+                    <label class="ticket-control-label">版式</label>
+                    <div class="ticket-chips">
+                      <button class="ticket-format-chip active" data-format="vertical">竖版 · 小红书</button>
+                      <button class="ticket-format-chip" data-format="square">方形 · 朋友圈</button>
+                      <button class="ticket-format-chip" data-format="horizontal">横版 · 收藏</button>
+                    </div>
+                  </div>
+
+                  <!-- 票根类型（照片滤镜） -->
+                  <div class="ticket-control-group">
+                    <label class="ticket-control-label">照片风格</label>
+                    <div class="ticket-chips">
+                      <button class="ticket-type-chip active" data-type="classic">经典原片</button>
+                      <button class="ticket-type-chip" data-type="vintage">复古胶片</button>
+                      <button class="ticket-type-chip" data-type="film">电影胶片</button>
+                      <button class="ticket-type-chip" data-type="mono">黑白默片</button>
+                    </div>
+                  </div>
+
+                  <!-- 文案编辑 -->
+                  <div class="ticket-control-group">
+                    <label class="ticket-control-label">心情文案</label>
+                    <p class="ticket-mood-text" id="ticket-mood-display"></p>
+                    <div class="ticket-mood-actions">
+                      <button class="btn btn-ghost btn-sm" id="ticket-regen-copy">换一句</button>
+                      <button class="btn btn-ghost btn-sm" id="ticket-edit-copy">编辑</button>
+                    </div>
+                    <input
+                      type="text"
+                      id="ticket-mood-input"
+                      class="ticket-text-input"
+                      style="display: none"
+                      placeholder="输入你的文案（30字内）"
+                      maxlength="30"
+                    />
+                  </div>
+
+                  <!-- 操作按钮 -->
+                  <div class="ticket-actions">
+                    <button class="btn btn-primary" id="ticket-save-btn">保存到票根墙</button>
+                    <div class="ticket-actions-row">
+                      <button class="btn btn-ghost" id="ticket-regenerate-btn">重新生成</button>
+                      <button class="btn btn-ghost" id="ticket-newphoto-btn">换张照片</button>
+                    </div>
+                    <div class="ticket-actions-row">
+                      <button class="btn btn-ghost" id="ticket-copy-btn">复制图片</button>
+                      <button class="btn btn-ghost" id="ticket-download-btn">下载</button>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- 票根墙 -->
-          <div id="ticket-wall-section" class="ticket-section" style="display: none">
-            <div class="ticket-wall-header">
-              <h2>我的票根墙</h2>
-              <button class="btn btn-ghost btn-sm" id="ticket-wall-back">← 返回</button>
-            </div>
-            <div class="ticket-wall-grid" id="ticket-wall-grid"></div>
-            <div class="ticket-wall-empty" id="ticket-wall-empty">
-              <div class="ticket-wall-empty-icon"><svg class="ico"><use href="#i-ticket"/></svg></div>
-              <p>还没有票根，去创建第一张吧！</p>
-              <button class="btn btn-primary" id="ticket-wall-create" style="margin-top: 16px">创建第一张票根</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ========== 多人共创页 ========== -->
-      <div class="page" id="page-cocreate">
-        <div class="page-inner">
-          <div class="cocreate-hero">
-            <h1>多人共创</h1>
-            <p>每个人写一句话，AI 融合成一部电影</p>
-          </div>
-
-          <div class="cocreate-intro">
-            <div class="cocreate-step">
-              <span class="step-num">1</span>
-              <span>每人添加一句心情或故事</span>
-            </div>
-            <div class="cocreate-step">
-              <span class="step-num">2</span>
-              <span>AI 融合所有情绪，生成统一创意</span>
-            </div>
-            <div class="cocreate-step">
-              <span class="step-num">3</span>
-              <span>选择导演，生成共创海报</span>
-            </div>
-          </div>
-
-          <div class="cocreate-inputs" id="cocreate-inputs">
-            <!-- 动态添加的输入框 -->
-          </div>
-
-          <button class="btn btn-ghost btn-full" id="btn-add-contributor">+ 添加一位创作者</button>
-
-          <div class="cocreate-summary" id="cocreate-summary" style="display: none">
-            <div class="summary-label">AI 融合分析</div>
-            <div class="summary-emotion" id="cocreate-emotion"></div>
-            <div class="summary-keywords" id="cocreate-keywords"></div>
-            <div class="summary-text" id="cocreate-text"></div>
-          </div>
-
-          <div class="cocreate-actions">
-            <button class="btn btn-ghost" id="btn-cocreate-back">← 返回</button>
-            <button class="btn btn-primary" id="btn-cocreate-analyze">AI 融合分析 →</button>
-            <button class="btn btn-primary" id="btn-cocreate-generate" style="display: none">生成共创海报 →</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- ========== 热门电影页 ========== -->
-      <div class="page" id="page-movies">
-        <div class="movies-page-inner">
-          <!-- Cinematic Hero -->
-          <div class="movies-hero" id="movies-hero">
-            <div class="movies-hero-bg" id="movies-hero-bg"></div>
-            <div class="movies-hero-overlay"></div>
-            <div class="movies-hero-content">
-              <div class="movies-hero-poster" id="movies-hero-poster"></div>
-              <div class="movies-hero-info">
-                <span class="movies-hero-label">本周冠军</span>
-                <h1 class="movies-hero-title" id="movies-hero-title">加载中...</h1>
-                <p class="movies-hero-meta" id="movies-hero-meta"></p>
-                <div class="movies-hero-heat">
-                  <div class="heat-bar"><div class="heat-bar-fill" id="movies-hero-heat-bar"></div></div>
-                  <span class="heat-text" id="movies-hero-heat-text">--</span>
+            <!-- 票根墙 -->
+            <div id="ticket-wall-section" class="ticket-section" style="display: none">
+              <div class="ticket-wall-header">
+                <h2>我的票根墙</h2>
+                <button class="btn btn-ghost btn-sm" id="ticket-wall-back">← 返回</button>
+              </div>
+              <div class="ticket-wall-grid" id="ticket-wall-grid"></div>
+              <div class="ticket-wall-empty" id="ticket-wall-empty">
+                <div class="ticket-wall-empty-icon">
+                  <svg class="ico"><use href="#i-ticket" /></svg>
                 </div>
-                <button class="btn btn-primary btn-lg movies-hero-cta" id="movies-hero-cta">✦ 生成同风格海报 →</button>
+                <p>还没有票根，去创建第一张吧！</p>
+                <button class="btn btn-primary" id="ticket-wall-create" style="margin-top: 16px">创建第一张票根</button>
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- 分类 Tab + 电影卡片横滑区 -->
-          <div class="movies-section-header">
-            <h2 class="movies-section-title">正在热映</h2>
-            <div class="movies-tabs">
-              <button class="movies-tab active" data-tab="active">正在热映</button>
-              <button class="movies-tab" data-tab="upcoming">即将上映</button>
-              <button class="movies-tab" data-tab="archived">口碑佳作</button>
+        <!-- ========== 多人共创页 ========== -->
+        <div class="page" id="page-cocreate">
+          <div class="page-inner">
+            <div class="cocreate-hero">
+              <h1>多人共创</h1>
+              <p>每个人写一句话，AI 融合成一部电影</p>
             </div>
-          </div>
-          <div class="movies-carousel-wrapper">
-            <button class="movies-carousel-btn movies-carousel-prev" id="movies-prev" aria-label="上一部">‹</button>
-            <div class="movies-carousel" id="movies-carousel">
-              <div class="movies-carousel-empty">加载中...</div>
-            </div>
-            <button class="movies-carousel-btn movies-carousel-next" id="movies-next" aria-label="下一部">›</button>
-          </div>
 
-          <!-- 排行榜 -->
-          <div class="movies-section-header">
-            <h2 class="movies-section-title">热度排行</h2>
-          </div>
-          <div class="movies-rankings">
-            <div class="ranking-card">
-              <h3 class="ranking-title"><svg class="ico"><use href="#i-trophy"/></svg> 票房榜</h3>
-              <ol class="ranking-list" id="ranking-boxoffice"></ol>
+            <div class="cocreate-tabs" role="tablist">
+              <button class="cocreate-tab active" data-mode="solo" role="tab" aria-selected="true">
+                <svg class="ico ico-sm"><use href="#i-edit" /></svg>
+                单人创作
+              </button>
+              <button class="cocreate-tab" data-mode="room" role="tab" aria-selected="false">
+                <svg class="ico ico-sm"><use href="#i-users" /></svg>
+                实时多人
+              </button>
             </div>
-            <div class="ranking-card">
-              <h3 class="ranking-title"><svg class="ico"><use href="#i-chat"/></svg> 讨论榜</h3>
-              <ol class="ranking-list" id="ranking-social"></ol>
-            </div>
-          </div>
 
-          <!-- 导演盲盒（D3） -->
-          <div class="movies-blindbox" id="movies-blindbox">
-            <div class="blindbox-card" id="blindbox-card">
-              <div class="blindbox-icon"><svg class="ico"><use href="#i-gift"/></svg></div>
-              <h2 class="blindbox-title">导演盲盒</h2>
-              <p class="blindbox-desc">随机导演 × 随机电影风格，开启惊喜创作</p>
-              <button class="btn btn-primary btn-lg" id="btn-open-blindbox">开启盲盒 →</button>
+            <!-- 单人模式（原有逻辑） -->
+            <div class="cocreate-mode-panel" data-panel="solo">
+              <div class="cocreate-intro">
+                <div class="cocreate-step">
+                  <span class="step-num">1</span>
+                  <span>每人添加一句心情或故事</span>
+                </div>
+                <div class="cocreate-step">
+                  <span class="step-num">2</span>
+                  <span>AI 融合所有情绪，生成统一创意</span>
+                </div>
+                <div class="cocreate-step">
+                  <span class="step-num">3</span>
+                  <span>选择导演，生成共创海报</span>
+                </div>
+              </div>
+
+              <div class="cocreate-inputs" id="cocreate-inputs">
+                <!-- 动态添加的输入框 -->
+              </div>
+
+              <button class="btn btn-ghost btn-full" id="btn-add-contributor">+ 添加一位创作者</button>
+
+              <div class="cocreate-summary" id="cocreate-summary" style="display: none">
+                <div class="summary-label">AI 融合分析</div>
+                <div class="summary-emotion" id="cocreate-emotion"></div>
+                <div class="summary-keywords" id="cocreate-keywords"></div>
+                <div class="summary-text" id="cocreate-text"></div>
+              </div>
+
+              <div class="cocreate-actions">
+                <button class="btn btn-ghost" id="btn-cocreate-back">← 返回</button>
+                <button class="btn btn-primary" id="btn-cocreate-analyze">AI 融合分析 →</button>
+                <button class="btn btn-primary" id="btn-cocreate-generate" style="display: none">生成共创海报 →</button>
+              </div>
             </div>
-            <div class="blindbox-result" id="blindbox-result" style="display: none">
-              <div class="blindbox-reveal" id="blindbox-reveal"></div>
-              <div class="blindbox-detail" id="blindbox-detail" style="display: none">
-                <div class="blindbox-combo" id="blindbox-combo"></div>
-                <canvas id="blindbox-dna-canvas" width="240" height="240"></canvas>
-                <button class="btn btn-primary btn-lg" id="btn-blindbox-generate">✦ 用这个组合生成 →</button>
-                <button class="btn btn-ghost" id="btn-blindbox-reroll"><svg class="ico"><use href="#i-refresh"/></svg> 再抽一次</button>
+
+            <!-- 实时多人模式 -->
+            <div class="cocreate-mode-panel" data-panel="room" style="display: none">
+              <!-- 房间未加入状态：创建/加入 -->
+              <div class="cocreate-lobby" id="cocreate-lobby">
+                <div class="cocreate-lobby-card">
+                  <div class="cocreate-lobby-icon">
+                    <svg class="ico ico-xl"><use href="#i-sparkles" /></svg>
+                  </div>
+                  <h3>创建共创房间</h3>
+                  <p class="cocreate-lobby-desc">创建房间，邀请朋友一起在线共创</p>
+                  <input
+                    type="text"
+                    class="cocreate-name-input"
+                    id="cocreate-create-name"
+                    placeholder="输入你的昵称"
+                    maxlength="20"
+                  />
+                  <button class="btn btn-primary btn-full" id="btn-cocreate-create-room">创建共创房间</button>
+                </div>
+                <div class="cocreate-lobby-divider"><span>或</span></div>
+                <div class="cocreate-lobby-card">
+                  <div class="cocreate-lobby-icon">
+                    <svg class="ico ico-xl"><use href="#i-link" /></svg>
+                  </div>
+                  <h3>加入房间</h3>
+                  <p class="cocreate-lobby-desc">输入 6 位房间号加入共创</p>
+                  <input
+                    type="text"
+                    class="cocreate-room-input"
+                    id="cocreate-join-roomid"
+                    placeholder="房间号（6位字母数字）"
+                    maxlength="6"
+                  />
+                  <input
+                    type="text"
+                    class="cocreate-name-input"
+                    id="cocreate-join-name"
+                    placeholder="输入你的昵称"
+                    maxlength="20"
+                  />
+                  <button class="btn btn-ghost btn-full" id="btn-cocreate-join-room">加入房间</button>
+                </div>
+              </div>
+
+              <!-- 房间已加入状态 -->
+              <div class="cocreate-room" id="cocreate-room" style="display: none">
+                <div class="cocreate-room-bar">
+                  <div class="cocreate-room-info">
+                    <span class="cocreate-room-label">房间号</span>
+                    <button class="cocreate-room-id" id="btn-cocreate-copy-id" title="点击复制房间号和链接">
+                      <span id="cocreate-room-id-text">------</span>
+                      <svg class="ico ico-sm"><use href="#i-link" /></svg>
+                    </button>
+                  </div>
+                  <div class="cocreate-room-status">
+                    <span class="cocreate-online-dot"></span>
+                    <span id="cocreate-online-count">0</span> 人在线
+                  </div>
+                  <div class="cocreate-room-actions">
+                    <button
+                      class="btn btn-ghost btn-sm"
+                      id="btn-cocreate-reset-room"
+                      style="display: none"
+                      title="重置房间"
+                    >
+                      重置
+                    </button>
+                    <button class="btn btn-ghost btn-sm" id="btn-cocreate-leave-room">退出</button>
+                  </div>
+                </div>
+
+                <div class="cocreate-qr" id="cocreate-qr-wrap" style="display: none">
+                  <div class="cocreate-qr-box" id="cocreate-qr"></div>
+                  <p class="cocreate-qr-hint">扫码或分享房间号邀请朋友加入</p>
+                </div>
+
+                <div class="cocreate-waiting" id="cocreate-waiting" style="display: none">
+                  <div class="cocreate-waiting-spinner"></div>
+                  <p>等待其他创作者加入...</p>
+                </div>
+
+                <div class="cocreate-members" id="cocreate-members">
+                  <!-- 动态渲染成员输入卡片 -->
+                </div>
+
+                <button class="btn btn-ghost btn-full" id="btn-cocreate-join-self" style="display: none">
+                  <svg class="ico ico-sm"><use href="#i-edit" /></svg>
+                  我也来写一句
+                </button>
+
+                <div class="cocreate-analyzing" id="cocreate-analyzing" style="display: none">
+                  <div class="cocreate-analyzing-spinner"></div>
+                  <p>AI 正在融合大家的故事...</p>
+                </div>
+
+                <div class="cocreate-summary" id="cocreate-room-summary" style="display: none">
+                  <div class="summary-label">AI 融合分析</div>
+                  <div class="summary-emotion" id="cocreate-room-emotion"></div>
+                  <div class="summary-keywords" id="cocreate-room-keywords"></div>
+                  <div class="summary-text" id="cocreate-room-text"></div>
+                </div>
+
+                <div class="cocreate-actions" id="cocreate-room-actions" style="display: none">
+                  <button class="btn btn-ghost" id="btn-cocreate-room-back">← 返回</button>
+                  <button class="btn btn-primary" id="btn-cocreate-room-analyze">AI 融合分析 →</button>
+                  <button class="btn btn-primary" id="btn-cocreate-room-generate" style="display: none">
+                    生成共创海报 →
+                  </button>
+                </div>
+              </div>
+
+              <div class="cocreate-ws-status" id="cocreate-ws-status"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========== 热门电影页 ========== -->
+        <div class="page" id="page-movies">
+          <div class="movies-page-inner">
+            <!-- Cinematic Hero -->
+            <div class="movies-hero" id="movies-hero">
+              <div class="movies-hero-bg" id="movies-hero-bg"></div>
+              <div class="movies-hero-overlay"></div>
+              <div class="movies-hero-content">
+                <div class="movies-hero-poster" id="movies-hero-poster"></div>
+                <div class="movies-hero-info">
+                  <span class="movies-hero-label">本周冠军</span>
+                  <h1 class="movies-hero-title" id="movies-hero-title">加载中...</h1>
+                  <p class="movies-hero-meta" id="movies-hero-meta"></p>
+                  <div class="movies-hero-heat">
+                    <div class="heat-bar"><div class="heat-bar-fill" id="movies-hero-heat-bar"></div></div>
+                    <span class="heat-text" id="movies-hero-heat-text">--</span>
+                  </div>
+                  <button class="btn btn-primary btn-lg movies-hero-cta" id="movies-hero-cta">
+                    ✦ 生成同风格海报 →
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 分类 Tab + 电影卡片横滑区 -->
+            <div class="movies-section-header">
+              <h2 class="movies-section-title">正在热映</h2>
+              <div class="movies-tabs">
+                <button class="movies-tab active" data-tab="active">正在热映</button>
+                <button class="movies-tab" data-tab="upcoming">即将上映</button>
+                <button class="movies-tab" data-tab="archived">口碑佳作</button>
+              </div>
+            </div>
+            <div class="movies-carousel-wrapper">
+              <button class="movies-carousel-btn movies-carousel-prev" id="movies-prev" aria-label="上一部">‹</button>
+              <div class="movies-carousel" id="movies-carousel">
+                <div class="movies-carousel-empty">加载中...</div>
+              </div>
+              <button class="movies-carousel-btn movies-carousel-next" id="movies-next" aria-label="下一部">›</button>
+            </div>
+
+            <!-- 排行榜 -->
+            <div class="movies-section-header">
+              <h2 class="movies-section-title">热度排行</h2>
+            </div>
+            <div class="movies-rankings">
+              <div class="ranking-card">
+                <h3 class="ranking-title">
+                  <svg class="ico"><use href="#i-trophy" /></svg> 票房榜
+                </h3>
+                <ol class="ranking-list" id="ranking-boxoffice"></ol>
+              </div>
+              <div class="ranking-card">
+                <h3 class="ranking-title">
+                  <svg class="ico"><use href="#i-chat" /></svg> 讨论榜
+                </h3>
+                <ol class="ranking-list" id="ranking-social"></ol>
+              </div>
+            </div>
+
+            <!-- 导演盲盒（D3） -->
+            <div class="movies-blindbox" id="movies-blindbox">
+              <div class="blindbox-card" id="blindbox-card">
+                <div class="blindbox-icon">
+                  <svg class="ico"><use href="#i-gift" /></svg>
+                </div>
+                <h2 class="blindbox-title">导演盲盒</h2>
+                <p class="blindbox-desc">随机导演 × 随机电影风格，开启惊喜创作</p>
+                <button class="btn btn-primary btn-lg" id="btn-open-blindbox">开启盲盒 →</button>
+              </div>
+              <div class="blindbox-result" id="blindbox-result" style="display: none">
+                <div class="blindbox-reveal" id="blindbox-reveal"></div>
+                <div class="blindbox-detail" id="blindbox-detail" style="display: none">
+                  <div class="blindbox-combo" id="blindbox-combo"></div>
+                  <canvas id="blindbox-dna-canvas" width="240" height="240"></canvas>
+                  <button class="btn btn-primary btn-lg" id="btn-blindbox-generate">✦ 用这个组合生成 →</button>
+                  <button class="btn btn-ghost" id="btn-blindbox-reroll">
+                    <svg class="ico"><use href="#i-refresh" /></svg> 再抽一次
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 返回按钮 -->
+            <div class="movies-back">
+              <button class="btn btn-outline" id="btn-movies-back">← 返回首页</button>
+            </div>
+
+            <!-- ========== D6: 情绪推荐电影 ========== -->
+            <div class="movies-emotion-recommend" id="movies-emotion-recommend">
+              <h2 class="emotion-rec-title">
+                <svg class="ico"><use href="#i-clapper" /></svg> 心情匹配电影
+              </h2>
+              <p class="emotion-rec-desc">输入你的心情，找到风格最匹配的电影</p>
+              <div class="emotion-rec-chips">
+                <span class="emotion-chip" data-emotion="孤独"
+                  ><svg class="ico"><use href="#i-cloud" /></svg> 孤独</span
+                >
+                <span class="emotion-chip" data-emotion="温暖"
+                  ><svg class="ico"><use href="#i-feather" /></svg> 温暖</span
+                >
+                <span class="emotion-chip" data-emotion="热血"
+                  ><svg class="ico"><use href="#i-flame" /></svg> 热血</span
+                >
+                <span class="emotion-chip" data-emotion="治愈"
+                  ><svg class="ico"><use href="#i-heart" /></svg> 治愈</span
+                >
+                <span class="emotion-chip" data-emotion="迷茫"
+                  ><svg class="ico"><use href="#i-disc" /></svg> 迷茫</span
+                >
+                <span class="emotion-chip" data-emotion="释然"
+                  ><svg class="ico"><use href="#i-sun" /></svg> 释然</span
+                >
+              </div>
+              <div class="emotion-rec-input">
+                <input
+                  type="text"
+                  id="emotion-rec-text"
+                  placeholder="如：孤独、温暖、热血..."
+                  class="emotion-rec-text-input"
+                />
+                <button class="btn btn-primary" id="btn-emotion-rec">匹配 →</button>
+              </div>
+              <div class="emotion-rec-results" id="emotion-rec-results" style="display: none"></div>
+            </div>
+
+            <!-- ========== H3: 每周挑战赛 ========== -->
+            <div class="movies-challenge" id="movies-challenge">
+              <div class="challenge-header">
+                <h2 class="challenge-title">
+                  <svg class="ico"><use href="#i-trophy" /></svg> 本周挑战赛
+                </h2>
+                <span class="challenge-deadline" id="challenge-deadline"></span>
+              </div>
+              <div class="challenge-body">
+                <div class="challenge-theme" id="challenge-theme">
+                  <span class="challenge-theme-label">本周主题</span>
+                  <span class="challenge-theme-name" id="challenge-theme-name">加载中...</span>
+                  <p class="challenge-theme-desc" id="challenge-theme-desc"></p>
+                </div>
+                <div class="challenge-stats">
+                  <div class="challenge-stat">
+                    <span class="challenge-stat-num" id="challenge-participants">0</span>
+                    <span class="challenge-stat-label">参与人数</span>
+                  </div>
+                  <div class="challenge-stat">
+                    <span class="challenge-stat-num" id="challenge-works">0</span>
+                    <span class="challenge-stat-label">作品数量</span>
+                  </div>
+                </div>
+              </div>
+              <div class="challenge-leaderboard" id="challenge-leaderboard">
+                <h3 class="challenge-lb-title">
+                  <svg class="ico"><use href="#i-trophy" /></svg> 排行榜
+                </h3>
+                <div class="challenge-lb-list" id="challenge-lb-list"></div>
+              </div>
+              <button class="btn btn-primary btn-lg challenge-join-btn" id="btn-join-challenge">✦ 参与挑战 →</button>
+            </div>
+
+            <!-- ========== H6: 赛季面板 ========== -->
+            <div class="movies-season" id="movies-season">
+              <div class="season-header">
+                <h2 class="season-title">
+                  <svg class="ico"><use href="#i-award" /></svg> 造境赛季
+                </h2>
+                <div class="season-tabs">
+                  <button class="season-tab active" data-season="current">本赛季</button>
+                  <button class="season-tab" data-season="history">历史赛季</button>
+                </div>
+              </div>
+              <div class="season-body" id="season-body">
+                <div class="season-info">
+                  <div class="season-info-item">
+                    <span class="season-info-label">赛季名称</span>
+                    <span class="season-info-value" id="season-name">2026 夏季赛</span>
+                  </div>
+                  <div class="season-info-item">
+                    <span class="season-info-label">剩余时间</span>
+                    <span class="season-info-value" id="season-remaining">--</span>
+                  </div>
+                  <div class="season-info-item">
+                    <span class="season-info-label">我的排名</span>
+                    <span class="season-info-value" id="season-my-rank">未参与</span>
+                  </div>
+                  <div class="season-info-item">
+                    <span class="season-info-label">我的积分</span>
+                    <span class="season-info-value" id="season-my-score">0</span>
+                  </div>
+                </div>
+                <div class="season-rewards">
+                  <h3 class="season-rewards-title">
+                    <svg class="ico"><use href="#i-gift" /></svg> 赛季奖励
+                  </h3>
+                  <div class="season-reward-list" id="season-reward-list"></div>
+                </div>
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- 返回按钮 -->
-          <div class="movies-back">
-            <button class="btn btn-outline" id="btn-movies-back">← 返回首页</button>
-          </div>
+        <!-- ========== 电影详情面板（全屏覆盖层） ========== -->
+        <div
+          class="movie-detail-overlay"
+          id="movie-detail-overlay"
+          style="display: none"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="movie-detail-title"
+        >
+          <div class="movie-detail-content">
+            <button class="movie-detail-close" id="movie-detail-close" aria-label="关闭">✕</button>
 
-          <!-- ========== D6: 情绪推荐电影 ========== -->
-          <div class="movies-emotion-recommend" id="movies-emotion-recommend">
-            <h2 class="emotion-rec-title"><svg class="ico"><use href="#i-clapper"/></svg> 心情匹配电影</h2>
-            <p class="emotion-rec-desc">输入你的心情，找到风格最匹配的电影</p>
-            <div class="emotion-rec-chips">
-              <span class="emotion-chip" data-emotion="孤独"><svg class="ico"><use href="#i-cloud"/></svg> 孤独</span>
-              <span class="emotion-chip" data-emotion="温暖"><svg class="ico"><use href="#i-feather"/></svg> 温暖</span>
-              <span class="emotion-chip" data-emotion="热血"><svg class="ico"><use href="#i-flame"/></svg> 热血</span>
-              <span class="emotion-chip" data-emotion="治愈"><svg class="ico"><use href="#i-heart"/></svg> 治愈</span>
-              <span class="emotion-chip" data-emotion="迷茫"><svg class="ico"><use href="#i-disc"/></svg> 迷茫</span>
-              <span class="emotion-chip" data-emotion="释然"><svg class="ico"><use href="#i-sun"/></svg> 释然</span>
+            <div class="movie-detail-grid">
+              <!-- 左列：海报 + 基础信息 -->
+              <div class="movie-detail-left">
+                <div class="movie-detail-poster" id="movie-detail-poster"></div>
+                <div class="movie-detail-info">
+                  <h2 class="movie-detail-title" id="movie-detail-title"></h2>
+                  <p class="movie-detail-en-title" id="movie-detail-en-title"></p>
+                  <div class="movie-detail-meta" id="movie-detail-meta"></div>
+                  <div class="movie-detail-heat" id="movie-detail-heat"></div>
+                </div>
+              </div>
+
+              <!-- 右列：DNA + 色彩 + 导演匹配 -->
+              <div class="movie-detail-right">
+                <div class="movie-detail-section">
+                  <h3>风格 DNA</h3>
+                  <canvas class="movie-dna-canvas" id="movie-dna-canvas" width="300" height="300"></canvas>
+                  <div class="movie-dna-compare">
+                    <label>对比导演：</label>
+                    <select id="movie-dna-compare-select" class="style-select"></select>
+                  </div>
+                </div>
+
+                <div class="movie-detail-section">
+                  <h3>色彩提取</h3>
+                  <div class="movie-color-palette" id="movie-color-palette"></div>
+                </div>
+
+                <div class="movie-detail-section">
+                  <h3>最相似导演</h3>
+                  <div class="movie-director-matches" id="movie-director-matches"></div>
+                </div>
+              </div>
             </div>
-            <div class="emotion-rec-input">
+
+            <!-- 标志性场景 -->
+            <div class="movie-detail-scenes" id="movie-detail-scenes"></div>
+
+            <!-- CTA 按钮 -->
+            <div class="movie-detail-actions">
+              <button class="btn btn-primary btn-lg" id="movie-detail-generate">✦ 生成同风格海报 →</button>
+              <button class="btn btn-outline" id="movie-detail-swap-director">
+                <svg class="ico"><use href="#i-clapper" /></svg> 如果换导演
+              </button>
+              <button class="btn btn-outline" id="movie-detail-quote-card">
+                <svg class="ico"><use href="#i-chat" /></svg> 金句卡
+              </button>
+              <button class="btn btn-outline" id="movie-detail-scene">
+                <svg class="ico"><use href="#i-masks" /></svg> 名场面重绘
+              </button>
+              <button class="btn btn-outline" id="movie-detail-comic">
+                <svg class="ico"><use href="#i-book" /></svg> 连环画
+              </button>
+              <button class="btn btn-outline" id="movie-detail-meme">
+                <svg class="ico"><use href="#i-zap" /></svg> 角色二创
+              </button>
+              <button class="btn btn-outline" id="movie-detail-guess">
+                <svg class="ico"><use href="#i-search" /></svg> 竞猜海报
+              </button>
+              <button class="btn btn-outline" id="movie-detail-share">
+                <svg class="ico"><use href="#i-link" /></svg> 分享
+              </button>
+            </div>
+
+            <!-- DNA 风格微调（D2） -->
+            <div class="movie-detail-section movie-dna-sliders" id="movie-dna-sliders" style="display: none">
+              <h3>风格微调 <button class="btn btn-ghost btn-sm" id="btn-reset-dna">重置</button></h3>
+              <div class="dna-slider-list" id="dna-slider-list"></div>
+              <button class="btn btn-primary btn-sm" id="btn-apply-custom-dna">应用自定义风格生成 →</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========== 换导演弹窗（H4） ========== -->
+        <zj-modal modal-id="director-swap-modal" title="如果换导演" subtitle="选择一位导演，看看他会怎么拍这部电影">
+          <div class="director-swap-grid" id="director-swap-grid"></div>
+          <div class="director-swap-preview" id="director-swap-preview" style="display: none">
+            <div class="swap-preview-left">
+              <canvas id="swap-dna-canvas" width="280" height="280"></canvas>
+            </div>
+            <div class="swap-preview-right">
+              <div class="swap-info" id="swap-info"></div>
+              <div class="swap-ratio-control">
+                <label>风格倾向</label>
+                <input type="range" id="swap-ratio" min="0" max="100" value="50" class="ratio-slider" />
+                <div class="ratio-labels"><span>电影风格</span><span>导演风格</span></div>
+              </div>
+              <button class="btn btn-primary btn-lg" id="btn-swap-generate">✦ 生成"如果"海报 →</button>
+            </div>
+          </div>
+        </zj-modal>
+
+        <!-- ========== 创意工具弹窗（合并 H7/H2/D4/X1/X4） ========== -->
+        <zj-modal modal-id="creative-modal" title="创意工具" subtitle="从你的电影海报衍生更多创意内容">
+          <div class="creative-tabs">
+            <button class="creative-tab active" data-creative-tab="quote">
+              <svg class="ico"><use href="#i-chat" /></svg> 金句卡
+            </button>
+            <button class="creative-tab" data-creative-tab="scene">
+              <svg class="ico"><use href="#i-masks" /></svg> 名场面
+            </button>
+            <button class="creative-tab" data-creative-tab="comic">
+              <svg class="ico"><use href="#i-book" /></svg> 连环画
+            </button>
+            <button class="creative-tab" data-creative-tab="meme">
+              <svg class="ico"><use href="#i-zap" /></svg> 角色二创
+            </button>
+            <button class="creative-tab" data-creative-tab="guess">
+              <svg class="ico"><use href="#i-search" /></svg> 竞猜
+            </button>
+          </div>
+          <div class="creative-panel active" data-creative-panel="quote">
+            <div class="quote-list" id="quote-list"></div>
+            <div class="quote-card-preview" id="quote-card-preview" style="display: none">
+              <img id="quote-card-img" alt="金句卡预览" />
+              <div class="quote-card-actions">
+                <button class="btn btn-outline" id="btn-quote-square">
+                  <svg class="ico"><use href="#i-grid" /></svg> 方版
+                </button>
+                <button class="btn btn-outline" id="btn-quote-vertical">
+                  <svg class="ico"><use href="#i-phone" /></svg> 竖版
+                </button>
+                <button class="btn btn-primary" id="btn-quote-download">
+                  <svg class="ico"><use href="#i-download" /></svg> 下载金句卡
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="creative-panel" data-creative-panel="scene">
+            <div class="scene-list" id="scene-list"></div>
+            <div class="scene-input-area" id="scene-input-area" style="display: none">
+              <label class="scene-label">你的场景描述</label>
+              <textarea
+                class="scene-textarea"
+                id="scene-description"
+                placeholder="描述你心目中的这个场景..."
+                rows="3"
+              ></textarea>
+              <label class="scene-label">自定义标题（可选）</label>
               <input
                 type="text"
-                id="emotion-rec-text"
-                placeholder="如：孤独、温暖、热血..."
-                class="emotion-rec-text-input"
+                class="scene-title-input"
+                id="scene-custom-title"
+                placeholder="给这张海报起个名字..."
               />
-              <button class="btn btn-primary" id="btn-emotion-rec">匹配 →</button>
+              <button class="btn btn-primary btn-lg" id="btn-scene-generate">✦ 生成名场面海报 →</button>
             </div>
-            <div class="emotion-rec-results" id="emotion-rec-results" style="display: none"></div>
+            <div class="scene-preview" id="scene-preview" style="display: none">
+              <img id="scene-preview-img" alt="名场面重绘预览" />
+              <button class="btn btn-primary" id="btn-scene-download">
+                <svg class="ico"><use href="#i-download" /></svg> 下载海报
+              </button>
+            </div>
           </div>
-
-          <!-- ========== H3: 每周挑战赛 ========== -->
-          <div class="movies-challenge" id="movies-challenge">
-            <div class="challenge-header">
-              <h2 class="challenge-title"><svg class="ico"><use href="#i-trophy"/></svg> 本周挑战赛</h2>
-              <span class="challenge-deadline" id="challenge-deadline"></span>
-            </div>
-            <div class="challenge-body">
-              <div class="challenge-theme" id="challenge-theme">
-                <span class="challenge-theme-label">本周主题</span>
-                <span class="challenge-theme-name" id="challenge-theme-name">加载中...</span>
-                <p class="challenge-theme-desc" id="challenge-theme-desc"></p>
+          <div class="creative-panel" data-creative-panel="comic">
+            <div class="comic-scenes" id="comic-scenes">
+              <div class="comic-scene-row" data-scene="0">
+                <span class="comic-scene-num">1</span>
+                <input type="text" class="comic-scene-title" placeholder="场景标题（如：相遇）" />
+                <textarea class="comic-scene-text" placeholder="描述这个场景..." rows="2"></textarea>
               </div>
-              <div class="challenge-stats">
-                <div class="challenge-stat">
-                  <span class="challenge-stat-num" id="challenge-participants">0</span>
-                  <span class="challenge-stat-label">参与人数</span>
-                </div>
-                <div class="challenge-stat">
-                  <span class="challenge-stat-num" id="challenge-works">0</span>
-                  <span class="challenge-stat-label">作品数量</span>
-                </div>
+              <div class="comic-scene-row" data-scene="1">
+                <span class="comic-scene-num">2</span>
+                <input type="text" class="comic-scene-title" placeholder="场景标题（如：冲突）" />
+                <textarea class="comic-scene-text" placeholder="描述这个场景..." rows="2"></textarea>
               </div>
-            </div>
-            <div class="challenge-leaderboard" id="challenge-leaderboard">
-              <h3 class="challenge-lb-title"><svg class="ico"><use href="#i-trophy"/></svg> 排行榜</h3>
-              <div class="challenge-lb-list" id="challenge-lb-list"></div>
-            </div>
-            <button class="btn btn-primary btn-lg challenge-join-btn" id="btn-join-challenge">✦ 参与挑战 →</button>
-          </div>
-
-          <!-- ========== H6: 赛季面板 ========== -->
-          <div class="movies-season" id="movies-season">
-            <div class="season-header">
-              <h2 class="season-title"><svg class="ico"><use href="#i-award"/></svg> 造境赛季</h2>
-              <div class="season-tabs">
-                <button class="season-tab active" data-season="current">本赛季</button>
-                <button class="season-tab" data-season="history">历史赛季</button>
+              <div class="comic-scene-row" data-scene="2">
+                <span class="comic-scene-num">3</span>
+                <input type="text" class="comic-scene-title" placeholder="场景标题（如：结局）" />
+                <textarea class="comic-scene-text" placeholder="描述这个场景..." rows="2"></textarea>
               </div>
             </div>
-            <div class="season-body" id="season-body">
-              <div class="season-info">
-                <div class="season-info-item">
-                  <span class="season-info-label">赛季名称</span>
-                  <span class="season-info-value" id="season-name">2026 夏季赛</span>
-                </div>
-                <div class="season-info-item">
-                  <span class="season-info-label">剩余时间</span>
-                  <span class="season-info-value" id="season-remaining">--</span>
-                </div>
-                <div class="season-info-item">
-                  <span class="season-info-label">我的排名</span>
-                  <span class="season-info-value" id="season-my-rank">未参与</span>
-                </div>
-                <div class="season-info-item">
-                  <span class="season-info-label">我的积分</span>
-                  <span class="season-info-value" id="season-my-score">0</span>
-                </div>
-              </div>
-              <div class="season-rewards">
-                <h3 class="season-rewards-title"><svg class="ico"><use href="#i-gift"/></svg> 赛季奖励</h3>
-                <div class="season-reward-list" id="season-reward-list"></div>
-              </div>
+            <button class="btn btn-ghost btn-sm" id="btn-comic-add-scene">+ 添加场景</button>
+            <button class="btn btn-primary btn-lg" id="btn-comic-generate">✦ 生成连环画 →</button>
+            <div class="comic-preview" id="comic-preview" style="display: none">
+              <img id="comic-preview-img" alt="连环画预览" />
+              <button class="btn btn-primary" id="btn-comic-download">
+                <svg class="ico"><use href="#i-download" /></svg> 下载连环画
+              </button>
             </div>
           </div>
-        </div>
-      </div>
-
-      <!-- ========== 电影详情面板（全屏覆盖层） ========== -->
-      <div
-        class="movie-detail-overlay"
-        id="movie-detail-overlay"
-        style="display: none"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="movie-detail-title"
-      >
-        <div class="movie-detail-content">
-          <button class="movie-detail-close" id="movie-detail-close" aria-label="关闭">✕</button>
-
-          <div class="movie-detail-grid">
-            <!-- 左列：海报 + 基础信息 -->
-            <div class="movie-detail-left">
-              <div class="movie-detail-poster" id="movie-detail-poster"></div>
-              <div class="movie-detail-info">
-                <h2 class="movie-detail-title" id="movie-detail-title"></h2>
-                <p class="movie-detail-en-title" id="movie-detail-en-title"></p>
-                <div class="movie-detail-meta" id="movie-detail-meta"></div>
-                <div class="movie-detail-heat" id="movie-detail-heat"></div>
-              </div>
-            </div>
-
-            <!-- 右列：DNA + 色彩 + 导演匹配 -->
-            <div class="movie-detail-right">
-              <div class="movie-detail-section">
-                <h3>风格 DNA</h3>
-                <canvas class="movie-dna-canvas" id="movie-dna-canvas" width="300" height="300"></canvas>
-                <div class="movie-dna-compare">
-                  <label>对比导演：</label>
-                  <select id="movie-dna-compare-select" class="style-select"></select>
-                </div>
-              </div>
-
-              <div class="movie-detail-section">
-                <h3>色彩提取</h3>
-                <div class="movie-color-palette" id="movie-color-palette"></div>
-              </div>
-
-              <div class="movie-detail-section">
-                <h3>最相似导演</h3>
-                <div class="movie-director-matches" id="movie-director-matches"></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 标志性场景 -->
-          <div class="movie-detail-scenes" id="movie-detail-scenes"></div>
-
-          <!-- CTA 按钮 -->
-          <div class="movie-detail-actions">
-            <button class="btn btn-primary btn-lg" id="movie-detail-generate">✦ 生成同风格海报 →</button>
-            <button class="btn btn-outline" id="movie-detail-swap-director"><svg class="ico"><use href="#i-clapper"/></svg> 如果换导演</button>
-            <button class="btn btn-outline" id="movie-detail-quote-card"><svg class="ico"><use href="#i-chat"/></svg> 金句卡</button>
-            <button class="btn btn-outline" id="movie-detail-scene"><svg class="ico"><use href="#i-masks"/></svg> 名场面重绘</button>
-            <button class="btn btn-outline" id="movie-detail-comic"><svg class="ico"><use href="#i-book"/></svg> 连环画</button>
-            <button class="btn btn-outline" id="movie-detail-meme"><svg class="ico"><use href="#i-zap"/></svg> 角色二创</button>
-            <button class="btn btn-outline" id="movie-detail-guess"><svg class="ico"><use href="#i-search"/></svg> 竞猜海报</button>
-            <button class="btn btn-outline" id="movie-detail-share"><svg class="ico"><use href="#i-link"/></svg> 分享</button>
-          </div>
-
-          <!-- DNA 风格微调（D2） -->
-          <div class="movie-detail-section movie-dna-sliders" id="movie-dna-sliders" style="display: none">
-            <h3>风格微调 <button class="btn btn-ghost btn-sm" id="btn-reset-dna">重置</button></h3>
-            <div class="dna-slider-list" id="dna-slider-list"></div>
-            <button class="btn btn-primary btn-sm" id="btn-apply-custom-dna">应用自定义风格生成 →</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- ========== 换导演弹窗（H4） ========== -->
-      <zj-modal modal-id="director-swap-modal" title="如果换导演" subtitle="选择一位导演，看看他会怎么拍这部电影">
-        <div class="director-swap-grid" id="director-swap-grid"></div>
-        <div class="director-swap-preview" id="director-swap-preview" style="display: none">
-          <div class="swap-preview-left">
-            <canvas id="swap-dna-canvas" width="280" height="280"></canvas>
-          </div>
-          <div class="swap-preview-right">
-            <div class="swap-info" id="swap-info"></div>
-            <div class="swap-ratio-control">
-              <label>风格倾向</label>
-              <input type="range" id="swap-ratio" min="0" max="100" value="50" class="ratio-slider" />
-              <div class="ratio-labels"><span>电影风格</span><span>导演风格</span></div>
-            </div>
-            <button class="btn btn-primary btn-lg" id="btn-swap-generate">✦ 生成"如果"海报 →</button>
-          </div>
-        </div>
-      </zj-modal>
-
-      <!-- ========== 创意工具弹窗（合并 H7/H2/D4/X1/X4） ========== -->
-      <zj-modal modal-id="creative-modal" title="创意工具" subtitle="从你的电影海报衍生更多创意内容">
-        <div class="creative-tabs">
-          <button class="creative-tab active" data-creative-tab="quote"><svg class="ico"><use href="#i-chat"/></svg> 金句卡</button>
-          <button class="creative-tab" data-creative-tab="scene"><svg class="ico"><use href="#i-masks"/></svg> 名场面</button>
-          <button class="creative-tab" data-creative-tab="comic"><svg class="ico"><use href="#i-book"/></svg> 连环画</button>
-          <button class="creative-tab" data-creative-tab="meme"><svg class="ico"><use href="#i-zap"/></svg> 角色二创</button>
-          <button class="creative-tab" data-creative-tab="guess"><svg class="ico"><use href="#i-search"/></svg> 竞猜</button>
-        </div>
-        <div class="creative-panel active" data-creative-panel="quote">
-          <div class="quote-list" id="quote-list"></div>
-          <div class="quote-card-preview" id="quote-card-preview" style="display: none">
-            <img id="quote-card-img" alt="金句卡预览" />
-            <div class="quote-card-actions">
-              <button class="btn btn-outline" id="btn-quote-square"><svg class="ico"><use href="#i-grid"/></svg> 方版</button>
-              <button class="btn btn-outline" id="btn-quote-vertical"><svg class="ico"><use href="#i-phone"/></svg> 竖版</button>
-              <button class="btn btn-primary" id="btn-quote-download"><svg class="ico"><use href="#i-download"/></svg> 下载金句卡</button>
-            </div>
-          </div>
-        </div>
-        <div class="creative-panel" data-creative-panel="scene">
-          <div class="scene-list" id="scene-list"></div>
-          <div class="scene-input-area" id="scene-input-area" style="display: none">
-            <label class="scene-label">你的场景描述</label>
-            <textarea
-              class="scene-textarea"
-              id="scene-description"
-              placeholder="描述你心目中的这个场景..."
-              rows="3"
-            ></textarea>
-            <label class="scene-label">自定义标题（可选）</label>
-            <input type="text" class="scene-title-input" id="scene-custom-title" placeholder="给这张海报起个名字..." />
-            <button class="btn btn-primary btn-lg" id="btn-scene-generate">✦ 生成名场面海报 →</button>
-          </div>
-          <div class="scene-preview" id="scene-preview" style="display: none">
-            <img id="scene-preview-img" alt="名场面重绘预览" />
-            <button class="btn btn-primary" id="btn-scene-download"><svg class="ico"><use href="#i-download"/></svg> 下载海报</button>
-          </div>
-        </div>
-        <div class="creative-panel" data-creative-panel="comic">
-          <div class="comic-scenes" id="comic-scenes">
-            <div class="comic-scene-row" data-scene="0">
-              <span class="comic-scene-num">1</span>
-              <input type="text" class="comic-scene-title" placeholder="场景标题（如：相遇）" />
-              <textarea class="comic-scene-text" placeholder="描述这个场景..." rows="2"></textarea>
-            </div>
-            <div class="comic-scene-row" data-scene="1">
-              <span class="comic-scene-num">2</span>
-              <input type="text" class="comic-scene-title" placeholder="场景标题（如：冲突）" />
-              <textarea class="comic-scene-text" placeholder="描述这个场景..." rows="2"></textarea>
-            </div>
-            <div class="comic-scene-row" data-scene="2">
-              <span class="comic-scene-num">3</span>
-              <input type="text" class="comic-scene-title" placeholder="场景标题（如：结局）" />
-              <textarea class="comic-scene-text" placeholder="描述这个场景..." rows="2"></textarea>
-            </div>
-          </div>
-          <button class="btn btn-ghost btn-sm" id="btn-comic-add-scene">+ 添加场景</button>
-          <button class="btn btn-primary btn-lg" id="btn-comic-generate">✦ 生成连环画 →</button>
-          <div class="comic-preview" id="comic-preview" style="display: none">
-            <img id="comic-preview-img" alt="连环画预览" />
-            <button class="btn btn-primary" id="btn-comic-download"><svg class="ico"><use href="#i-download"/></svg> 下载连环画</button>
-          </div>
-        </div>
-        <div class="creative-panel" data-creative-panel="meme">
-          <div class="meme-form">
-            <label class="scene-label">角色名称</label>
-            <input type="text" class="scene-title-input" id="meme-character-name" placeholder="如：哪吒、奥本海默..." />
-            <label class="scene-label">二创内容</label>
-            <textarea
-              class="scene-textarea"
-              id="meme-text"
-              placeholder="输入台词、恶搞文案或神反应..."
-              rows="3"
-            ></textarea>
-            <label class="scene-label">类型</label>
-            <div class="meme-type-options">
-              <button class="meme-type-btn active" data-type="dialogue"><svg class="ico"><use href="#i-chat"/></svg> 经典台词</button>
-              <button class="meme-type-btn" data-type="parody"><svg class="ico"><use href="#i-masks"/></svg> 恶搞改编</button>
-              <button class="meme-type-btn" data-type="reaction"><svg class="ico"><use href="#i-zap"/></svg> 神反应</button>
-            </div>
-            <button class="btn btn-primary btn-lg" id="btn-meme-generate">✦ 生成二创海报 →</button>
-          </div>
-          <div class="meme-preview" id="meme-preview" style="display: none">
-            <img id="meme-preview-img" alt="角色二创预览" />
-            <button class="btn btn-primary" id="btn-meme-download"><svg class="ico"><use href="#i-download"/></svg> 下载</button>
-          </div>
-        </div>
-        <div class="creative-panel" data-creative-panel="guess">
-          <div class="guess-form">
-            <label class="scene-label">提示难度</label>
-            <div class="guess-level-options">
-              <button class="guess-level-btn" data-level="1"><svg class="ico"><use href="#i-meh"/></svg> 极难（仅导演+年份）</button>
-              <button class="guess-level-btn active" data-level="2"><svg class="ico"><use href="#i-meh"/></svg> 中等（导演+风格+金句）</button>
-              <button class="guess-level-btn" data-level="3"><svg class="ico"><use href="#i-smile"/></svg> 简单（导演+片名首字+风格）</button>
-            </div>
-            <button class="btn btn-primary btn-lg" id="btn-guess-generate">✦ 生成竞猜海报 →</button>
-          </div>
-          <div class="guess-preview" id="guess-preview" style="display: none">
-            <img id="guess-preview-img" alt="竞猜海报预览" />
-            <div class="guess-answer" id="guess-answer" style="display: none">
-              <span>答案：</span><strong id="guess-answer-text"></strong>
-            </div>
-            <button class="btn btn-outline" id="btn-guess-reveal"><svg class="ico"><use href="#i-eye"/></svg> 揭晓答案</button>
-            <button class="btn btn-primary" id="btn-guess-download"><svg class="ico"><use href="#i-download"/></svg> 下载</button>
-          </div>
-        </div>
-      </zj-modal>
-
-      <!-- ========== 批量生成页 ========== -->
-      <div class="page" id="page-batch">
-        <div class="page-inner">
-          <div class="director-hero">
-            <button class="btn btn-ghost" id="btn-batch-back">← 返回</button>
-            <h1><svg class="ico"><use href="#i-clipboard"/></svg> 批量生成海报</h1>
-            <p>每行一条文本，一次生成多张海报。支持 CSV 导入。</p>
-          </div>
-
-          <!-- 输入区 -->
-          <div class="batch-input-section" id="batch-input-section">
-            <div class="batch-textarea-wrap">
+          <div class="creative-panel" data-creative-panel="meme">
+            <div class="meme-form">
+              <label class="scene-label">角色名称</label>
+              <input
+                type="text"
+                class="scene-title-input"
+                id="meme-character-name"
+                placeholder="如：哪吒、奥本海默..."
+              />
+              <label class="scene-label">二创内容</label>
               <textarea
-                id="batch-text-input"
-                class="batch-textarea"
-                placeholder="每行一条文本，例如：&#10;深夜加班后走出写字楼，抬头看见月亮&#10;和好朋友大吵一架后的后悔&#10;毕业最后一晚的宿舍"
-                rows="8"
+                class="scene-textarea"
+                id="meme-text"
+                placeholder="输入台词、恶搞文案或神反应..."
+                rows="3"
               ></textarea>
-              <div class="batch-input-footer">
-                <span class="batch-input-count" id="batch-input-count">0 条</span>
-                <label class="btn btn-ghost btn-sm batch-csv-btn">
-                  <svg class="ico"><use href="#i-file"/></svg> 导入 CSV
-                  <input type="file" id="batch-csv-input" accept=".csv,.txt" style="display: none" />
-                </label>
+              <label class="scene-label">类型</label>
+              <div class="meme-type-options">
+                <button class="meme-type-btn active" data-type="dialogue">
+                  <svg class="ico"><use href="#i-chat" /></svg> 经典台词
+                </button>
+                <button class="meme-type-btn" data-type="parody">
+                  <svg class="ico"><use href="#i-masks" /></svg> 恶搞改编
+                </button>
+                <button class="meme-type-btn" data-type="reaction">
+                  <svg class="ico"><use href="#i-zap" /></svg> 神反应
+                </button>
+              </div>
+              <button class="btn btn-primary btn-lg" id="btn-meme-generate">✦ 生成二创海报 →</button>
+            </div>
+            <div class="meme-preview" id="meme-preview" style="display: none">
+              <img id="meme-preview-img" alt="角色二创预览" />
+              <button class="btn btn-primary" id="btn-meme-download">
+                <svg class="ico"><use href="#i-download" /></svg> 下载
+              </button>
+            </div>
+          </div>
+          <div class="creative-panel" data-creative-panel="guess">
+            <div class="guess-form">
+              <label class="scene-label">提示难度</label>
+              <div class="guess-level-options">
+                <button class="guess-level-btn" data-level="1">
+                  <svg class="ico"><use href="#i-meh" /></svg> 极难（仅导演+年份）
+                </button>
+                <button class="guess-level-btn active" data-level="2">
+                  <svg class="ico"><use href="#i-meh" /></svg> 中等（导演+风格+金句）
+                </button>
+                <button class="guess-level-btn" data-level="3">
+                  <svg class="ico"><use href="#i-smile" /></svg> 简单（导演+片名首字+风格）
+                </button>
+              </div>
+              <button class="btn btn-primary btn-lg" id="btn-guess-generate">✦ 生成竞猜海报 →</button>
+            </div>
+            <div class="guess-preview" id="guess-preview" style="display: none">
+              <img id="guess-preview-img" alt="竞猜海报预览" />
+              <div class="guess-answer" id="guess-answer" style="display: none">
+                <span>答案：</span><strong id="guess-answer-text"></strong>
+              </div>
+              <button class="btn btn-outline" id="btn-guess-reveal">
+                <svg class="ico"><use href="#i-eye" /></svg> 揭晓答案
+              </button>
+              <button class="btn btn-primary" id="btn-guess-download">
+                <svg class="ico"><use href="#i-download" /></svg> 下载
+              </button>
+            </div>
+          </div>
+        </zj-modal>
+
+        <!-- ========== 批量生成页 ========== -->
+        <div class="page" id="page-batch">
+          <div class="page-inner">
+            <div class="director-hero">
+              <button class="btn btn-ghost" id="btn-batch-back">← 返回</button>
+              <h1>
+                <svg class="ico"><use href="#i-clipboard" /></svg> 批量生成海报
+              </h1>
+              <p>每行一条文本，一次生成多张海报。支持 CSV 导入。</p>
+            </div>
+
+            <!-- 输入区 -->
+            <div class="batch-input-section" id="batch-input-section">
+              <div class="batch-textarea-wrap">
+                <textarea
+                  id="batch-text-input"
+                  class="batch-textarea"
+                  placeholder="每行一条文本，例如：&#10;深夜加班后走出写字楼，抬头看见月亮&#10;和好朋友大吵一架后的后悔&#10;毕业最后一晚的宿舍"
+                  rows="8"
+                ></textarea>
+                <div class="batch-input-footer">
+                  <span class="batch-input-count" id="batch-input-count">0 条</span>
+                  <label class="btn btn-ghost btn-sm batch-csv-btn">
+                    <svg class="ico"><use href="#i-file" /></svg> 导入 CSV
+                    <input type="file" id="batch-csv-input" accept=".csv,.txt" style="display: none" />
+                  </label>
+                </div>
+              </div>
+
+              <div class="batch-options">
+                <div class="batch-option-group">
+                  <label class="batch-option-label">选择导演</label>
+                  <div class="batch-director-grid" id="batch-director-grid"></div>
+                </div>
+                <div class="batch-option-group">
+                  <label class="batch-option-label">海报版式</label>
+                  <select id="batch-format-select" class="search-input batch-format-select"></select>
+                </div>
+              </div>
+
+              <div class="batch-hint">
+                <svg class="ico"><use href="#i-bulb" /></svg> 单次最多 50 条，并发 2 个任务。CSV 格式：每行一条文本，或
+                text,directorId 两列。
+              </div>
+
+              <button class="btn btn-primary btn-full" id="btn-batch-start">开始批量生成 →</button>
+            </div>
+
+            <!-- 进度区 -->
+            <div class="batch-progress-section" id="batch-progress-section" style="display: none">
+              <div class="batch-progress-bar-wrap">
+                <div
+                  class="batch-progress-bar"
+                  id="batch-progress-bar"
+                  role="progressbar"
+                  aria-valuenow="0"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                ></div>
+              </div>
+              <div class="batch-progress-info">
+                <span class="batch-progress-percent" id="batch-stats-text">0%</span>
+                <span class="batch-progress-detail" id="batch-stats-detail">准备中...</span>
+              </div>
+              <div class="batch-progress-actions">
+                <button class="btn btn-ghost btn-sm" id="btn-batch-abort">
+                  <svg class="ico"><use href="#i-stop" /></svg> 中止
+                </button>
+                <button class="btn btn-ghost btn-sm" id="btn-batch-finish" style="display: none">完成</button>
               </div>
             </div>
 
-            <div class="batch-options">
-              <div class="batch-option-group">
-                <label class="batch-option-label">选择导演</label>
-                <div class="batch-director-grid" id="batch-director-grid"></div>
+            <!-- 结果区 -->
+            <div class="batch-results-section" id="batch-results-section" style="display: none">
+              <div class="batch-results-header">
+                <h3 class="batch-results-title">生成结果</h3>
+                <button class="btn btn-ghost btn-sm" id="btn-batch-download-all">
+                  <svg class="ico"><use href="#i-download" /></svg> 全部下载
+                </button>
               </div>
-              <div class="batch-option-group">
-                <label class="batch-option-label">海报版式</label>
-                <select id="batch-format-select" class="search-input batch-format-select"></select>
-              </div>
+              <div class="batch-results-grid" id="batch-results-grid"></div>
             </div>
-
-            <div class="batch-hint">
-              <svg class="ico"><use href="#i-bulb"/></svg> 单次最多 50 条，并发 2 个任务。CSV 格式：每行一条文本，或 text,directorId 两列。
-            </div>
-
-            <button class="btn btn-primary btn-full" id="btn-batch-start">开始批量生成 →</button>
-          </div>
-
-          <!-- 进度区 -->
-          <div class="batch-progress-section" id="batch-progress-section" style="display: none">
-            <div class="batch-progress-bar-wrap">
-              <div
-                class="batch-progress-bar"
-                id="batch-progress-bar"
-                role="progressbar"
-                aria-valuenow="0"
-                aria-valuemin="0"
-                aria-valuemax="100"
-              ></div>
-            </div>
-            <div class="batch-progress-info">
-              <span class="batch-progress-percent" id="batch-stats-text">0%</span>
-              <span class="batch-progress-detail" id="batch-stats-detail">准备中...</span>
-            </div>
-            <div class="batch-progress-actions">
-              <button class="btn btn-ghost btn-sm" id="btn-batch-abort"><svg class="ico"><use href="#i-stop"/></svg> 中止</button>
-              <button class="btn btn-ghost btn-sm" id="btn-batch-finish" style="display: none">完成</button>
-            </div>
-          </div>
-
-          <!-- 结果区 -->
-          <div class="batch-results-section" id="batch-results-section" style="display: none">
-            <div class="batch-results-header">
-              <h3 class="batch-results-title">生成结果</h3>
-              <button class="btn btn-ghost btn-sm" id="btn-batch-download-all"><svg class="ico"><use href="#i-download"/></svg> 全部下载</button>
-            </div>
-            <div class="batch-results-grid" id="batch-results-grid"></div>
           </div>
         </div>
-      </div>
 
-      <!-- ========== 热点话题页 ========== -->
-      <div class="page" id="page-hot-topics">
-        <div class="page-inner">
-          <div class="director-hero">
-            <button class="btn btn-ghost" id="btn-hot-topics-back">← 返回</button>
-            <h1><svg class="ico"><use href="#i-flame"/></svg> 热点话题联动</h1>
-            <p>从微博/抖音/知乎/B站热搜获取灵感，一键生成电影海报</p>
-          </div>
+        <!-- ========== 热点话题页 ========== -->
+        <div class="page" id="page-hot-topics">
+          <div class="page-inner">
+            <div class="director-hero">
+              <button class="btn btn-ghost" id="btn-hot-topics-back">← 返回</button>
+              <h1>
+                <svg class="ico"><use href="#i-flame" /></svg> 热点话题联动
+              </h1>
+              <p>从微博/抖音/知乎/B站热搜获取灵感，一键生成电影海报</p>
+            </div>
 
-          <div class="hot-topics-tabs" id="hot-topics-tabs"></div>
-          <div class="hot-topics-list" id="hot-topics-list"></div>
+            <div class="hot-topics-tabs" id="hot-topics-tabs"></div>
+            <div class="hot-topics-list" id="hot-topics-list"></div>
 
-          <div class="hot-topics-footer">
-            <button class="btn btn-ghost btn-sm" id="btn-hot-topics-refresh"><svg class="ico"><use href="#i-refresh"/></svg> 刷新热搜</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- ========== 模板库页 ========== -->
-      <div class="page" id="page-template">
-        <div class="page-inner">
-          <div class="director-hero">
-            <button class="btn btn-ghost" id="btn-template-back">← 返回</button>
-            <h1><svg class="ico"><use href="#i-layers"/></svg> 海报模板库</h1>
-            <p>选择一个模板快速开始，或生成后保存自己的模板</p>
-          </div>
-
-          <div class="template-categories" id="template-categories"></div>
-          <div class="template-grid" id="template-grid"></div>
-
-          <div style="margin-top: 24px">
-            <button class="btn btn-primary" id="btn-save-template"><svg class="ico"><use href="#i-save"/></svg> 保存当前海报为模板</button>
+            <div class="hot-topics-footer">
+              <button class="btn btn-ghost btn-sm" id="btn-hot-topics-refresh">
+                <svg class="ico"><use href="#i-refresh" /></svg> 刷新热搜
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-    </main>
-    </div><!-- /.app-shell -->
+
+        <!-- ========== 模板库页 ========== -->
+        <div class="page" id="page-template">
+          <div class="page-inner">
+            <div class="director-hero">
+              <button class="btn btn-ghost" id="btn-template-back">← 返回</button>
+              <h1>
+                <svg class="ico"><use href="#i-layers" /></svg> 海报模板库
+              </h1>
+              <p>选择一个模板快速开始，或生成后保存自己的模板</p>
+            </div>
+
+            <div class="template-categories" id="template-categories"></div>
+            <div class="template-grid" id="template-grid"></div>
+
+            <div style="margin-top: 24px">
+              <button class="btn btn-primary" id="btn-save-template">
+                <svg class="ico"><use href="#i-save" /></svg> 保存当前海报为模板
+              </button>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+    <!-- /.app-shell -->
 
     <!-- ========== 结果工具弹窗（合并分享/动效/预告片/品牌/排版/账号） ========== -->
     <zj-modal
@@ -1507,12 +2116,24 @@
       content-class="result-tools-content"
     >
       <div class="result-tools-tabs">
-        <button class="result-tools-tab active" data-result-tab="share"><svg class="ico"><use href="#i-upload"/></svg> 分享</button>
-        <button class="result-tools-tab" data-result-tab="animate"><svg class="ico"><use href="#i-clapper"/></svg> 动效</button>
-        <button class="result-tools-tab" data-result-tab="trailer"><svg class="ico"><use href="#i-film"/></svg> 预告片</button>
-        <button class="result-tools-tab" data-result-tab="brand"><svg class="ico"><use href="#i-tag"/></svg> 品牌</button>
-        <button class="result-tools-tab" data-result-tab="typography"><svg class="ico"><use href="#i-type"/></svg> 排版</button>
-        <button class="result-tools-tab" data-result-tab="accounts"><svg class="ico"><use href="#i-phone"/></svg> 账号</button>
+        <button class="result-tools-tab active" data-result-tab="share">
+          <svg class="ico"><use href="#i-upload" /></svg> 分享
+        </button>
+        <button class="result-tools-tab" data-result-tab="animate">
+          <svg class="ico"><use href="#i-clapper" /></svg> 动效
+        </button>
+        <button class="result-tools-tab" data-result-tab="trailer">
+          <svg class="ico"><use href="#i-film" /></svg> 预告片
+        </button>
+        <button class="result-tools-tab" data-result-tab="brand">
+          <svg class="ico"><use href="#i-tag" /></svg> 品牌
+        </button>
+        <button class="result-tools-tab" data-result-tab="typography">
+          <svg class="ico"><use href="#i-type" /></svg> 排版
+        </button>
+        <button class="result-tools-tab" data-result-tab="accounts">
+          <svg class="ico"><use href="#i-phone" /></svg> 账号
+        </button>
       </div>
 
       <!-- 分享面板 -->
@@ -1571,7 +2192,9 @@
         </div>
         <div class="trailer-controls">
           <button class="btn btn-ghost btn-sm" id="btn-trailer-replay">↻ 重播</button>
-          <button class="btn btn-ghost btn-sm" id="btn-trailer-skip">跳过 <svg class="ico"><use href="#i-skip"/></svg></button>
+          <button class="btn btn-ghost btn-sm" id="btn-trailer-skip">
+            跳过 <svg class="ico"><use href="#i-skip" /></svg>
+          </button>
         </div>
       </div>
 
@@ -1590,7 +2213,7 @@
             <div class="brand-logo-preview" id="brand-logo-preview"></div>
             <div class="brand-logo-actions">
               <label class="btn btn-ghost btn-sm">
-                <svg class="ico"><use href="#i-camera"/></svg> 上传 Logo
+                <svg class="ico"><use href="#i-camera" /></svg> 上传 Logo
                 <input type="file" id="brand-logo-input" accept="image/*" style="display: none" />
               </label>
               <button class="btn btn-ghost btn-sm" id="btn-brand-logo-remove" style="display: none">移除</button>
@@ -1657,7 +2280,7 @@
           <h3 class="typography-section-title">自定义字体</h3>
           <div class="typography-font-upload">
             <label class="btn btn-ghost btn-sm">
-              <svg class="ico"><use href="#i-clip"/></svg> 上传字体文件
+              <svg class="ico"><use href="#i-clip" /></svg> 上传字体文件
               <input
                 type="file"
                 id="typography-font-input"
@@ -1743,9 +2366,15 @@
       content-class="style-modal-content"
     >
       <div class="style-editor-tabs">
-        <button class="style-editor-tab active" data-style-tab="custom"><svg class="ico"><use href="#i-sparkles"/></svg> 自定义</button>
-        <button class="style-editor-tab" data-style-tab="movie"><svg class="ico"><use href="#i-clapper"/></svg> 电影分析</button>
-        <button class="style-editor-tab" data-style-tab="blend"><svg class="ico"><use href="#i-palette"/></svg> 混搭</button>
+        <button class="style-editor-tab active" data-style-tab="custom">
+          <svg class="ico"><use href="#i-sparkles" /></svg> 自定义
+        </button>
+        <button class="style-editor-tab" data-style-tab="movie">
+          <svg class="ico"><use href="#i-clapper" /></svg> 电影分析
+        </button>
+        <button class="style-editor-tab" data-style-tab="blend">
+          <svg class="ico"><use href="#i-palette" /></svg> 混搭
+        </button>
       </div>
 
       <div class="style-editor-panel active" data-style-panel="custom">

@@ -30,6 +30,8 @@ const imageStorage = require('./image-storage');
 const costMonitor = require('./cost-monitor');
 const metrics = require('./metrics');
 const { sanitizeUserInput, wrapUserInput } = require('./utils/prompt-sanitizer');
+const { setupWSServer } = require('./ws-server');
+const http = require('http');
 
 // ========== 限流常量 ==========
 const RATE_LIMIT = {
@@ -117,7 +119,7 @@ app.use(
         styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
         fontSrc: ["'self'", 'https://fonts.gstatic.com'],
         imgSrc: ["'self'", 'data:', 'blob:', 'https://image.tmdb.org'],
-        connectSrc: ["'self'"],
+        connectSrc: ["'self'", 'ws:', 'wss:'],
         objectSrc: ["'none'"],
         baseUri: ["'none'"],
         formAction: ["'self'"],
@@ -1520,15 +1522,19 @@ app.use((err, req, res, next) => {
 // ========== 启动服务器 ==========
 // 仅在直接运行时启动服务器（避免被 require 时占用端口，便于 supertest 测试 app 对象）
 if (require.main === module) {
-  const server = app.listen(PORT, () => {
+  const httpServer = http.createServer(app);
+  setupWSServer(httpServer);
+
+  const server = httpServer.listen(PORT, () => {
     logger.info(
       {
         port: PORT,
         env: isProduction ? 'production' : 'development',
         apiKeyAuth: !!API_KEY,
         seedream: !!process.env.VOLCENGINE_API_KEY,
+        websocket: true,
       },
-      `🎬 造境 ZaoJing 服务器已启动 → http://localhost:${PORT}`
+      `🎬 造境 ZaoJing 服务器已启动 → http://localhost:${PORT} (WS: /ws/cocreate)`
     );
   });
 

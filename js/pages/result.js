@@ -98,8 +98,9 @@ function showResultPage() {
     applyBrandingIfNeeded(current, posterImg);
 
     // 如果有电影来源，显示灵感来源面板
+    const existingRef = $('movie-inspiration');
     if (current.movieRef) {
-      let refEl = $('movie-inspiration');
+      let refEl = existingRef;
       if (!refEl) {
         refEl = document.createElement('div');
         refEl.id = 'movie-inspiration';
@@ -112,9 +113,11 @@ function showResultPage() {
       refEl.innerHTML = `
         <div class="inspiration-label">灵感来源</div>
         <div class="inspiration-movie">${escapeHtml(ref.title)}</div>
-        ${movie ? `<div class="inspiration-style">${escapeHtml(movie.visualStyle)}</div>` : ''}
+        ${movie ? `<div class="inspiration-style">${escapeHtml(movie.visualStyle || '')}</div>` : ''}
       `;
       refEl.style.display = 'block';
+    } else if (existingRef) {
+      existingRef.style.display = 'none';
     }
   }
 
@@ -124,14 +127,19 @@ function showResultPage() {
     $('result-meta').textContent = `6位导演合集 · ${current.format}`;
     $('poster-director-info').textContent = '系列合集';
   } else {
-    $('result-meta').textContent = isMulti
-      ? `${results.length} 位导演系列 · ${current.format}`
-      : `${director ? director.name : ''}风格 · ${current.format}`;
-    $('poster-director-info').textContent = isMulti
-      ? `${state.currentPosterIndex + 1}/${results.length} 位导演`
-      : director
-        ? director.name
-        : '';
+    const movieRef = current.movieRef;
+    if (isMulti) {
+      $('result-meta').textContent = `${results.length} 位导演系列 · ${current.format}`;
+      $('poster-director-info').textContent = `${state.currentPosterIndex + 1}/${results.length} 位导演`;
+    } else if (movieRef) {
+      const dirName = director ? director.name : '';
+      $('result-meta').textContent =
+        `《${movieRef.title}》风格${dirName ? ` · ${dirName}视角` : ''} · ${current.format}`;
+      $('poster-director-info').textContent = movieRef.title;
+    } else {
+      $('result-meta').textContent = `${director ? director.name : ''}风格 · ${current.format}`;
+      $('poster-director-info').textContent = director ? director.name : '';
+    }
   }
   $('poster-format-info').textContent = `${current.width} × ${current.height}`;
   $('poster-time-info').textContent = '刚刚';

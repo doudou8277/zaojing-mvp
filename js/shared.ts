@@ -61,6 +61,11 @@ interface AppInitialState {
   activeCustomStyleId: string | null;
   movieStyle: CustomStyle | null;
   blendStyle: { a: string; b: string; ratio: number } | null;
+  selectedMovieId: string | null;
+  movieCustomDNA: Record<string, string> | null;
+  movieCustomColors: Record<string, string> | null;
+  movieCustomPrompt: string | null;
+  movieSwapLabel: string | null;
   showQuote: boolean;
   currentTitle: string;
   altTitles: string[];
@@ -72,7 +77,6 @@ interface AppInitialState {
   cocreateAnalysis: unknown | null;
   trailerTimer: ReturnType<typeof setTimeout> | null;
   genTimer: ReturnType<typeof setTimeout> | null;
-  // 索引签名：满足 createStore<T extends Record<string, unknown>> 约束
   [key: string]: unknown;
 }
 
@@ -206,6 +210,11 @@ const state = createStore<AppInitialState>({
   activeCustomStyleId: null,
   movieStyle: null,
   blendStyle: null,
+  selectedMovieId: null,
+  movieCustomDNA: null,
+  movieCustomColors: null,
+  movieCustomPrompt: null,
+  movieSwapLabel: null,
   showQuote: true,
   currentTitle: '',
   altTitles: [],

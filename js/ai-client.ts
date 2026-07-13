@@ -154,7 +154,7 @@ export async function analyzeEmotion(
 ): Promise<EmotionAnalysis | null> {
   return await apiFetch<EmotionAnalysis>('/api/analyze', {
     method: 'POST',
-    body: { text, moodTagId },
+    body: { text, moodTagId: moodTagId ?? undefined },
     timeout: API_TIMEOUT_ANALYZE,
     signal,
   });
@@ -166,7 +166,15 @@ export async function generateImage(options: GenerateImageOptions, signal?: Abor
 
   const result = await apiFetch<GenerateImageResponse>('/api/generate-image', {
     method: 'POST',
-    body: { text, directorId, emotion, engine, size, stylePrompt, negativePrompt },
+    body: {
+      text,
+      directorId,
+      emotion: emotion ?? undefined,
+      engine,
+      size,
+      stylePrompt: stylePrompt ?? undefined,
+      negativePrompt: negativePrompt ?? undefined,
+    },
     timeout: API_TIMEOUT_GENERATE,
     signal,
   });
@@ -200,7 +208,7 @@ export async function generateCopy(options: GenerateCopyOptions, signal?: AbortS
   const { text, directorId, emotion, type } = options;
   return await apiFetch('/api/generate-copy', {
     method: 'POST',
-    body: { text, directorId, emotion, type },
+    body: { text, directorId, emotion: emotion ?? undefined, type: type ?? undefined },
     timeout: API_TIMEOUT_COPY,
     signal,
   });
@@ -215,7 +223,7 @@ export async function generatePlatformCopy(
   const { text, directorId, emotion } = params;
   return await apiFetch<PlatformCopy>('/api/generate-platform-copy', {
     method: 'POST',
-    body: { text, directorId, emotion },
+    body: { text, directorId, emotion: emotion ?? undefined },
     timeout: API_TIMEOUT_COPY,
     signal,
   });
@@ -254,7 +262,7 @@ export async function generateCopyStream(
     response = await fetch(API_BASE + '/api/generate-copy-stream', {
       method: 'POST',
       headers,
-      body: JSON.stringify({ text, directorId, emotion, type }),
+      body: JSON.stringify({ text, directorId, emotion: emotion ?? undefined, type: type ?? undefined }),
       signal: controller.signal,
     });
   } catch (err) {

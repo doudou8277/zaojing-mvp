@@ -368,7 +368,6 @@ export async function runEmotionAnalysis({ text, moodTagId, initDirectorsPage, l
 // ========== 海报生成流程（导演页 → 结果页之间） ==========
 
 export async function startGeneration() {
-  // 释放上一轮海报的 Blob URL，避免内存泄漏
   if (state.posterResults && state.posterResults.length) {
     state.posterResults.forEach((r) => {
       safeRevokeUrl(r.dataUrl);
@@ -383,17 +382,57 @@ export async function startGeneration() {
 
   const isMulti = state.selectedDirectorIds.length > 1;
   const isGrid9 = state.posterFormat === 'grid9';
-  const movieModule = _getMovieModule ? _getMovieModule() : null;
-  const selectedMovie = movieModule ? movieModule.getSelectedMovie() : null;
+
+  let movieModule = _getMovieModule ? _getMovieModule() : null;
+  let selectedMovie = null;
+  let movieCustomDNA = state.movieCustomDNA || null;
+  let movieCustomColors = state.movieCustomColors || null;
+  let movieCustomPrompt = state.movieCustomPrompt || null;
+  let movieSwapLabel = state.movieSwapLabel || null;
+
+  if (state.selectedMovieId) {
+    if (movieModule && typeof movieModule.getSelectedMovie === 'function') {
+      selectedMovie = movieModule.getSelectedMovie();
+      if (movieModule.state) {
+        movieCustomDNA = movieModule.state.customDNA || movieCustomDNA;
+        movieCustomColors = movieModule.state.customColors || movieCustomColors;
+        movieCustomPrompt = movieModule.state.customPrompt || movieCustomPrompt;
+        movieSwapLabel = movieModule.state.swapLabel || movieSwapLabel;
+      }
+    }
+    if (!selectedMovie) {
+      try {
+        const mod = await import('../movie-module.js');
+        movieModule = mod;
+        await mod.init();
+        selectedMovie = mod.getSelectedMovie();
+        if (mod.state) {
+          movieCustomDNA = mod.state.customDNA || movieCustomDNA;
+          movieCustomColors = mod.state.customColors || movieCustomColors;
+          movieCustomPrompt = mod.state.customPrompt || movieCustomPrompt;
+          movieSwapLabel = mod.state.swapLabel || movieSwapLabel;
+        }
+      } catch (e) {
+        logger.warn('[Generating] 加载电影模块失败:', e);
+      }
+    }
+  }
+
+  const movieStylePrompt = movieCustomPrompt || (selectedMovie ? selectedMovie.stylePrompt : null);
+  const movieDisplayTitle = movieSwapLabel || (selectedMovie ? selectedMovie.title : null);
 
   try {
     // ---- 阶段 1: 准备 + 加载 PosterEngine ----
     _setPhase('prepare', {
       subtext: isGrid9
         ? '准备九宫格合成'
-        : isMulti
-          ? `准备 ${state.selectedDirectorIds.length} 位导演的拍摄`
-          : '准备拍摄',
+        : movieDisplayTitle
+          ? movieSwapLabel
+            ? `正在以「${movieDisplayTitle}」风格创作${isMulti ? ` · ${state.selectedDirectorIds.length} 位导演` : ''}`
+            : `正在以《${movieDisplayTitle}》风格创作${isMulti ? ` · ${state.selectedDirectorIds.length} 位导演` : ''}`
+          : isMulti
+            ? `准备 ${state.selectedDirectorIds.length} 位导演的拍摄`
+            : '准备拍摄',
     });
     const prepEntry = _addReasoningEntry({
       tool: 'init_session',
@@ -507,7 +546,9 @@ export async function startGeneration() {
               }
               const imgEntry = _addReasoningEntry({
                 tool: 'generate_image',
-                thought: `调用 ${dirLabel} 风格的图片生成，情绪基调：${emotion ? emotion.primaryEmotion : '默认'}`,
+                thought: movieDisplayTitle
+                  ? `调用 AI 生成${movieSwapLabel ? '「' + movieDisplayTitle + '」' : '《' + movieDisplayTitle + '》'}同风格图片，导演视角：${dirLabel}，情绪基调：${emotion ? emotion.primaryEmotion : '默认'}`
+                  : `调用 ${dirLabel} 风格的图片生成，情绪基调：${emotion ? emotion.primaryEmotion : '默认'}`,
               });
               const aiResult = await posterBoundary.run(
                 () =>
@@ -518,6 +559,7 @@ export async function startGeneration() {
                       emotion: emotion ? emotion.primaryEmotion : null,
                       engine: state.aiEngine,
                       size: state.posterFormat,
+                      stylePrompt: movieStylePrompt || undefined,
                     },
                     abortController.signal
                   ),
@@ -544,11 +586,11 @@ export async function startGeneration() {
             const result = await PosterEngine.generate({
               text: state.inputText,
               directorId: directorId,
-              movieId: selectedMovie ? selectedMovie.id : undefined,
-              customDNA: selectedMovie ? movieModule.state.customDNA || undefined : undefined,
-              customColors: selectedMovie ? movieModule.state.customColors || undefined : undefined,
-              customPrompt: selectedMovie ? movieModule.state.customPrompt || undefined : undefined,
-              swapLabel: selectedMovie ? movieModule.state.swapLabel || undefined : undefined,
+              movieId: state.selectedMovieId || undefined,
+              customDNA: movieCustomDNA || undefined,
+              customColors: movieCustomColors || undefined,
+              customPrompt: movieCustomPrompt || undefined,
+              swapLabel: movieSwapLabel || undefined,
               moodTagId: state.moodTagId,
               format: state.posterFormat,
               showQuote: state.showQuote,

@@ -446,7 +446,7 @@ function drawAIBackground(ctx, imageBitmap, width, height) {
 // ========== Worker 消息处理 ==========
 
 self.onmessage = async function (e) {
-  const { type, id, width, height, directorId, colors, aiImageBlob, vignetteIntensity, renderContext } = e.data;
+  const { type, id, width, height, directorId, colors, aiImageBuffer, vignetteIntensity, renderContext } = e.data;
 
   if (type !== 'renderBackground') {
     self.postMessage({ id, error: '未知消息类型: ' + type });
@@ -460,9 +460,10 @@ self.onmessage = async function (e) {
 
     // 绘制背景
     let drewEmotionCanvas = false;
-    if (aiImageBlob) {
-      // AI 生图模式：走原有逻辑，不叠加情绪化效果
-      const imageBitmap = await createImageBitmap(aiImageBlob);
+    if (aiImageBuffer) {
+      // AI 生图模式：从 ArrayBuffer 重建 Blob 再创建 ImageBitmap
+      const blob = new Blob([aiImageBuffer]);
+      const imageBitmap = await createImageBitmap(blob);
       drawAIBackground(ctx, imageBitmap, width, height);
       imageBitmap.close();
     } else if (bgRenderers[directorId]) {

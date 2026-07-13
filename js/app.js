@@ -193,6 +193,14 @@ function navigateTo(pageId) {
   }
   navigate(pageId);
   lazyLoadAll();
+
+  if (pageId === 'directors') {
+    import('./pages/directors.js')
+      .then(({ updateMovieStyleBadge }) => {
+        updateMovieStyleBadge();
+      })
+      .catch(() => {});
+  }
 }
 
 // ========== 依赖注入 ==========
@@ -927,17 +935,26 @@ async function init() {
 
   initInputPage({ initDirectorsPage: initDirectorsPageWithCallbacks });
 
-  // 根据初始 hash 路由（支持直接URL访问，如 #ticket、#wall 等）
-  const initialHash = window.location.hash.replace('#', '');
+  // 根据初始 hash 路由（支持直接URL访问，如 #ticket、#wall、#cocreate?room=XXX 等）
+  const initialHashRaw = window.location.hash.replace('#', '');
   const validPages = ['input', 'directors', 'result', 'wall', 'ticket', 'cocreate', 'movies', 'batch', 'hot-topics'];
-  const startPage = initialHash && validPages.includes(initialHash) ? initialHash : 'input';
+  const initialPageId = initialHashRaw.split('?')[0];
+  const startPage = initialPageId && validPages.includes(initialPageId) ? initialPageId : 'input';
 
   // 如果是直接访问ticket/wall等页面，需要先确保input页初始化（它是入口），但显示目标页面
   if (startPage !== 'input' && startPage !== 'directors' && startPage !== 'generating' && startPage !== 'result') {
     // 对于非核心流程页面（ticket等），先确保模块加载再导航
+    // 注意：navigateTo 会调用 navigate() 并 replaceState 去掉 query string，
+    // 所以需要在此之前解析 invite 参数传给 init 函数
+    const savedHash = window.location.hash;
     navigateTo(startPage);
     if (startPage === 'ticket') {
       ensurePageInit('ticket').then((mod) => mod.initTicketPage());
+    }
+    if (startPage === 'cocreate') {
+      const params = new URLSearchParams(savedHash.split('?')[1] || '');
+      const inviteRoomId = params.get('room');
+      ensurePageInit('cocreate').then((mod) => mod.initCocreatePage({ inviteRoomId }));
     }
   } else {
     // navigateTo 内部已调用 lazyLoadAll 扫描待懒加载的图片
@@ -946,11 +963,16 @@ async function init() {
 
   // 监听浏览器前进/后退
   window.addEventListener('popstate', () => {
-    const hash = window.location.hash.replace('#', '');
-    if (hash && validPages.includes(hash) && hash !== 'generating') {
-      navigateTo(hash);
-      if (hash === 'ticket') {
+    const hashRaw = window.location.hash.replace('#', '');
+    const pageId = hashRaw.split('?')[0];
+    if (pageId && validPages.includes(pageId) && pageId !== 'generating') {
+      const popParams = new URLSearchParams(hashRaw.split('?')[1] || '');
+      navigateTo(pageId);
+      if (pageId === 'ticket') {
         ensurePageInit('ticket').then((mod) => mod.initTicketPage());
+      }
+      if (pageId === 'cocreate') {
+        ensurePageInit('cocreate').then((mod) => mod.initCocreatePage({ inviteRoomId: popParams.get('room') }));
       }
     }
   });

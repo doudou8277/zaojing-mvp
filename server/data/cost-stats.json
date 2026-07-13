@@ -2,16 +2,16 @@
   "current": {
     "date": "Mon Jul 13 2026",
     "totalCost": 0,
-    "totalTokens": 2997,
-    "calls": 3,
+    "totalTokens": 18111,
+    "calls": 19,
     "byModel": {
       "doubao-seed-2-0-lite-260428": {
-        "calls": 2,
-        "tokens": 2997,
+        "calls": 12,
+        "tokens": 18111,
         "cost": 0
       },
       "doubao-seedream-5-0-pro-260628": {
-        "calls": 1,
+        "calls": 7,
         "tokens": 0,
         "cost": 0
       }
@@ -37,5 +37,5 @@
       }
     }
   ],
-  "updatedAt": "2026-07-12T16:15:41.620Z"
+  "updatedAt": "2026-07-13T15:04:51.014Z"
 }

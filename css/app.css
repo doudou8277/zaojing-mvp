@@ -886,6 +886,68 @@ a:hover {
   font-size: 0.84rem;
 }
 
+.movie-style-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 auto 16px;
+  padding: 10px 14px 10px 16px;
+  max-width: 340px;
+  background: linear-gradient(135deg, rgba(212, 168, 94, 0.15), rgba(180, 120, 60, 0.1));
+  border: 1px solid rgba(212, 168, 94, 0.35);
+  border-radius: 14px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.movie-style-badge .badge-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(212, 168, 94, 0.25);
+  color: var(--gold);
+  flex-shrink: 0;
+}
+.movie-style-badge .badge-icon .ico {
+  width: 16px;
+  height: 16px;
+}
+.movie-style-badge .badge-text {
+  flex: 1;
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+  line-height: 1.4;
+}
+.movie-style-badge .badge-movie {
+  font-weight: 700;
+  color: var(--gold);
+  margin: 0 4px;
+}
+.movie-style-badge .badge-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--ink-mute);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+.movie-style-badge .badge-clear:hover {
+  background: rgba(255, 80, 80, 0.2);
+  color: #ff8080;
+}
+.movie-style-badge .badge-clear .ico {
+  width: 14px;
+  height: 14px;
+}
+
 .director-toolbar {
   display: flex;
   align-items: center;
@@ -3140,6 +3202,401 @@ a:hover {
   display: flex;
   gap: 12px;
   margin-top: 20px;
+}
+
+/* ========== Tab 切换 ========== */
+.cocreate-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 4px;
+  margin-bottom: 20px;
+}
+.cocreate-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 12px;
+  border: none;
+  border-radius: calc(var(--radius-md) - 2px);
+  background: transparent;
+  color: var(--ink-mute);
+  font-size: 0.85rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    color 0.2s;
+}
+.cocreate-tab:hover {
+  color: var(--ink);
+}
+.cocreate-tab.active {
+  background: var(--bg);
+  color: var(--ink);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* ========== 多人实时模式 - Lobby ========== */
+.cocreate-lobby {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.cocreate-lobby-card {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 28px 20px;
+  text-align: center;
+}
+.cocreate-lobby-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(var(--miya-rgb), 0.1);
+  color: var(--miya);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 12px;
+}
+.cocreate-lobby-icon svg {
+  width: 28px;
+  height: 28px;
+}
+.cocreate-lobby-card h3 {
+  font-size: 1.1rem;
+  font-family: var(--font-serif);
+  margin-bottom: 4px;
+}
+.cocreate-lobby-desc {
+  font-size: 0.82rem;
+  color: var(--ink-mute);
+  margin-bottom: 16px;
+}
+.cocreate-lobby-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--ink-faint);
+  font-size: 0.8rem;
+}
+.cocreate-lobby-divider::before,
+.cocreate-lobby-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+.cocreate-name-input,
+.cocreate-room-input {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  color: var(--ink);
+  font-size: 16px;
+  font-family: inherit;
+  margin-bottom: 10px;
+  transition: border-color 0.2s;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+}
+.cocreate-name-input {
+  text-transform: none;
+  letter-spacing: normal;
+}
+.cocreate-name-input:focus,
+.cocreate-room-input:focus {
+  outline: none;
+  border-color: var(--miya);
+  box-shadow: var(--ring-focus);
+}
+
+/* ========== 多人房间视图 ========== */
+.cocreate-room {
+  animation: fadeUp 0.3s var(--ease);
+}
+.cocreate-room-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.cocreate-room-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cocreate-room-label {
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.cocreate-room-id {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: var(--bg);
+  border: 1px solid var(--miya);
+  border-radius: var(--radius-sm);
+  color: var(--miya);
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.cocreate-room-id:hover {
+  background: rgba(var(--miya-rgb), 0.08);
+}
+.cocreate-room-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: var(--ink-mute);
+  margin-left: auto;
+}
+.cocreate-online-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4ade80;
+  animation: pulseDot 2s infinite;
+}
+@keyframes pulseDot {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(74, 222, 128, 0);
+  }
+}
+.cocreate-room-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.cocreate-qr {
+  text-align: center;
+  padding: 12px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  margin-bottom: 14px;
+}
+.cocreate-qr-box canvas {
+  border-radius: var(--radius-sm);
+}
+.cocreate-qr-hint {
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+  margin-top: 8px;
+}
+
+.cocreate-waiting {
+  text-align: center;
+  padding: 32px 20px;
+  color: var(--ink-mute);
+}
+.cocreate-waiting-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--line);
+  border-top-color: var(--miya);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 12px;
+}
+.cocreate-waiting p {
+  font-size: 0.88rem;
+}
+.cocreate-waiting p::after {
+  content: '';
+  animation: dots 1.5s steps(4, end) infinite;
+}
+@keyframes dots {
+  0%,
+  20% {
+    content: '';
+  }
+  40% {
+    content: '.';
+  }
+  60% {
+    content: '..';
+  }
+  80%,
+  100% {
+    content: '...';
+  }
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ========== 房间成员卡片 ========== */
+.cocreate-members {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.room-member.offline {
+  opacity: 0.55;
+}
+.room-member.is-self {
+  background: rgba(var(--miya-rgb), 0.04);
+  border-radius: var(--radius-md);
+  padding: 4px;
+}
+.avatar-offline {
+  filter: grayscale(1);
+  opacity: 0.5;
+}
+
+.cocreate-input-field.readonly {
+  background: var(--bg-2);
+  border-style: dashed;
+  color: var(--ink-mute);
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  line-height: 1.5;
+}
+.cocreate-input-field.readonly.is-typing {
+  border-color: var(--miya);
+  color: var(--ink);
+  font-style: italic;
+}
+
+.member-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 0.68rem;
+  margin-left: 6px;
+  font-weight: 500;
+  vertical-align: middle;
+}
+.host-badge {
+  background: rgba(251, 191, 36, 0.15);
+  color: #b45309;
+}
+.typing-badge {
+  background: rgba(74, 222, 128, 0.15);
+  color: #15803d;
+}
+.done-badge {
+  background: rgba(59, 130, 246, 0.12);
+  color: #1d4ed8;
+}
+.idle-badge {
+  background: var(--bg-3);
+  color: var(--ink-faint);
+}
+.offline-badge {
+  background: var(--bg-3);
+  color: var(--ink-faint);
+}
+.self-tag {
+  font-size: 0.72rem;
+  color: var(--miya);
+  margin-left: 4px;
+}
+
+.cocreate-kick-btn {
+  padding: 6px 10px;
+  background: transparent;
+  border: 1px solid rgba(var(--danger-rgb), 0.3);
+  border-radius: var(--radius-sm);
+  color: var(--danger);
+  font-size: 0.72rem;
+  font-family: inherit;
+  cursor: pointer;
+  flex-shrink: 0;
+  align-self: center;
+  transition: background 0.2s;
+}
+.cocreate-kick-btn:hover {
+  background: rgba(var(--danger-rgb), 0.1);
+}
+
+/* ========== 分析中状态 ========== */
+.cocreate-analyzing {
+  text-align: center;
+  padding: 28px 20px;
+}
+.cocreate-analyzing-spinner {
+  width: 44px;
+  height: 44px;
+  border: 3px solid var(--line);
+  border-top-color: var(--miya);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 12px;
+}
+.cocreate-analyzing p {
+  font-size: 0.88rem;
+  color: var(--ink-mute);
+}
+
+/* ========== WebSocket 状态条 ========== */
+.cocreate-ws-status {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 16px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 0.78rem;
+  color: var(--ink-mute);
+  z-index: 50;
+  box-shadow: var(--shadow-md);
+  transition: all 0.3s;
+  pointer-events: none;
+}
+.cocreate-ws-status:empty {
+  display: none;
+}
+.cocreate-ws-status.ws-connected {
+  color: #15803d;
+  border-color: rgba(74, 222, 128, 0.4);
+}
+.cocreate-ws-status.ws-disconnected,
+.cocreate-ws-status.ws-reconnecting {
+  color: #b45309;
+  border-color: rgba(251, 191, 36, 0.4);
+}
+.cocreate-ws-status.ws-error {
+  color: var(--danger);
+  border-color: rgba(var(--danger-rgb), 0.4);
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 0.78rem;
 }
 
 /* ========== 交互式情绪光谱 ========== */
@@ -8235,7 +8692,8 @@ textarea:focus-visible,
   gap: 6px;
 }
 .ticket-style-chip,
-.ticket-format-chip {
+.ticket-format-chip,
+.ticket-type-chip {
   padding: 6px 14px;
   border: 1px solid var(--border, #ddd);
   border-radius: 16px;
@@ -8246,12 +8704,14 @@ textarea:focus-visible,
   transition: all 0.2s;
 }
 .ticket-style-chip:hover,
-.ticket-format-chip:hover {
+.ticket-format-chip:hover,
+.ticket-type-chip:hover {
   border-color: var(--accent, #c87f2e);
   color: var(--accent, #c87f2e);
 }
 .ticket-style-chip.active,
-.ticket-format-chip.active {
+.ticket-format-chip.active,
+.ticket-type-chip.active {
   border-color: var(--accent, #c87f2e);
   color: #fff;
   background: var(--accent, #c87f2e);

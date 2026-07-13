@@ -49,14 +49,21 @@ export default defineConfig({
   server: {
     port: 5173,
     open: true,
-    // API 请求代理到 Express 后端
     proxy: {
       '/api': {
         target: 'http://localhost:8127',
-        changeOrigin: true
+        changeOrigin: true,
+        // 图片生成 API 可能需要长达 180 秒，设置足够的代理超时
+        timeout: 300000, // 5 分钟（涵盖 180s 生图 + 60s 下载 + 余量）
+        proxyTimeout: 300000,
       },
       '/generated': {
         target: 'http://localhost:8127',
+        changeOrigin: true
+      },
+      '/ws': {
+        target: 'ws://localhost:8127',
+        ws: true,
         changeOrigin: true
       }
     }

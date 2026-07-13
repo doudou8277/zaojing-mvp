@@ -3,6 +3,56 @@
 import { $, state, toast, escapeHtml } from '../shared.js';
 import { DIRECTORS, EMOTION_SPECTRUM, EMOTION_KEYWORDS, getEmotionFromMood, getStyleDNAValues } from '../data.js';
 
+export function updateMovieStyleBadge() {
+  const badge = $('movie-style-badge');
+  const titleEl = $('badge-movie-title');
+  if (!badge || !titleEl) return;
+
+  const movieId = state.selectedMovieId;
+  const swapLabel = state.movieSwapLabel;
+
+  if (movieId || swapLabel) {
+    let displayText;
+    if (swapLabel) {
+      displayText = `「${swapLabel}」`;
+    } else if (movieId) {
+      let movieTitle = movieId;
+      try {
+        const movies = window.__movieData || [];
+        const movie = movies.find((m) => m.id === movieId);
+        movieTitle = movie ? movie.title : movieId;
+      } catch (e) {
+        // ignore
+      }
+      displayText = `《${movieTitle}》`;
+    }
+    titleEl.textContent = displayText;
+    badge.style.display = 'flex';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+export function clearMovieStyleSelection() {
+  state.selectedMovieId = null;
+  state.movieCustomDNA = null;
+  state.movieCustomColors = null;
+  state.movieCustomPrompt = null;
+  state.movieSwapLabel = null;
+
+  try {
+    const movieModule = window.__movieModule;
+    if (movieModule && typeof movieModule.clearSelection === 'function') {
+      movieModule.clearSelection();
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  updateMovieStyleBadge();
+  toast('已清除电影风格选择', 2000);
+}
+
 // ========== DNA 风格可视化（胶片齿孔版） ==========
 
 // 十六进制颜色转 RGB
@@ -245,6 +295,12 @@ export function initDirectorsPage(callbacks = {}) {
 
   const grid = $('director-grid');
   grid.innerHTML = '';
+
+  updateMovieStyleBadge();
+  const clearBtn = $('badge-clear-movie');
+  if (clearBtn) {
+    clearBtn.onclick = () => clearMovieStyleSelection();
+  }
 
   // 渲染情绪光谱可视化
   renderEmotionSpectrum();

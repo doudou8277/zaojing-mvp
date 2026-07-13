@@ -278,17 +278,14 @@ async function renderBackgroundViaWorker(
 
   const id = ++_requestId;
 
-  // 如果有 AI 图片 URL，先 fetch 为 Blob
-  let aiImageBlob: Blob | null = null;
+  // 如果有 AI 图片 URL，先 fetch 为 ArrayBuffer（用于 transfer 给 Worker）
+  // 注意：Blob 不是 transferable 对象，不能放入 postMessage 的 transfer list，
+  // 必须转为 ArrayBuffer 后才能 transfer，避免 "Value does not have a transferable type" 错误。
+  let aiImageBuffer: ArrayBuffer | null = null;
   if (aiImageUrl) {
     try {
-      if (aiImageUrl.startsWith('data:')) {
-        const response = await fetch(aiImageUrl);
-        aiImageBlob = await response.blob();
-      } else {
-        const response = await fetch(aiImageUrl);
-        aiImageBlob = await response.blob();
-      }
+      const response = await fetch(aiImageUrl);
+      aiImageBuffer = await response.arrayBuffer();
     } catch (e) {
       // fetch 失败，让 Worker 降级为 Canvas 背景
       logger.warn('[PosterEngine] fetch 失败:', e instanceof Error ? e.message : String(e));
@@ -322,11 +319,11 @@ async function renderBackgroundViaWorker(
         height,
         directorId,
         colors,
-        aiImageBlob,
+        aiImageBuffer,
         vignetteIntensity,
         renderContext: renderContext || null,
       },
-      aiImageBlob ? [aiImageBlob as unknown as Transferable] : []
+      aiImageBuffer ? [aiImageBuffer] : []
     );
   });
 }
@@ -2077,14 +2074,21 @@ async function generate(options: GenerateOptions): Promise<PosterGenerateResult>
     customTitleWeight, // 自定义标题字重（覆盖默认）
   } = options;
 
-  // 优先使用电影风格，其次导演风格
-  let styleSource: StyleSource | undefined;
+  // 优先使用电影风格，其次导演风格；自定义参数始终覆盖
+  let styleSource: StyleSource;
+  let movieRef: { id: string; title: string; posterUrl: string; styleDNA: Record<string, string> } | null = null;
+
   if (movieId) {
     const movie =
       (FALLBACK_MOVIES as Movie[]).find((m) => m.id === movieId) ||
       ((_getServerMovies ? _getServerMovies() : []) as Movie[]).find((m) => m.id === movieId);
     if (movie) {
-      // Phase 2: 如果有自定义 DNA/色彩/prompt，使用融合后的
+      movieRef = {
+        id: movie.id,
+        title: movie.title,
+        posterUrl: movie.posterUrl,
+        styleDNA: customDNA || movie.styleDNA,
+      };
       styleSource = {
         id: movie.id,
         name: swapLabel || movie.title,
@@ -2095,18 +2099,36 @@ async function generate(options: GenerateOptions): Promise<PosterGenerateResult>
         promptCore: customPrompt || movie.stylePrompt,
         quotes: movie.iconicQuotes || [],
         isMovie: true,
-        movieRef: {
-          id: movie.id,
-          title: movie.title,
-          posterUrl: movie.posterUrl,
-          styleDNA: customDNA || movie.styleDNA,
-        },
+        movieRef,
       };
     }
   }
+
   if (!styleSource) {
     const director = DIRECTORS.find((d) => d.id === directorId) || DIRECTORS[0];
-    styleSource = director as unknown as StyleSource;
+    styleSource = { ...(director as unknown as StyleSource) };
+
+    if (customColors) {
+      styleSource.colors = customColors as any;
+    }
+    if (customDNA) {
+      styleSource.styleDNA = customDNA;
+    }
+    if (customPrompt) {
+      styleSource.promptCore = customPrompt;
+    }
+    if (swapLabel) {
+      styleSource.name = swapLabel;
+    }
+    if (movieId) {
+      styleSource.isMovie = true;
+      styleSource.movieRef = movieRef || {
+        id: movieId,
+        title: swapLabel || '自定义风格',
+        posterUrl: '',
+        styleDNA: customDNA || styleSource.styleDNA,
+      };
+    }
   }
 
   // 构建情绪化渲染上下文（Canvas 降级时驱动背景与文字层）

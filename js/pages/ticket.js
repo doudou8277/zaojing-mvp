@@ -5,7 +5,13 @@
 
 import { navigate, toast, escapeHtml } from '../shared.js';
 import { logger } from '../utils/logger.js';
-import { renderTicket, getStyleColors, getFormatSize, canvasToDataUrl } from '../utils/ticket-engine.js';
+import {
+  renderTicket,
+  getStyleColors,
+  getFormatSize,
+  canvasToDataUrl,
+  getTicketTypes,
+} from '../utils/ticket-engine.js';
 import { saveTicket, getAllTickets, deleteTicket, getTicketCount } from '../utils/ticket-storage.js';
 
 // ========== 状态 ==========
@@ -14,8 +20,12 @@ let analysisResult = null; // AI 分析结果
 let currentStyle = 'miyazaki';
 let currentFormat = 'vertical';
 let currentMoodText = '';
+let currentTicketType = 'classic'; // 票根类型：对应照片滤镜
 let isGenerating = false;
 let ticketCount = 0; // 缓存票根数量
+
+// 票根类型列表（从引擎获取）
+const TICKET_TYPES = getTicketTypes();
 
 // 导演风格列表（与渲染引擎 STYLE_COLORS 保持一致）
 const STYLES = [
@@ -127,6 +137,18 @@ function setupTicketPage() {
       chip.classList.add('active');
       currentFormat = chip.dataset.format;
       updateCanvasWrapRatio();
+      if (analysisResult && currentPhoto) {
+        renderCurrentTicket();
+      }
+    });
+  });
+
+  // 票根类型切换（照片滤镜）
+  document.querySelectorAll('.ticket-type-chip').forEach((chip) => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('.ticket-type-chip').forEach((c) => c.classList.remove('active'));
+      chip.classList.add('active');
+      currentTicketType = chip.dataset.type;
       if (analysisResult && currentPhoto) {
         renderCurrentTicket();
       }
@@ -309,6 +331,7 @@ function resetToUpload() {
   analysisResult = null;
   currentMoodText = '';
   isGenerating = false;
+  currentTicketType = 'classic';
 
   showSection('upload');
 
@@ -336,6 +359,11 @@ function resetToUpload() {
   if (modeSmart) modeSmart.classList.add('active');
   if (modeManual) modeManual.classList.remove('active');
   if (manualFields) manualFields.style.display = 'none';
+
+  // 重置票根类型到经典原片
+  document.querySelectorAll('.ticket-type-chip').forEach((c) => {
+    c.classList.toggle('active', c.dataset.type === 'classic');
+  });
 
   // 重置画布比例
   updateCanvasWrapRatio();
@@ -595,6 +623,10 @@ async function renderCurrentTicket() {
 
   const colors = getStyleColors(currentStyle);
 
+  // 获取当前票根类型对应的照片滤镜
+  const ticketType = TICKET_TYPES.find((t) => t.id === currentTicketType);
+  const photoFilter = ticketType ? ticketType.photoFilter : 'none';
+
   await renderTicket(canvas, {
     photoUrl: currentPhoto.dataUrl,
     destination,
@@ -605,6 +637,8 @@ async function renderCurrentTicket() {
     emotion: analysisResult.emotion,
     ticketNumber: `NO.${String(ticketCount + 1).padStart(3, '0')}`,
     colors,
+    origin: 'HOME',
+    photoFilter,
   });
 
   // 更新风格说明
@@ -679,6 +713,7 @@ async function handleSave() {
       moodText: currentMoodText || analysisResult.moodText || '',
       styleId: currentStyle,
       format: currentFormat,
+      ticketType: currentTicketType,
       emotion: emotionCopy,
       animationType: analysisResult.animationType || 'none',
       ticketDataUrl,
