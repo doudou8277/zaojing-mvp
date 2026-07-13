@@ -12,7 +12,13 @@ const fs = require('fs');
 const crypto = require('crypto');
 const dotenv = require('dotenv');
 
-dotenv.config();
+// 显式指定 .env 路径，避免 cwd 不在 server/ 目录时加载失败
+const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env';
+dotenv.config({ path: path.join(__dirname, envFile) });
+// 补充加载 .env（含真实 API key），覆盖模板中的空值
+if (envFile !== '.env') {
+  dotenv.config({ path: path.join(__dirname, '.env') });
+}
 
 const logger = require('./logger');
 const aiService = require('./ai-service');
@@ -100,8 +106,8 @@ if (isProduction) {
 // ========== 中间件 ==========
 
 // 安全 HTTP 头（helmet）
-// CSP 已收紧：移除 'unsafe-inline' 脚本权限（所有内联 onclick 已改为 addEventListener）
-// 样式仍需 'unsafe-inline'（Vite 构建产物含内联 style）
+// CSP 已收紧：移除 'unsafe-inline' 脚本权限（所有内联 onclick 已改为 addEventListener；Google Fonts 直接以 stylesheet 加载，无 onload 内联脚本）
+// 样式仍需 'unsafe-inline'（Vite 构建产物与部分 HTML 元素含内联 style）
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -540,31 +546,9 @@ app.post('/api/generate-image', generateRateLimit, validate(schemas.generateImag
     res.json(result);
   } catch (error) {
     req.log.error({ err: error.message, stack: error.stack?.slice(0, 500) }, '图片生成失败');
-    // 临时：返回详细错误信息用于调试
-    errorResponse(req, res, 500, `图片生成失败: ${error.message}`);
-  }
-});
-
-// 临时调试端点：测试 Volcengine API 连通性
-app.get('/api/debug/test-volcengine', async (req, res) => {
-  try {
-    const apiKey = process.env.VOLCENGINE_API_KEY;
-    const result = { hasApiKey: !!apiKey, keyPrefix: apiKey ? apiKey.substring(0, 15) + '...' : null };
-    // 测试模型列表
-    const modelsResp = await fetch('https://ark.cn-beijing.volces.com/api/v3/models', {
-      headers: { Authorization: `Bearer ${apiKey}` },
-    });
-    result.modelsStatus = modelsResp.status;
-    if (modelsResp.ok) {
-      const models = await modelsResp.json();
-      result.modelCount = models.data ? models.data.length : 0;
-      result.imageModels = (models.data || []).filter((m) => m.id && m.id.includes('seedream')).map((m) => m.id);
-    } else {
-      result.modelsError = await modelsResp.text();
-    }
-    res.json(result);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    const isDev = process.env.NODE_ENV === 'development';
+    const message = isDev ? `图片生成失败: ${error.message}` : '图片生成失败，请稍后重试';
+    errorResponse(req, res, 500, message);
   }
 });
 

@@ -16,12 +16,12 @@ const { writeJsonAtomicAsync } = require('./utils/atomic-write');
 
 // ========== API 超时常量（毫秒） ==========
 const TIMEOUTS = {
-  DEFAULT: 30000, // 默认 LLM 调用超时
-  STREAM: 60000, // 流式调用超时
-  IMAGE_GEN: 120000, // 图片生成超时
-  IMAGE_FETCH: 30000, // 图片下载超时
-  HTTP_FETCH: 15000, // 外部 HTTP 请求超时
-  MAX_RETRIES: 2, // 最大重试次数
+  DEFAULT: 60000, // 默认 LLM 调用超时（从30秒增加到60秒）
+  STREAM: 120000, // 流式调用超时（从60秒增加到120秒）
+  IMAGE_GEN: 180000, // 图片生成超时（从120秒增加到180秒，3分钟）
+  IMAGE_FETCH: 60000, // 图片下载超时（从30秒增加到60秒）
+  HTTP_FETCH: 30000, // 外部 HTTP 请求超时（从15秒增加到30秒）
+  MAX_RETRIES: 3, // 最大重试次数（从2次增加到3次）
 };
 
 // ========== 导演风格 DNA 数据（单一来源：shared/directors.json） ==========
@@ -835,7 +835,7 @@ Requirements:
     try {
       let result;
       if (currentEngine === 'seedream') {
-        result = await generateWithSeedream(fullPrompt, size, directorId);
+        result = await callWithRetry(() => generateWithSeedream(fullPrompt, size, directorId), 2);
       }
 
       // 记录图片生成成本
