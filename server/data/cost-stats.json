@@ -1,10 +1,15 @@
 {
   "current": {
-    "date": "Sat Jul 11 2026",
+    "date": "Mon Jul 13 2026",
     "totalCost": 0,
-    "totalTokens": 0,
-    "calls": 1,
+    "totalTokens": 2997,
+    "calls": 3,
     "byModel": {
+      "doubao-seed-2-0-lite-260428": {
+        "calls": 2,
+        "tokens": 2997,
+        "cost": 0
+      },
       "doubao-seedream-5-0-pro-260628": {
         "calls": 1,
         "tokens": 0,
@@ -12,6 +17,25 @@
       }
     }
   },
-  "history": [],
-  "updatedAt": "2026-07-10T16:09:15.997Z"
+  "history": [
+    {
+      "date": "Sun Jul 12 2026",
+      "totalCost": 0,
+      "totalTokens": 4362,
+      "calls": 5,
+      "byModel": {
+        "doubao-seed-2-0-lite-260428": {
+          "calls": 3,
+          "tokens": 4362,
+          "cost": 0
+        },
+        "doubao-seedream-5-0-pro-260628": {
+          "calls": 2,
+          "tokens": 0,
+          "cost": 0
+        }
+      }
+    }
+  ],
+  "updatedAt": "2026-07-12T16:15:41.620Z"
 }
