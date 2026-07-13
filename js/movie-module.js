@@ -770,7 +770,7 @@ function showMovieTag(movieId, label) {
   }
 
   const c = movie.colors || {};
-  const displayLabel = label || `🎬 ${movie.title}`;
+  const displayLabel = label || movie.title;
   const tagBgColor = sanitizeColor(c.primary, '#c41e3a');
   const posterStyle = movie.posterUrl
     ? `background-image:url(${escapeHtml(movie.posterUrl)});background-size:cover;background-position:center`
@@ -1079,7 +1079,8 @@ function openBlindBox() {
   detail.style.display = 'none';
 
   // 开盒动画
-  reveal.innerHTML = '<div class="blindbox-anim">🎬✨🎥🎨✨</div>';
+  reveal.innerHTML =
+    '<div class="blindbox-anim"><svg class="ico"><use href="#i-clapper"/></svg><svg class="ico"><use href="#i-sparkles"/></svg><svg class="ico"><use href="#i-film"/></svg><svg class="ico"><use href="#i-palette"/></svg><svg class="ico"><use href="#i-sparkles"/></svg></div>';
   reveal.className = 'blindbox-reveal animating';
 
   setTimeout(() => {
@@ -1101,7 +1102,7 @@ function openBlindBox() {
     detail.style.gap = '16px';
 
     $('blindbox-combo').innerHTML = `
-        <div class="blindbox-combo-title">✨ 惊喜组合 ✨</div>
+        <div class="blindbox-combo-title">惊喜组合</div>
         <div class="blindbox-combo-names">
           <span class="combo-movie">${escapeHtml(randomMovie.title)}</span>
           <span class="combo-x">×</span>
@@ -1752,7 +1753,7 @@ function joinChallenge() {
   tag.innerHTML = `
       <div class="movie-tag-poster" style="background:var(--miya)"></div>
       <div class="movie-tag-info">
-        <span class="movie-tag-title">🏆 挑战赛：${theme.name}</span>
+        <span class="movie-tag-title"><svg class="ico"><use href="#i-trophy"/></svg> 挑战赛：${theme.name}</span>
         <span class="movie-tag-style">${theme.desc}</span>
       </div>
       <button class="movie-tag-remove" data-action="clear-movie">✕</button>
@@ -1777,10 +1778,10 @@ function renderSeason(tab) {
     $('season-my-score').textContent = '0';
 
     const rewards = [
-      { rank: '冠军', reward: '🏆 限定金色徽章 + 1000积分', desc: '赛季总积分第1名' },
-      { rank: '前三', reward: '🥇 稀有徽章 + 500积分', desc: '赛季总积分前3名' },
-      { rank: '前十', reward: '🥈 精选徽章 + 300积分', desc: '赛季总积分前10名' },
-      { rank: '参与奖', reward: '🎖️ 参与徽章 + 50积分', desc: '至少提交3件作品' },
+      { rank: '冠军', reward: '限定金色徽章 + 1000积分', desc: '赛季总积分第1名' },
+      { rank: '前三', reward: '稀有徽章 + 500积分', desc: '赛季总积分前3名' },
+      { rank: '前十', reward: '精选徽章 + 300积分', desc: '赛季总积分前10名' },
+      { rank: '参与奖', reward: '参与徽章 + 50积分', desc: '至少提交3件作品' },
     ];
 
     $('season-reward-list').innerHTML = rewards
@@ -1809,7 +1810,7 @@ function renderSeason(tab) {
             <div class="season-history-item">
               <div class="season-history-info">
                 <span class="season-history-name">${escapeHtml(s.name)}</span>
-                <span class="season-history-champion">🏆 冠军：${escapeHtml(s.champion)}</span>
+                <span class="season-history-champion"><svg class="ico"><use href="#i-trophy"/></svg> 冠军：${escapeHtml(s.champion)}</span>
                 <span class="season-history-participants">${s.participants} 人参与</span>
               </div>
             </div>

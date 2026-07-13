@@ -4,6 +4,7 @@ import { $, state, toast, navigate, escapeHtml, sanitizeImageUrl, logger } from 
 import { MOOD_TAGS, EMOTION_KEYWORDS, MOOD_TO_EMOTION } from '../data.js';
 import * as AIClient from '../ai-client';
 import { checkCompliance, RISK_LEVEL, formatComplianceResult, getRiskLevelLabel } from '../utils/compliance.js';
+import { initDirectorsPage } from './directors.js';
 
 /**
  * 本地情绪分析（Canvas 模式下使用）
@@ -47,7 +48,7 @@ export function initInputPage({ initDirectorsPage } = {}) {
     const el = document.createElement('button');
     el.className = 'mood-tag';
     el.dataset.id = tag.id;
-    el.innerHTML = `<span class="emoji">${tag.emoji}</span> ${tag.label}`;
+    el.innerHTML = `<svg class="ico"><use href="#i-${tag.icon}"/></svg> ${tag.label}`;
     if (state.moodTagId === tag.id) el.classList.add('selected');
     el.addEventListener('click', () => {
       document.querySelectorAll('.mood-tag').forEach((t) => t.classList.remove('selected'));
@@ -101,22 +102,28 @@ export function initInputPage({ initDirectorsPage } = {}) {
       logger.warn('语音识别错误:', event.error);
       toast('语音识别出错，请重试');
       state.isListening = false;
-      $('voice-status').style.display = 'none';
+      const vs = $('voice-status');
+      if (vs) vs.style.display = 'none';
     };
 
     // 识别结束（含主动停止）时复位状态
     recognition.onend = () => {
       state.isListening = false;
-      $('voice-status').style.display = 'none';
+      const vs = $('voice-status');
+      if (vs) vs.style.display = 'none';
     };
 
     state.voiceRecognition = recognition;
   }
 
-  const uploadZone = $('upload-zone');
+  const uploadBtn = $('btn-upload-image');
   const uploadInput = $('upload-input');
+  const uploadPreview = $('upload-preview');
+  const uploadLabel = $('upload-label');
   // 用 onclick 避免重复绑定
-  uploadZone.onclick = () => uploadInput.click();
+  if (uploadBtn) {
+    uploadBtn.onclick = () => uploadInput.click();
+  }
   uploadInput.onchange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -129,11 +136,12 @@ export function initInputPage({ initDirectorsPage } = {}) {
         return;
       }
       state.uploadedImage = safeDataUrl;
-      uploadZone.classList.add('has-image');
-      uploadZone.innerHTML = `
-        <img class="upload-preview" src="${safeDataUrl}" alt="预览">
-        <p style="font-size:.8rem; color:var(--miya)">已上传，点击重新选择</p>
-      `;
+      if (uploadBtn) uploadBtn.classList.add('has-image');
+      if (uploadLabel) uploadLabel.textContent = '重新选择图片';
+      if (uploadPreview) {
+        uploadPreview.src = safeDataUrl;
+        uploadPreview.style.display = 'inline-block';
+      }
       toast('图片已上传，AI 将理解其情绪');
 
       // 如果后端可用，调用 AI 视觉情绪分析
@@ -246,7 +254,7 @@ function showComplianceWarning(result, isBlock) {
   if (!warningEl || !warningContent) {
     // 降级：用 toast 显示
     const label = getRiskLevelLabel(result.maxLevel);
-    toast(`⚠️ ${label}：检测到 ${result.risks.length} 个风险词`);
+    toast(`${label}：检测到 ${result.risks.length} 个风险词`);
     return;
   }
 
@@ -264,7 +272,7 @@ function showComplianceWarning(result, isBlock) {
 
   warningContent.innerHTML = `
     <div class="compliance-warning-title">
-      ${isBlock ? '🚫 内容存在合规风险' : '⚠️ 内容提示'}
+      ${isBlock ? '内容存在合规风险' : '内容提示'}
     </div>
     <div class="compliance-risk-list">${riskItems}</div>
   `;

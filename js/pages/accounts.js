@@ -3,7 +3,7 @@
  * 提供账号列表、添加/删除账号、一键多平台发布
  */
 
-import { $, toast, escapeHtml, logger } from '../shared.js';
+import { $, toast, escapeHtml, logger, closeModal } from '../shared.js';
 import {
   MATRIX_PLATFORMS,
   ACCOUNT_STATUS,
@@ -80,7 +80,7 @@ function renderMatrixStats() {
       (p) => `
       <div class="account-stat-item">
         <span class="account-stat-value" style="color:${p.color}">${stats.byPlatform[p.id] || 0}</span>
-        <span class="account-stat-label">${p.icon} ${p.label}</span>
+        <span class="account-stat-label"><svg class="ico"><use href="#i-${p.icon}"/></svg> ${p.label}</span>
       </div>
     `
     ).join('')}
@@ -119,7 +119,7 @@ function renderAccountsList() {
         <div class="account-info">
           <div class="account-name">
             <span class="account-platform-badge" style="background:${platform ? platform.color : '#666'}20;color:${platform ? platform.color : '#666'}">
-              ${platform ? platform.icon + ' ' + platform.label : account.platform}
+              ${platform ? `<svg class="ico"><use href="#i-${platform.icon}"/></svg> ${platform.label}` : account.platform}
             </span>
             ${escapeHtml(account.nickname)}
           </div>
@@ -172,7 +172,7 @@ function renderPublishSection() {
       <button class="btn btn-ghost btn-sm" id="btn-select-all-accounts">全选</button>
       <button class="btn btn-ghost btn-sm" id="btn-deselect-all-accounts">取消全选</button>
       <button class="btn btn-primary btn-sm" id="btn-publish-matrix" disabled>
-        📤 一键发布到选中账号
+        <svg class="ico"><use href="#i-upload"/></svg> 一键发布到选中账号
       </button>
     </div>
     <div class="accounts-publish-progress" id="accounts-publish-progress" style="display:none"></div>
@@ -205,7 +205,10 @@ function updatePublishButton() {
   const btn = $('btn-publish-matrix');
   if (btn) {
     btn.disabled = selected.length === 0;
-    btn.textContent = selected.length > 0 ? `📤 一键发布到 ${selected.length} 个账号` : '📤 一键发布到选中账号';
+    btn.innerHTML =
+      selected.length > 0
+        ? `<svg class="ico"><use href="#i-upload"/></svg> 一键发布到 ${selected.length} 个账号`
+        : '<svg class="ico"><use href="#i-upload"/></svg> 一键发布到选中账号';
   }
 }
 
@@ -221,9 +224,7 @@ export function showAddAccountForm() {
   // 渲染平台选择
   const platformSelect = $('new-account-platform');
   if (platformSelect) {
-    platformSelect.innerHTML = MATRIX_PLATFORMS.map(
-      (p) => `<option value="${p.id}">${p.icon} ${p.label}</option>`
-    ).join('');
+    platformSelect.innerHTML = MATRIX_PLATFORMS.map((p) => `<option value="${p.id}">${p.label}</option>`).join('');
   }
 
   formEl.style.display = 'block';
@@ -341,7 +342,7 @@ async function handlePublish() {
     }
 
     if (progressEl) {
-      progressEl.innerHTML += `<div class="publish-progress-done">✅ 发布完成</div>`;
+      progressEl.innerHTML += `<div class="publish-progress-done"><svg class="ico"><use href="#i-check"/></svg> 发布完成</div>`;
     }
   } catch (e) {
     logger.error('[accounts] 发布失败:', e.message);
@@ -350,7 +351,7 @@ async function handlePublish() {
     // 恢复按钮
     if (publishBtn) {
       publishBtn.disabled = false;
-      publishBtn.textContent = '📤 一键发布到选中账号';
+      publishBtn.innerHTML = '<svg class="ico"><use href="#i-upload"/></svg> 一键发布到选中账号';
     }
     // 刷新列表（更新发布次数）
     renderAccountsList();

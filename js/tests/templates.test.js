@@ -32,7 +32,7 @@ describe('POSTER_TEMPLATES 数据完整性', () => {
     POSTER_TEMPLATES.forEach((tpl) => {
       expect(tpl.id).toBeTruthy();
       expect(tpl.name).toBeTruthy();
-      expect(tpl.emoji).toBeTruthy();
+      expect(tpl.icon).toBeTruthy();
       expect(tpl.text).toBeTruthy();
       expect(tpl.directorId).toBeTruthy();
       expect(tpl.format).toBeTruthy();
@@ -83,11 +83,11 @@ describe('TEMPLATE_CATEGORIES', () => {
     expect(allCat.label).toBe('全部');
   });
 
-  it('每个分类有 id、label、emoji', () => {
+  it('每个分类有 id、label、icon', () => {
     TEMPLATE_CATEGORIES.forEach((cat) => {
       expect(cat.id).toBeTruthy();
       expect(cat.label).toBeTruthy();
-      expect(cat.emoji).toBeTruthy();
+      expect(cat.icon).toBeTruthy();
     });
   });
 
@@ -149,7 +149,7 @@ describe('用户模板 localStorage 持久化', () => {
       {
         id: 'test-1',
         name: '测试模板',
-        emoji: '🔖',
+        icon: 'bookmark',
         text: '测试文本',
         directorId: 'miyazaki',
         format: 'vertical',

@@ -62,7 +62,8 @@ export const DIRECTORS: Director[] = [
     id: 'miyazaki',
     name: '宫崎骏',
     enName: 'Miyazaki Hayao',
-    avatar: '🌿',
+    avatar:
+      '<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 20c0-4 4-8 10-8s10 4 10 8c0 2-1 4-3 5l3 11H10l3-11c-3-1-5-3-5-5z" fill="currentColor" opacity=".25"/><ellipse cx="18" cy="18" rx="10" ry="5" fill="currentColor"/><path d="M30 22l12-6-2 8-10 4z" fill="currentColor" opacity=".7"/></svg>',
     tagline: '天空、绿野、少女、治愈',
     styleDesc: '手绘动画质感，广阔天空与 lush 自然，金色光线下的少女剪影',
     keywords: ['天空', '云朵', '绿野', '少女', '治愈'],
@@ -108,7 +109,8 @@ export const DIRECTORS: Director[] = [
     id: 'wkw',
     name: '王家卫',
     enName: 'Wong Kar-wai',
-    avatar: '🎞️',
+    avatar:
+      '<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="24" cy="24" r="10" stroke="currentColor" stroke-width="2" opacity=".3"/><circle cx="24" cy="24" r="6" stroke="currentColor" stroke-width="2"/><circle cx="24" cy="24" r="2" fill="currentColor"/><path d="M8 18h6M8 24h8M8 30h6M34 18h6M34 24h6M34 30h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".5"/></svg>',
     tagline: '暧昧光影、霓虹绿、城市独白',
     styleDesc: '低照度霓虹光影，抽帧运动模糊，城市夜色中的孤独身影',
     keywords: ['暧昧', '光影', '霓虹', '独白', '城市'],
@@ -154,7 +156,8 @@ export const DIRECTORS: Director[] = [
     id: 'koreeda',
     name: '是枝裕和',
     enName: 'Koreeda Hirokazu',
-    avatar: '☀️',
+    avatar:
+      '<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="10" y="8" width="28" height="32" rx="1" stroke="currentColor" stroke-width="1.5" opacity=".4"/><rect x="14" y="12" width="20" height="14" rx="1" fill="currentColor" opacity=".15"/><path d="M14 32h20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".3"/><path d="M14 36h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".2"/><circle cx="34" cy="19" r="3" fill="currentColor" opacity=".35"/></svg>',
     tagline: '夏日午后、生活流、家庭温度',
     styleDesc: '柔和自然光，淡色调生活场景，家庭日常中的细微情感',
     keywords: ['夏日', '午后', '家庭', '生活', '自然光'],
@@ -200,7 +203,8 @@ export const DIRECTORS: Director[] = [
     id: 'wes',
     name: '韦斯·安德森',
     enName: 'Wes Anderson',
-    avatar: '🍬',
+    avatar:
+      '<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="8" y="8" width="32" height="32" rx="2" stroke="currentColor" stroke-width="2"/><rect x="14" y="14" width="20" height="20" rx="1" fill="currentColor" opacity=".2"/><line x1="24" y1="8" x2="24" y2="40" stroke="currentColor" stroke-width="1" opacity=".3"/><line x1="8" y1="24" x2="40" y2="24" stroke="currentColor" stroke-width="1" opacity=".3"/><circle cx="24" cy="24" r="3" fill="currentColor"/></svg>',
     tagline: '对称构图、糖果色、怪趣仪式',
     styleDesc: '完美对称构图，粉彩糖果色调，平面感怪趣美学',
     keywords: ['对称', '糖果色', '平面', '怪趣', '仪式感'],
@@ -246,7 +250,8 @@ export const DIRECTORS: Director[] = [
     id: 'nolan',
     name: '诺兰',
     enName: 'Christopher Nolan',
-    avatar: '🌌',
+    avatar:
+      '<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="24" cy="24" r="16" stroke="currentColor" stroke-width="2.5"/><circle cx="24" cy="24" r="10" stroke="currentColor" stroke-width="2" opacity=".7"/><path d="M24 8a16 16 0 0 1 0 32" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><circle cx="24" cy="8" r="3" fill="currentColor"/><line x1="24" y1="24" x2="24" y2="8" stroke="currentColor" stroke-width="1.5" opacity=".5"/></svg>',
     tagline: '冷峻、巨物、时间扭曲',
     styleDesc: '冷色调巨物感，纪实风格，时间与空间的哲学叙事',
     keywords: ['冷峻', '巨物', '纪实', '宏大', '时间'],
@@ -292,7 +297,8 @@ export const DIRECTORS: Director[] = [
     id: 'chow',
     name: '周星驰',
     enName: 'Stephen Chow',
-    avatar: '🎭',
+    avatar:
+      '<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M24 8l4 8h8l-6 6 2 10-8-4-8 4 2-10-6-6h8z" fill="currentColor" opacity=".25" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="24" cy="24" r="4" fill="currentColor"/><path d="M14 38l4-4M34 38l-4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".5"/></svg>',
     tagline: '无厘头、港风、丧中带燃',
     styleDesc: '夸张漫画感，港式霓虹，无厘头反转中的热血',
     keywords: ['夸张', '无厘头', '港风', '漫画', '反转'],
@@ -338,7 +344,8 @@ export const DIRECTORS: Director[] = [
     id: 'jia',
     name: '贾樟柯',
     enName: 'Jia Zhangke',
-    avatar: '🏚️',
+    avatar:
+      '<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="8" y="24" width="12" height="16" fill="currentColor" opacity=".3"/><rect x="22" y="16" width="10" height="24" fill="currentColor" opacity=".5"/><rect x="34" y="28" width="6" height="12" fill="currentColor" opacity=".2"/><path d="M6 40h36" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M26 20h2M26 24h2" stroke="currentColor" stroke-width="1" opacity=".6" stroke-linecap="round"/></svg>',
     tagline: '土黄、纪实、变迁、小城',
     styleDesc: '去饱和大地色，长镜头固定机位，拆迁工地与过渡空间，纪实质感',
     keywords: ['写实', '怀旧', '变迁', '小城', '底层'],
@@ -384,7 +391,8 @@ export const DIRECTORS: Director[] = [
     id: 'lee',
     name: '李安',
     enName: 'Ang Lee',
-    avatar: '🎋',
+    avatar:
+      '<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 40c4-8 12-20 16-32 4 12 12 24 16 32" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".6"/><path d="M12 40c3-5 8-13 12-22 4 9 9 17 12 22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".4"/><line x1="24" y1="8" x2="24" y2="40" stroke="currentColor" stroke-width="1" opacity=".3"/></svg>',
     tagline: '东方、克制、画意、哲思',
     styleDesc: '古典平衡构图，水墨意境，翠绿与金色交织，情感克制的东方美学',
     keywords: ['东方', '克制', '优雅', '哲思', '画意'],
@@ -430,7 +438,8 @@ export const DIRECTORS: Director[] = [
     id: 'kurosawa',
     name: '黑泽明',
     enName: 'Akira Kurosawa',
-    avatar: '⚔️',
+    avatar:
+      '<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M24 8a16 16 0 0 1 14 8l-28 0a16 16 0 0 1 14-8z" fill="currentColor" opacity=".3"/><path d="M10 16l28 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M14 22l2 14M20 22l2 18M28 22l-2 18M34 22l-2 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".5"/><circle cx="24" cy="12" r="3" fill="currentColor"/></svg>',
     tagline: '朱红、靛蓝、史诗、悲壮',
     styleDesc: '大胆原色对比，动态群体几何排列，天气作为角色，史诗级人性戏剧',
     keywords: ['史诗', '悲壮', '英雄', '宿命', '人性'],
@@ -476,7 +485,8 @@ export const DIRECTORS: Director[] = [
     id: 'coppola',
     name: '索菲亚·科波拉',
     enName: 'Sofia Coppola',
-    avatar: '🌸',
+    avatar:
+      '<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="6" y="6" width="36" height="36" rx="2" fill="currentColor" opacity=".08"/><ellipse cx="24" cy="24" rx="8" ry="10" fill="currentColor" opacity=".2"/><ellipse cx="24" cy="24" rx="4" ry="5" fill="currentColor" opacity=".4"/><circle cx="24" cy="24" r="1.5" fill="currentColor"/></svg>',
     tagline: '柔粉、淡蓝、疏离、梦幻',
     styleDesc: '低饱和粉彩，大量留白，柔和窗光，孤立身影在空旷空间中的亲密孤独',
     keywords: ['梦幻', '忧郁', '疏离', '亲密', '漂泊'],
@@ -523,7 +533,8 @@ export const DIRECTORS: Director[] = [
     id: 'chazelle',
     name: '查泽雷',
     enName: 'Damien Chazelle',
-    avatar: '🎺',
+    avatar:
+      '<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M24 6L8 42h32z" fill="currentColor" opacity=".15"/><path d="M24 6l-10 28h20z" fill="currentColor" opacity=".3"/><circle cx="24" cy="14" r="4" fill="currentColor"/><path d="M20 30l8-6M28 30l-8-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".6"/></svg>',
     tagline: '梦幻紫、日落橙、梦想、爵士',
     styleDesc: '高饱和原色，动态运镜，戏剧性舞台光，歌舞片梦幻感与苦甜交织',
     keywords: ['梦想', '激情', '苦甜', '野心', '浪漫'],
@@ -569,7 +580,8 @@ export const DIRECTORS: Director[] = [
     id: 'tarantino',
     name: '昆汀',
     enName: 'Quentin Tarantino',
-    avatar: '🔫',
+    avatar:
+      '<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="24" cy="24" r="14" stroke="currentColor" stroke-width="2"/><circle cx="24" cy="24" r="6" stroke="currentColor" stroke-width="1.5"/><circle cx="24" cy="24" r="2" fill="currentColor"/><rect x="10" y="10" width="4" height="4" fill="currentColor" opacity=".6"/><rect x="34" y="10" width="4" height="4" fill="currentColor" opacity=".6"/><rect x="10" y="34" width="4" height="4" fill="currentColor" opacity=".6"/><rect x="34" y="34" width="4" height="4" fill="currentColor" opacity=".6"/><path d="M14 18l4 12M20 16l2 16M28 16l-2 16M34 18l-4 12" stroke="currentColor" stroke-width="1" opacity=".4" stroke-linecap="round"/></svg>',
     tagline: '血红、暖黄、复古、黑色幽默',
     styleDesc: '高饱和复古色调，低角度动态构图，grindhouse质感，风格化暴力美学',
     keywords: ['酷', '暴力', '复古', '黑色幽默', '致敬'],
@@ -615,16 +627,16 @@ export const DIRECTORS: Director[] = [
 
 // ========== 10 个心情标签 ==========
 export const MOOD_TAGS = [
-  { id: 'emo', label: 'emo', emoji: '🌧️' },
-  { id: 'rich', label: '暴富', emoji: '💰' },
-  { id: 'homesick', label: '想家', emoji: '🏠' },
-  { id: 'ex', label: '前任', emoji: '💔' },
-  { id: 'free', label: '自由', emoji: '🕊️' },
-  { id: 'overtime', label: '加班', emoji: '🌙' },
-  { id: 'lonely', label: '孤独', emoji: '🌫️' },
-  { id: 'healing', label: '治愈', emoji: '🌿' },
-  { id: 'relief', label: '释然', emoji: '☀️' },
-  { id: 'crush', label: '暗恋', emoji: '💌' },
+  { id: 'emo', label: 'emo', icon: 'cloud' },
+  { id: 'rich', label: '暴富', icon: 'disc' },
+  { id: 'homesick', label: '想家', icon: 'home' },
+  { id: 'ex', label: '前任', icon: 'heart' },
+  { id: 'free', label: '自由', icon: 'feather' },
+  { id: 'overtime', label: '加班', icon: 'moon' },
+  { id: 'lonely', label: '孤独', icon: 'cloud' },
+  { id: 'healing', label: '治愈', icon: 'feather' },
+  { id: 'relief', label: '释然', icon: 'sun' },
+  { id: 'crush', label: '暗恋', icon: 'mail' },
 ] as MoodTag[];
 
 // ========== 4 种海报版式 + 社交平台尺寸预设 ==========
@@ -646,7 +658,7 @@ export const POSTER_TEMPLATES: PosterTemplate[] = [
   {
     id: 'tpl-cinema-01',
     name: '深夜独行',
-    emoji: '🌃',
+    icon: 'moon',
     text: '深夜加班后走出写字楼，抬头看见月亮',
     directorId: 'wkw',
     format: 'vertical',
@@ -657,7 +669,7 @@ export const POSTER_TEMPLATES: PosterTemplate[] = [
   {
     id: 'tpl-cinema-02',
     name: '雨中漫步',
-    emoji: '🌧️',
+    icon: 'cloud',
     text: '在异乡的公交车上，窗外下着雨，耳机里是老歌',
     directorId: 'wkw',
     format: 'vertical',
@@ -668,7 +680,7 @@ export const POSTER_TEMPLATES: PosterTemplate[] = [
   {
     id: 'tpl-cinema-03',
     name: '夏日告别',
-    emoji: '🌅',
+    icon: 'sun',
     text: '毕业最后一晚的宿舍，空荡荡的床铺和关不掉的灯',
     directorId: 'miyazaki',
     format: 'vertical',
@@ -679,7 +691,7 @@ export const POSTER_TEMPLATES: PosterTemplate[] = [
   {
     id: 'tpl-cinema-04',
     name: '星际远航',
-    emoji: '🚀',
+    icon: 'zap',
     text: '在浩瀚星空中漂流，地球只是一颗蓝色的弹珠',
     directorId: 'nolan',
     format: 'horizontal',
@@ -689,7 +701,7 @@ export const POSTER_TEMPLATES: PosterTemplate[] = [
   {
     id: 'tpl-cinema-05',
     name: '暗夜追踪',
-    emoji: '🔦',
+    icon: 'search',
     text: '霓虹灯下的追逐，每一步都在与时间赛跑',
     directorId: 'nolan',
     format: 'vertical',
@@ -700,7 +712,7 @@ export const POSTER_TEMPLATES: PosterTemplate[] = [
   {
     id: 'tpl-emo-01',
     name: '未说出口的话',
-    emoji: '💬',
+    icon: 'chat',
     text: '和好朋友大吵一架后的后悔，想道歉又开不了口',
     directorId: 'koreeda',
     format: 'vertical',
@@ -711,7 +723,7 @@ export const POSTER_TEMPLATES: PosterTemplate[] = [
   {
     id: 'tpl-emo-02',
     name: '暗恋心事',
-    emoji: '💌',
+    icon: 'mail',
     text: '每次遇见你，心跳都会漏一拍，但假装若无其事',
     directorId: 'wkw',
     format: 'square',
@@ -722,7 +734,7 @@ export const POSTER_TEMPLATES: PosterTemplate[] = [
   {
     id: 'tpl-emo-03',
     name: '想家的夜',
-    emoji: '🏠',
+    icon: 'home',
     text: '电话那头妈妈说天冷加衣，这头我已泪流满面',
     directorId: 'miyazaki',
     format: 'vertical',
@@ -733,7 +745,7 @@ export const POSTER_TEMPLATES: PosterTemplate[] = [
   {
     id: 'tpl-emo-04',
     name: '释然时刻',
-    emoji: '☀️',
+    icon: 'sun',
     text: '终于放下了那段执念，阳光照进窗台，一切重新开始',
     directorId: 'chazelle',
     format: 'vertical',
@@ -744,7 +756,7 @@ export const POSTER_TEMPLATES: PosterTemplate[] = [
   {
     id: 'tpl-emo-05',
     name: '暴富梦',
-    emoji: '💰',
+    icon: 'disc',
     text: '梦想有一天不用看闹钟，阳光和自由都是我的',
     directorId: 'wes',
     format: 'square',
@@ -755,7 +767,7 @@ export const POSTER_TEMPLATES: PosterTemplate[] = [
   {
     id: 'tpl-emo-06',
     name: '自由飞翔',
-    emoji: '🕊️',
+    icon: 'feather',
     text: '站在山顶，风穿过指尖，全世界都在脚下',
     directorId: 'miyazaki',
     format: 'horizontal',
@@ -767,7 +779,7 @@ export const POSTER_TEMPLATES: PosterTemplate[] = [
   {
     id: 'tpl-fest-01',
     name: '新年愿望',
-    emoji: '🎆',
+    icon: 'sparkles',
     text: '新年的第一束烟花，许下关于你的愿望',
     directorId: 'chazelle',
     format: 'vertical',
@@ -777,7 +789,7 @@ export const POSTER_TEMPLATES: PosterTemplate[] = [
   {
     id: 'tpl-fest-02',
     name: '中秋月圆',
-    emoji: '🌕',
+    icon: 'moon',
     text: '月圆之夜，千里之外的你也在这片月光下吧',
     directorId: 'lee',
     format: 'square',
@@ -788,7 +800,7 @@ export const POSTER_TEMPLATES: PosterTemplate[] = [
   {
     id: 'tpl-fest-03',
     name: '圣诞夜',
-    emoji: '🎄',
+    icon: 'star',
     text: '街角的圣诞树亮了，一个人走过也觉得温暖',
     directorId: 'wes',
     format: 'vertical',
@@ -798,7 +810,7 @@ export const POSTER_TEMPLATES: PosterTemplate[] = [
   {
     id: 'tpl-fest-04',
     name: '毕业季',
-    emoji: '🎓',
+    icon: 'award',
     text: '散伙饭上没人哭，出了门才发现真的散了',
     directorId: 'koreeda',
     format: 'vertical',
@@ -810,7 +822,7 @@ export const POSTER_TEMPLATES: PosterTemplate[] = [
   {
     id: 'tpl-soc-01',
     name: '微博金句',
-    emoji: '📱',
+    icon: 'phone',
     text: '生活不会因为你软弱而对你温柔',
     directorId: 'wkw',
     format: 'weibo',
@@ -820,7 +832,7 @@ export const POSTER_TEMPLATES: PosterTemplate[] = [
   {
     id: 'tpl-soc-02',
     name: '小红书种草',
-    emoji: '📕',
+    icon: 'book',
     text: '周末去了一家藏在巷子里的咖啡馆，治愈了一整周',
     directorId: 'wes',
     format: 'xhs',
@@ -830,7 +842,7 @@ export const POSTER_TEMPLATES: PosterTemplate[] = [
   {
     id: 'tpl-soc-03',
     name: '公众号封面',
-    emoji: '📝',
+    icon: 'edit',
     text: '当 AI 遇见电影：一场关于情绪的视觉实验',
     directorId: 'nolan',
     format: 'wechat',
@@ -840,7 +852,7 @@ export const POSTER_TEMPLATES: PosterTemplate[] = [
   {
     id: 'tpl-soc-04',
     name: '抖音封面',
-    emoji: '🎬',
+    icon: 'clapper',
     text: '这条视频太治愈了，看完整个人都好了',
     directorId: 'miyazaki',
     format: 'douyin',
@@ -851,7 +863,7 @@ export const POSTER_TEMPLATES: PosterTemplate[] = [
   {
     id: 'tpl-soc-05',
     name: '九宫格日记',
-    emoji: '🖼️',
+    icon: 'grid',
     text: '这一周的九个瞬间，记录生活的小确幸',
     directorId: 'wes',
     format: 'grid9',
@@ -862,7 +874,7 @@ export const POSTER_TEMPLATES: PosterTemplate[] = [
   {
     id: 'tpl-heal-01',
     name: '晨光微暖',
-    emoji: '🌅',
+    icon: 'sun',
     text: '早起看到的第一个日出，感觉一切都会好起来',
     directorId: 'miyazaki',
     format: 'vertical',
@@ -873,7 +885,7 @@ export const POSTER_TEMPLATES: PosterTemplate[] = [
   {
     id: 'tpl-heal-02',
     name: '雨后初晴',
-    emoji: '🌈',
+    icon: 'cloud',
     text: '暴雨后的彩虹，是大自然给勇敢者的奖赏',
     directorId: 'chazelle',
     format: 'horizontal',
@@ -884,12 +896,12 @@ export const POSTER_TEMPLATES: PosterTemplate[] = [
 ];
 
 // 模板分类标签
-export const TEMPLATE_CATEGORIES: { id: string; label: string; emoji: string }[] = [
-  { id: 'all', label: '全部', emoji: '✨' },
-  { id: 'cinema', label: '电影场景', emoji: '🎬' },
-  { id: 'emotion', label: '情绪表达', emoji: '💭' },
-  { id: 'festival', label: '节日场景', emoji: '🎉' },
-  { id: 'social', label: '社交场景', emoji: '📱' },
+export const TEMPLATE_CATEGORIES: { id: string; label: string; icon: string }[] = [
+  { id: 'all', label: '全部', icon: 'sparkles' },
+  { id: 'cinema', label: '电影场景', icon: 'clapper' },
+  { id: 'emotion', label: '情绪表达', icon: 'chat' },
+  { id: 'festival', label: '节日场景', icon: 'gift' },
+  { id: 'social', label: '社交场景', icon: 'phone' },
 ];
 
 // ========== 生成中进度文案序列 ==========

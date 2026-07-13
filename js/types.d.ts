@@ -67,6 +67,14 @@ export interface EmotionAnalysis {
   aiQuote: string;
 }
 
+export interface ImageEmotionAnalysis {
+  primaryEmotion?: string;
+  emotion?: string;
+  keywords?: string[];
+  hint?: string;
+  description?: string;
+}
+
 export interface DirectorRecommendation {
   directorId: string;
   reason: string;
@@ -207,7 +215,7 @@ export interface ModelCost {
 export interface MoodTag {
   id: string;
   label: string;
-  emoji: string;
+  icon: string;
   emotion: string;
 }
 
@@ -306,7 +314,7 @@ export type TemplateCategory = 'cinema' | 'emotion' | 'festival' | 'social' | 'c
 export interface PosterTemplate {
   id: string;
   name: string;
-  emoji: string;
+  icon: string;
   text: string;
   directorId: string;
   format: PosterFormat;

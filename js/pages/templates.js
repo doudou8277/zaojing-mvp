@@ -78,7 +78,7 @@ export function saveAsTemplate(customName) {
   const template = {
     id: 'user-tpl-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
     name: name,
-    emoji: '🔖',
+    icon: 'bookmark',
     text: state.inputText.trim(),
     directorId: directorId,
     format: state.posterFormat || 'vertical',
@@ -135,7 +135,7 @@ function renderCategoryTabs() {
     const btn = document.createElement('button');
     btn.className = 'template-cat-btn' + (_currentCategory === cat.id ? ' active' : '');
     btn.dataset.category = cat.id;
-    btn.innerHTML = `<span class="cat-emoji">${cat.emoji}</span> ${cat.label}`;
+    btn.innerHTML = `<svg class="ico"><use href="#i-${cat.icon}"/></svg> ${cat.label}`;
     btn.addEventListener('click', () => {
       _currentCategory = cat.id;
       renderCategoryTabs();
@@ -174,7 +174,7 @@ function renderTemplateGrid() {
     card.className = 'template-card' + (template.source === 'user' ? ' user-template' : '');
     card.innerHTML = `
       <div class="template-card-header">
-        <span class="template-emoji">${template.emoji}</span>
+        <span class="template-emoji"><svg class="ico"><use href="#i-${template.icon}"/></svg></span>
         <span class="template-name">${escapeHtml(template.name)}</span>
         ${template.source === 'user' ? '<span class="template-badge">我的</span>' : ''}
       </div>

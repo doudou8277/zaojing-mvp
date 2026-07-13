@@ -87,7 +87,7 @@ async function apiFetch<T = any>(url: string, options?: ApiFetchOptions): Promis
         throw new Error('用户取消了请求');
       }
       logger.warn('[ai-client] 请求超时');
-      throw new Error('请求超时，请稍后重试');
+      throw new Error('AI 生成需要较长时间，请稍后重试（当前服务器繁忙）');
     }
     logger.warn('[ai-client] 网络连接失败:', err instanceof Error ? err.message : String(err));
     throw new Error('网络连接失败，请检查网络后重试');

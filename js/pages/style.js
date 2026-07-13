@@ -182,7 +182,7 @@ function renderSavedStyles() {
     const el = document.createElement('div');
     el.className = 'saved-style-item';
     el.innerHTML = `
-      <div class="saved-style-avatar">${escapeHtml(s.avatar || '🎨')}</div>
+      <div class="saved-style-avatar"><svg class="ico"><use href="#i-${s.icon || 'palette'}"/></svg></div>
       <div class="saved-style-info">
         <div class="saved-style-name">${escapeHtml(s.name)}</div>
         <div class="saved-style-desc">${escapeHtml(s.styleDesc || '')}</div>
@@ -491,7 +491,7 @@ function saveAndUseCustomStyle() {
 
   const style = { ...state.currentCustomStyle }; // 浅拷贝避免引用问题
   style.id = 'custom_' + Date.now();
-  style.avatar = style.avatar || '🎨';
+  style.icon = style.icon || 'palette';
   style.source = 'custom';
   style.available = true;
   style.fontFamily = style.fontFamily || '"Noto Serif SC", serif';

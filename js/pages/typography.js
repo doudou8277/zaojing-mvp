@@ -3,7 +3,7 @@
  * 提供字体选择、自定义字体上传、排版参数调整
  */
 
-import { $, toast, escapeHtml, logger } from '../shared.js';
+import { $, toast, escapeHtml, logger, closeModal } from '../shared.js';
 import {
   PRESET_FONTS,
   FONT_WEIGHTS,

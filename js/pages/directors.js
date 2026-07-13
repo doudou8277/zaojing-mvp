@@ -3,10 +3,31 @@
 import { $, state, toast, escapeHtml } from '../shared.js';
 import { DIRECTORS, EMOTION_SPECTRUM, EMOTION_KEYWORDS, getEmotionFromMood, getStyleDNAValues } from '../data.js';
 
-// ========== DNA 雷达图 ==========
+// ========== DNA 风格可视化（胶片齿孔版） ==========
 
-// 绘制DNA雷达图到 canvas（新版，8维度雷达图）
-export function drawDNARadar(canvas, styleDNA, label) {
+// 十六进制颜色转 RGB
+function hexToRgb(hex) {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? [parseInt(result[1], 16), parseInt(result[2], 16), parseInt(result[3], 16)] : [127, 196, 171]; // 默认薄荷绿
+}
+
+// 绘制一个圆角矩形齿孔
+function drawPerforation(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+// 绘制DNA风格图（电影胶片齿孔圆环）
+export function drawDNARadar(canvas, styleDNA, primaryColor = '#7fc4ab') {
   if (!canvas || !styleDNA) return;
   const ctx = canvas.getContext('2d');
   const w = canvas.width;
@@ -14,7 +35,7 @@ export function drawDNARadar(canvas, styleDNA, label) {
   const cx = w / 2;
   const cy = h / 2;
   const showLabels = w >= 100;
-  const radius = Math.min(w, h) / 2 - (showLabels ? 20 : 8);
+  const outerRadius = Math.min(w, h) / 2 - (showLabels ? 22 : 8);
 
   ctx.clearRect(0, 0, w, h);
 
@@ -22,72 +43,173 @@ export function drawDNARadar(canvas, styleDNA, label) {
   const dimensions = ['色温', '饱和', '对比', '构图', '光影', '尺度', '节奏', '质感'];
   const values = getStyleDNAValues(styleDNA);
   const n = dimensions.length;
+  const colorRGB = hexToRgb(primaryColor);
+  const [r, g, b] = colorRGB;
 
-  // 绘制网格（3层）
-  for (let layer = 1; layer <= 3; layer++) {
-    const r = (radius * layer) / 3;
+  const filmWidth = outerRadius * 0.28; // 胶片宽度
+  const innerRadius = outerRadius - filmWidth;
+  const perfCount = 5; // 每段5个齿孔
+  const perfSize = filmWidth * 0.45; // 齿孔大小
+  const segmentAngle = (Math.PI * 2) / n;
+  const gapAngle = segmentAngle * 0.15; // 段之间间隙
+
+  // 1. 外层柔光
+  const outerGlow = ctx.createRadialGradient(cx, cy, outerRadius * 0.3, cx, cy, outerRadius * 1.2);
+  outerGlow.addColorStop(0, `rgba(${r},${g},${b},0.08)`);
+  outerGlow.addColorStop(0.5, `rgba(${r},${g},${b},0.03)`);
+  outerGlow.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = outerGlow;
+  ctx.beginPath();
+  ctx.arc(cx, cy, outerRadius * 1.2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 2. 绘制胶片基底（深色圆环）
+  ctx.beginPath();
+  ctx.arc(cx, cy, outerRadius, 0, Math.PI * 2);
+  ctx.arc(cx, cy, innerRadius, 0, Math.PI * 2, true);
+  const filmBase = ctx.createRadialGradient(cx, cy, innerRadius, cx, cy, outerRadius);
+  filmBase.addColorStop(0, '#1a1815');
+  filmBase.addColorStop(0.5, '#12110f');
+  filmBase.addColorStop(1, '#0d0c0a');
+  ctx.fillStyle = filmBase;
+  ctx.fill();
+
+  // 胶片内外边缘
+  ctx.strokeStyle = 'rgba(245,240,232,0.12)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(cx, cy, outerRadius, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(cx, cy, innerRadius, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // 3. 中心胶片卷轴
+  const reelRadius = innerRadius * 0.7;
+  const reelInnerRadius = reelRadius * 0.35;
+
+  // 卷轴底座
+  const reelGlow = ctx.createRadialGradient(cx, cy, 0, cx, cy, reelRadius);
+  reelGlow.addColorStop(0, `rgba(${r},${g},${b},0.15)`);
+  reelGlow.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = reelGlow;
+  ctx.beginPath();
+  ctx.arc(cx, cy, reelRadius, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 卷轴外环
+  ctx.beginPath();
+  ctx.arc(cx, cy, reelRadius, 0, Math.PI * 2);
+  ctx.strokeStyle = `rgba(${r},${g},${b},0.3)`;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // 卷轴内环
+  ctx.beginPath();
+  ctx.arc(cx, cy, reelInnerRadius, 0, Math.PI * 2);
+  ctx.fillStyle = '#0d0c0a';
+  ctx.fill();
+  ctx.strokeStyle = `rgba(${r},${g},${b},0.4)`;
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // 卷轴辐条（4个）
+  for (let i = 0; i < 4; i++) {
+    const spokeAngle = (Math.PI * 2 * i) / 4;
     ctx.beginPath();
-    for (let i = 0; i < n; i++) {
-      const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
-      const x = cx + Math.cos(angle) * r;
-      const y = cy + Math.sin(angle) * r;
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-    }
-    ctx.closePath();
-    ctx.strokeStyle = `rgba(245,240,232,${0.05 + layer * 0.03})`;
+    ctx.moveTo(cx + Math.cos(spokeAngle) * reelInnerRadius, cy + Math.sin(spokeAngle) * reelInnerRadius);
+    ctx.lineTo(cx + Math.cos(spokeAngle) * reelRadius * 0.9, cy + Math.sin(spokeAngle) * reelRadius * 0.9);
+    ctx.strokeStyle = `rgba(${r},${g},${b},0.2)`;
     ctx.lineWidth = 1;
     ctx.stroke();
   }
 
-  // 绘制轴线
-  for (let i = 0; i < n; i++) {
-    const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
-    ctx.beginPath();
-    ctx.moveTo(cx, cy);
-    ctx.lineTo(cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius);
-    ctx.strokeStyle = 'rgba(245,240,232,0.08)';
-    ctx.stroke();
-  }
-
-  // 绘制数据多边形
+  // 中心轴
   ctx.beginPath();
-  for (let i = 0; i < n; i++) {
-    const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
-    const r = radius * values[i];
-    const x = cx + Math.cos(angle) * r;
-    const y = cy + Math.sin(angle) * r;
-    if (i === 0) ctx.moveTo(x, y);
-    else ctx.lineTo(x, y);
-  }
-  ctx.closePath();
-  ctx.fillStyle = 'rgba(127,196,171,0.15)';
+  ctx.arc(cx, cy, 2.5, 0, Math.PI * 2);
+  ctx.fillStyle = `rgba(${r},${g},${b},0.7)`;
   ctx.fill();
-  ctx.strokeStyle = 'rgba(127,196,171,0.6)';
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
 
-  // 绘制顶点
+  // 4. 绘制每段胶片的齿孔
   for (let i = 0; i < n; i++) {
-    const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
-    const r = radius * values[i];
-    const x = cx + Math.cos(angle) * r;
-    const y = cy + Math.sin(angle) * r;
+    const centerAngle = (Math.PI * 2 * i) / n - Math.PI / 2;
+    const val = Math.max(0.2, values[i]);
+    const litCount = Math.round(val * perfCount); // 点亮的齿孔数
+    const segmentStart = centerAngle - segmentAngle / 2 + gapAngle / 2;
+    const segmentEnd = centerAngle + segmentAngle / 2 - gapAngle / 2;
+
+    // 段分隔线
     ctx.beginPath();
-    ctx.arc(x, y, 2, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(127,196,171,0.9)';
-    ctx.fill();
+    ctx.moveTo(cx + Math.cos(segmentStart) * innerRadius, cy + Math.sin(segmentStart) * innerRadius);
+    ctx.lineTo(cx + Math.cos(segmentStart) * outerRadius, cy + Math.sin(segmentStart) * outerRadius);
+    ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // 绘制这一段的齿孔（两层：外层和内层齿孔）
+    for (let ring = 0; ring < 2; ring++) {
+      const ringRadius = ring === 0 ? innerRadius + filmWidth * 0.25 : outerRadius - filmWidth * 0.25;
+
+      for (let p = 0; p < perfCount; p++) {
+        const angleOffset = (segmentEnd - segmentStart) * ((p + 0.5) / perfCount);
+        const perfAngle = segmentStart + angleOffset;
+        const isLit = p < litCount;
+
+        // 齿孔位置
+        const px = cx + Math.cos(perfAngle) * ringRadius;
+        const py = cy + Math.sin(perfAngle) * ringRadius;
+
+        ctx.save();
+        ctx.translate(px, py);
+        ctx.rotate(perfAngle + Math.PI / 2);
+
+        if (isLit) {
+          // 点亮的齿孔 - 带发光和渐变
+          ctx.shadowColor = `rgba(${r},${g},${b},0.8)`;
+          ctx.shadowBlur = 8;
+
+          const perfGrad = ctx.createLinearGradient(0, -perfSize / 2, 0, perfSize / 2);
+          perfGrad.addColorStop(0, `rgba(${r},${g},${b},1)`);
+          perfGrad.addColorStop(
+            0.5,
+            `rgba(${Math.min(255, r + 40)},${Math.min(255, g + 40)},${Math.min(255, b + 40)},0.95)`
+          );
+          perfGrad.addColorStop(1, `rgba(${r},${g},${b},0.85)`);
+
+          drawPerforation(ctx, -perfSize / 2, -perfSize / 2, perfSize, perfSize, perfSize * 0.25);
+          ctx.fillStyle = perfGrad;
+          ctx.fill();
+
+          // 齿孔高光
+          ctx.shadowBlur = 0;
+          drawPerforation(ctx, -perfSize / 2 + 1, -perfSize / 2 + 1, perfSize * 0.4, perfSize * 0.3, perfSize * 0.15);
+          ctx.fillStyle = 'rgba(255,255,255,0.3)';
+          ctx.fill();
+        } else {
+          // 未点亮的齿孔 - 深色镂空
+          ctx.shadowBlur = 0;
+          drawPerforation(ctx, -perfSize / 2, -perfSize / 2, perfSize, perfSize, perfSize * 0.25);
+          ctx.fillStyle = 'rgba(0,0,0,0.6)';
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(245,240,232,0.08)';
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+
+        ctx.restore();
+      }
+    }
   }
 
-  // 绘制轴标签（仅大画布显示）
+  // 5. 绘制轴标签（仅大画布显示）
   if (showLabels) {
-    ctx.font = '9px "Noto Sans SC", sans-serif';
+    ctx.font = '7px "Noto Sans SC", sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = 'rgba(245,240,232,0.5)';
+    ctx.fillStyle = 'rgba(245,240,232,0.45)';
     for (let i = 0; i < n; i++) {
       const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
-      const labelR = radius + 12;
+      const labelR = outerRadius + 12;
       const x = cx + Math.cos(angle) * labelR;
       const y = cy + Math.sin(angle) * labelR;
       ctx.fillText(dimensions[i], x, y);
@@ -163,6 +285,14 @@ export function initDirectorsPage(callbacks = {}) {
       ? `<div class="ai-rec-badge" title="${escapeHtml(aiRec.reason || '')}">AI推荐 ${escapeHtml(String(aiRec.matchScore || 0))}%</div>`
       : '';
 
+    const keywordTags =
+      director.keywords && director.keywords.length > 0
+        ? `<div class="keywords">${director.keywords
+            .slice(0, 3)
+            .map((k) => `<span class="keyword-tag">${escapeHtml(k)}</span>`)
+            .join('')}</div>`
+        : '';
+
     card.innerHTML = `
       <div class="check-mark">✓</div>
       ${aiBadge}
@@ -170,8 +300,9 @@ export function initDirectorsPage(callbacks = {}) {
       <div class="name">${director.name}</div>
       <div class="en-name">${director.enName}</div>
       <div class="tagline">${director.tagline}</div>
+      ${keywordTags}
       ${aiRec ? `<div class="ai-rec-reason">${escapeHtml(aiRec.reason || '')}</div>` : ''}
-      <canvas class="dna-radar" width="80" height="80" style="display:none"></canvas>
+      <canvas class="dna-radar" width="60" height="60" style="display:none"></canvas>
     `;
 
     card.addEventListener('click', () => {
@@ -188,7 +319,7 @@ export function initDirectorsPage(callbacks = {}) {
     if (director && director.styleDNA) {
       const canvas = card.querySelector('canvas.dna-radar');
       if (canvas) {
-        drawDNARadar(canvas, director.styleDNA);
+        drawDNARadar(canvas, director.styleDNA, director.colors?.primary);
         canvas.style.display = 'block';
       }
     }
@@ -345,9 +476,9 @@ export function renderEmotionSpectrum() {
 
 // ========== 情绪光谱交互 ==========
 // 模块级变量，避免重复绑定
-let _spectrumDragState = { isDragging: false, track: null, slider: null };
+const _spectrumDragState = { isDragging: false, track: null, slider: null };
 let _spectrumHandlersBound = false;
-let _globalKeyHandler = null;
+const _globalKeyHandler = null;
 
 export function _spectrumMouseMove(e) {
   if (!_spectrumDragState.isDragging) return;

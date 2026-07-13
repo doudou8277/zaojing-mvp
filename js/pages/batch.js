@@ -7,6 +7,7 @@ import { DIRECTORS, POSTER_FORMATS } from '../data.js';
 import * as AIClient from '../ai-client';
 import { createModuleBoundary } from '../utils/error-boundary.js';
 import { BatchQueue, parseBatchInput, parseCSV } from '../utils/batch-queue.js';
+import { safeRevokeUrl } from '../utils/sanitize.js';
 
 const posterBoundary = createModuleBoundary('BatchPoster');
 
@@ -27,6 +28,16 @@ let _batchQueue = null;
 let _batchResults = [];
 let _batchDirectorId = 'miyazaki';
 let _batchFormat = 'vertical';
+
+// 释放所有批量结果的 Blob URL，防止内存泄漏
+function cleanupBatchResults() {
+  _batchResults.forEach((item) => {
+    if (item && item.result && item.result.dataUrl) {
+      safeRevokeUrl(item.result.dataUrl);
+    }
+  });
+  _batchResults = [];
+}
 
 // ========== 打开 / 关闭弹窗 ==========
 export function openBatchModal() {
@@ -52,7 +63,7 @@ export function closeBatchModal() {
 }
 
 function resetBatchUI() {
-  _batchResults = [];
+  cleanupBatchResults();
   _batchQueue = null;
   const progressSection = $('batch-progress-section');
   const resultsSection = $('batch-results-section');
@@ -182,7 +193,8 @@ export async function startBatchGeneration() {
   if (progressSection) progressSection.style.display = 'block';
   if (startBtn) startBtn.disabled = true;
 
-  _batchResults = [];
+  // 清理旧结果的 Blob URL，防止内存泄漏
+  cleanupBatchResults();
 
   // 创建任务队列
   _batchQueue = new BatchQueue({
@@ -287,7 +299,7 @@ function renderBatchResults() {
         <span class="batch-result-title">${escapeHtml(result.title || task.text.substring(0, 20))}</span>
         <span class="batch-result-meta">${escapeHtml(directorName)}</span>
       </div>
-      <button class="btn btn-ghost btn-sm batch-download-btn" data-index="${index}">⬇ 下载</button>
+      <button class="btn btn-ghost btn-sm batch-download-btn" data-index="${index}"><svg class="ico"><use href="#i-download"/></svg> 下载</button>
     `;
     const downloadBtn = card.querySelector('.batch-download-btn');
     downloadBtn.addEventListener('click', () => downloadBatchPoster(index));

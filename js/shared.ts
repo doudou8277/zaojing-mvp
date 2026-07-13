@@ -8,6 +8,7 @@ import type {
   HistoryEntry,
   WallItem,
   EmotionAnalysis,
+  ImageEmotionAnalysis,
   HealthStatus,
   AIEngine,
   PosterFormat,
@@ -54,7 +55,7 @@ interface AppInitialState {
   useAI: boolean;
   aiHealthStatus: HealthStatus | null;
   emotionAnalysis: EmotionAnalysis | null;
-  imageEmotionAnalysis: boolean | null;
+  imageEmotionAnalysis: ImageEmotionAnalysis | null;
   styleSource: 'preset' | 'custom' | 'movie' | 'blend';
   currentCustomStyle: CustomStyle | null;
   activeCustomStyleId: string | null;
@@ -106,6 +107,7 @@ function navigate(pageId: string): void {
   window.scrollTo(0, 0);
   history.replaceState(null, '', `#${pageId}`);
   updateFlowIndicator(pageId);
+  setActiveNav(pageId);
 }
 
 // 更新流程步骤指示器
@@ -408,4 +410,176 @@ export {
   openResultToolsModal,
   switchResultToolsTab,
   ALL_MODAL_IDS,
+  confirmDialog,
+  promptDialog,
+  setActiveNav,
 };
+
+// ========== 统一对话框 API（替代原生 confirm/prompt/alert） ==========
+
+interface ConfirmOptions {
+  title?: string;
+  okText?: string;
+  cancelText?: string;
+  danger?: boolean;
+}
+
+interface PromptOptions extends ConfirmOptions {
+  defaultValue?: string;
+  placeholder?: string;
+}
+
+/**
+ * 统一确认对话框，替代 window.confirm
+ * @returns Promise<boolean> 用户点击确定返回 true，取消返回 false
+ */
+function confirmDialog(message: string, options: ConfirmOptions = {}): Promise<boolean> {
+  const { title = '确认操作', okText = '确定', cancelText = '取消', danger = false } = options;
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.className = 'confirm-dialog-overlay';
+    overlay.innerHTML = `
+      <div class="confirm-dialog" role="dialog" aria-modal="true">
+        <div class="confirm-dialog-title">${escapeHtml(title)}</div>
+        <div class="confirm-dialog-msg">${escapeHtml(message)}</div>
+        <div class="confirm-dialog-actions">
+          <button class="btn btn-ghost btn-cancel">${escapeHtml(cancelText)}</button>
+          <button class="btn ${danger ? 'btn-danger' : 'btn-primary'} btn-ok">${escapeHtml(okText)}</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    const cleanup = (result: boolean) => {
+      overlay.remove();
+      document.removeEventListener('keydown', keyHandler);
+      resolve(result);
+    };
+
+    const keyHandler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') cleanup(false);
+      if (e.key === 'Enter') cleanup(true);
+    };
+    document.addEventListener('keydown', keyHandler);
+
+    overlay.querySelector('.btn-cancel')?.addEventListener('click', () => cleanup(false));
+    overlay.querySelector('.btn-ok')?.addEventListener('click', () => cleanup(true));
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) cleanup(false);
+    });
+
+    // 聚焦确定按钮
+    setTimeout(() => {
+      (overlay.querySelector('.btn-ok') as HTMLElement)?.focus();
+    }, 50);
+  });
+}
+
+/**
+ * 统一输入对话框，替代 window.prompt
+ * @returns Promise<string | null> 用户输入内容，取消返回 null
+ */
+function promptDialog(message: string, options: PromptOptions = {}): Promise<string | null> {
+  const { title = '请输入', okText = '确定', cancelText = '取消', defaultValue = '', placeholder = '' } = options;
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.className = 'confirm-dialog-overlay';
+    overlay.innerHTML = `
+      <div class="confirm-dialog" role="dialog" aria-modal="true">
+        <div class="confirm-dialog-title">${escapeHtml(title)}</div>
+        <div class="confirm-dialog-msg">${escapeHtml(message)}</div>
+        <input type="text" class="confirm-dialog-input" value="${escapeHtml(defaultValue)}" placeholder="${escapeHtml(placeholder)}" />
+        <div class="confirm-dialog-actions">
+          <button class="btn btn-ghost btn-cancel">${escapeHtml(cancelText)}</button>
+          <button class="btn btn-primary btn-ok">${escapeHtml(okText)}</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    const input = overlay.querySelector<HTMLInputElement>('.confirm-dialog-input');
+    input?.select();
+
+    const cleanup = (result: string | null) => {
+      overlay.remove();
+      document.removeEventListener('keydown', keyHandler);
+      resolve(result);
+    };
+
+    const keyHandler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') cleanup(null);
+      if (e.key === 'Enter') cleanup(input?.value?.trim() || null);
+    };
+    document.addEventListener('keydown', keyHandler);
+
+    overlay.querySelector('.btn-cancel')?.addEventListener('click', () => cleanup(null));
+    overlay.querySelector('.btn-ok')?.addEventListener('click', () => cleanup(input?.value?.trim() || null));
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) cleanup(null);
+    });
+  });
+}
+
+/**
+ * 设置侧边导航和底部Tab的激活状态
+ */
+function setActiveNav(pageId: string): void {
+  // 核心创作流程映射到创作tab
+  const createPages = ['input', 'directors', 'generating', 'result'];
+  // 实验室页面
+  const labPages = ['ticket', 'cocreate', 'batch', 'hot-topics', 'template', 'movies'];
+  // 我的页面
+  const myPages = ['wall', 'ticket-wall'];
+
+  // 页面标题映射
+  const pageTitles: Record<string, string> = {
+    input: '创作',
+    directors: '选择导演',
+    generating: 'AI 创作中',
+    result: '海报作品',
+    wall: '我的电影墙',
+    ticket: '旅行票根',
+    cocreate: '共创海报',
+    movies: '热门电影',
+    batch: '批量生成',
+    'hot-topics': '热门话题',
+    template: '模板库',
+    'ticket-wall': '票根墙',
+  };
+
+  let activeSection: string;
+  if (createPages.includes(pageId)) {
+    activeSection = 'create';
+  } else if (labPages.includes(pageId)) {
+    activeSection = 'lab';
+  } else if (myPages.includes(pageId)) {
+    activeSection = 'my';
+  } else {
+    activeSection = 'create';
+  }
+
+  // 更新侧边栏
+  document.querySelectorAll('.sidebar-nav-item').forEach((item) => {
+    const navItem = item as HTMLElement;
+    navItem.classList.toggle('active', navItem.dataset.section === activeSection);
+  });
+
+  // 更新底部Tab
+  document.querySelectorAll('.bottom-tab-item').forEach((item) => {
+    const tabItem = item as HTMLElement;
+    tabItem.classList.toggle('active', tabItem.dataset.section === activeSection);
+  });
+
+  // 更新topbar标题
+  const topbarTitle = document.getElementById('topbar-title');
+  if (topbarTitle) {
+    topbarTitle.textContent = pageTitles[pageId] || '造境';
+  }
+
+  // 更新topbar返回按钮：仅在非input页显示
+  const backBtn = document.getElementById('btn-back');
+  if (backBtn) {
+    const showBack = pageId !== 'input';
+    backBtn.style.display = showBack ? '' : 'none';
+  }
+}

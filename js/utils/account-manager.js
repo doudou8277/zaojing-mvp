@@ -15,7 +15,7 @@ export const MATRIX_PLATFORMS = [
   {
     id: 'weibo',
     label: '微博',
-    icon: '📱',
+    icon: 'phone',
     color: '#e6162d',
     maxContentLength: 2000,
     supportsImage: true,
@@ -24,7 +24,7 @@ export const MATRIX_PLATFORMS = [
   {
     id: 'xhs',
     label: '小红书',
-    icon: '📕',
+    icon: 'book',
     color: '#ff2442',
     maxContentLength: 1000,
     supportsImage: true,
@@ -33,7 +33,7 @@ export const MATRIX_PLATFORMS = [
   {
     id: 'wechat',
     label: '微信公众号',
-    icon: '💬',
+    icon: 'chat',
     color: '#07c160',
     maxContentLength: 20000,
     supportsImage: true,
@@ -42,7 +42,7 @@ export const MATRIX_PLATFORMS = [
   {
     id: 'douyin',
     label: '抖音',
-    icon: '🎵',
+    icon: 'music',
     color: '#25f4ee',
     maxContentLength: 500,
     supportsImage: true,

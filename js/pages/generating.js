@@ -403,6 +403,32 @@ export async function startGeneration() {
     prepEntry.updateObservation(`会话初始化完成，海报引擎已就绪`);
     if (_cancelled) return;
 
+    // 如果 useAI 为 true 但健康检查尚未完成，主动等待一次
+    if (state.useAI && !state.aiHealthStatus) {
+      _setPhase('prepare', { subtext: '正在连接 AI 服务…' });
+      try {
+        const health = await AIClient.checkHealth();
+        if (health && health.status === 'ok') {
+          state.aiHealthStatus = health;
+          if (health.engines && !health.engines.seedream) {
+            logger.warn('[Generating] 后端已连接但 seedream 引擎不可用');
+            toast('警告：AI 引擎不可用，将降级 Canvas', 4000);
+            state.useAI = false;
+          }
+        } else {
+          state.aiHealthStatus = null;
+          logger.warn('[Generating] 健康检查未通过');
+          toast('警告：AI 服务未响应，将降级 Canvas', 4000);
+          state.useAI = false;
+        }
+      } catch (e) {
+        state.aiHealthStatus = null;
+        logger.warn('[Generating] 健康检查失败:', _getErrMsg(e));
+        toast('警告：AI 服务连接失败，将降级 Canvas', 4000);
+        state.useAI = false;
+      }
+    }
+
     // ---- 阶段 2: 分析/匹配（Canvas 模式可能用到情绪标签） ----
     _setPhase('analyze');
     const emotion = state.emotionAnalysis;
@@ -472,7 +498,9 @@ export async function startGeneration() {
 
             // 图片生成
             let aiImageUrl = null;
-            if (state.useAI && state.aiHealthStatus) {
+            // 用户选了 AI 模式且后端可用时调用 seedream
+            // aiHealthStatus 可能在上一轮被置 null（如健康检查超时），但用户显式选了 AI 就尝试调用
+            if (state.useAI) {
               if (!director) {
                 logger.warn(`[Generating] 未找到导演: ${directorId}，跳过该导演`);
                 return null;
@@ -497,6 +525,8 @@ export async function startGeneration() {
                   const msg = _getErrMsg(err);
                   logger.warn(`AI 生图失败 (${directorId})，降级为 Canvas:`, msg);
                   imgEntry.updateObservation(`AI 生图失败，降级为 Canvas 绘制：${_truncateObs(msg, 60)}`, true);
+                  // 明确提示用户，不再静默降级
+                  toast(`AI 生图失败，已降级 Canvas：${_truncateObs(msg, 40)}`, 4000);
                   return null;
                 }
               );

@@ -8,10 +8,10 @@ import { logger } from './logger.js';
 
 // ========== 平台元数据 ==========
 export const HOT_PLATFORMS = [
-  { id: 'weibo', label: '微博热搜', color: '#e6162d', icon: '📱' },
-  { id: 'douyin', label: '抖音热榜', color: '#25f4ee', icon: '🎵' },
-  { id: 'zhihu', label: '知乎热榜', color: '#0084ff', icon: '💡' },
-  { id: 'bilibili', label: 'B站热门', color: '#fb7299', icon: '📺' },
+  { id: 'weibo', label: '微博热搜', color: '#e6162d', icon: 'phone' },
+  { id: 'douyin', label: '抖音热榜', color: '#25f4ee', icon: 'music' },
+  { id: 'zhihu', label: '知乎热榜', color: '#0084ff', icon: 'bulb' },
+  { id: 'bilibili', label: 'B站热门', color: '#fb7299', icon: 'tv' },
 ];
 
 // ========== 本地降级数据 ==========

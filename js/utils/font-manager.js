@@ -112,7 +112,7 @@ const STORAGE_KEY = 'zaojing_typography_config';
 // 存储用户上传的字体（family name → dataUrl），持久化到 localStorage
 // 注意：大字体文件可能超出 localStorage 限制，仅保存元信息
 const CUSTOM_FONTS_KEY = 'zaojing_custom_fonts';
-let _loadedCustomFonts = new Map(); // family name → FontFace（运行时）
+const _loadedCustomFonts = new Map(); // family name → FontFace（运行时）
 
 /**
  * 加载排版配置

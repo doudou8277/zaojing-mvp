@@ -11,21 +11,21 @@ export const STORAGE_TOTAL_LIMIT = 5 * 1024 * 1024;
 
 // ========== API 超时（毫秒） ==========
 /** 健康检查超时 */
-export const API_TIMEOUT_HEALTH = 5000;
+export const API_TIMEOUT_HEALTH = 10000;
 /** 情绪分析/图片分析/风格融合超时 */
-export const API_TIMEOUT_ANALYZE = 15000;
-/** 图片生成/Agent 全链路超时 */
-export const API_TIMEOUT_GENERATE = 90000;
-/** SSE 流式生成超时 */
-export const API_TIMEOUT_SSE = 120000;
-/** 默认请求超时 */
-export const API_TIMEOUT_DEFAULT = 60000;
-/** 文案生成/风格解析/电影分析超时 */
-export const API_TIMEOUT_COPY = 30000;
+export const API_TIMEOUT_ANALYZE = 30000;
+/** 图片生成/Agent 全链路超时（从90秒增加到180秒，3分钟） */
+export const API_TIMEOUT_GENERATE = 180000;
+/** SSE 流式生成超时（从120秒增加到180秒） */
+export const API_TIMEOUT_SSE = 180000;
+/** 默认请求超时（从60秒增加到90秒） */
+export const API_TIMEOUT_DEFAULT = 90000;
+/** 文案生成/风格解析/电影分析超时（从30秒增加到60秒） */
+export const API_TIMEOUT_COPY = 60000;
 /** 保存海报超时 */
-export const API_TIMEOUT_SAVE = 10000;
+export const API_TIMEOUT_SAVE = 15000;
 /** Worker 渲染超时 */
-export const API_TIMEOUT_WORKER = 10000;
+export const API_TIMEOUT_WORKER = 15000;
 
 // ========== 限流配置 ==========
 /** 限流时间窗口（毫秒） */

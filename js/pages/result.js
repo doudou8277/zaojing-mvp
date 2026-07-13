@@ -217,10 +217,10 @@ function renderPlatformCopy(copy) {
   if (!el) return;
 
   const platforms = [
-    { id: 'weibo', label: '微博', icon: '📱', color: '#e6162d' },
-    { id: 'xhs', label: '小红书', icon: '📕', color: '#ff2442' },
-    { id: 'douyin', label: '抖音', icon: '🎵', color: '#25f4ee' },
-    { id: 'wechat', label: '微信', icon: '💬', color: '#07c160' },
+    { id: 'weibo', label: '微博', icon: 'phone', color: '#e6162d' },
+    { id: 'xhs', label: '小红书', icon: 'book', color: '#ff2442' },
+    { id: 'douyin', label: '抖音', icon: 'music', color: '#25f4ee' },
+    { id: 'wechat', label: '微信', icon: 'chat', color: '#07c160' },
   ];
 
   el.innerHTML = `
@@ -229,7 +229,7 @@ function renderPlatformCopy(copy) {
         .map(
           (p, i) => `
         <button class="platform-copy-tab ${i === 0 ? 'active' : ''}" data-platform="${p.id}" style="${i === 0 ? `border-color:${p.color}` : ''}">
-          ${p.icon} ${p.label}
+          <svg class="ico"><use href="#i-${p.icon}"/></svg> ${p.label}
         </button>
       `
         )
@@ -563,9 +563,10 @@ async function sharePoster() {
   ).substring(0, 16);
   const shareUrl = `${window.location.origin}${window.location.pathname}#share/${shareId}`;
 
-  // 填充分享弹窗（验证 dataUrl 格式，防止恶意 src 注入）
+  // 填充分享弹窗（验证 URL 格式，防止恶意 src 注入；支持 blob: 和 data: URL）
   const shareImgSrc =
-    typeof current.dataUrl === 'string' && /^data:image\/[a-zA-Z0-9.+-]+;base64,/.test(current.dataUrl)
+    typeof current.dataUrl === 'string' &&
+    (/^data:image\/[a-zA-Z0-9.+-]+;base64,/.test(current.dataUrl) || /^blob:/.test(current.dataUrl))
       ? current.dataUrl
       : '';
   $('share-preview').innerHTML = shareImgSrc ? `<img src="${escapeHtml(shareImgSrc)}" alt="海报预览">` : '';
@@ -809,7 +810,7 @@ async function regenerate() {
         title: i === state.currentPosterIndex ? state.currentTitle : undefined,
       });
       // 释放旧海报的 Blob URL，防止内存泄漏
-      safeRevokeUrl(old.blobUrl);
+      safeRevokeUrl(old.dataUrl);
       state.posterResults[i] = result;
       saveToHistory(result);
     }
@@ -857,12 +858,14 @@ function renderWallGrid() {
   const empty = $('wall-empty');
   const actions = $('wall-actions');
   const countEl = $('wall-count');
+  const statsEl = $('wall-stats');
 
   if (state.wallItems.length === 0) {
     grid.innerHTML = '';
     grid.style.display = 'none';
     empty.style.display = 'block';
     actions.style.display = 'none';
+    if (statsEl) statsEl.style.display = 'none';
     countEl.textContent = '你的电影海报作品集';
     return;
   }
@@ -870,7 +873,23 @@ function renderWallGrid() {
   grid.style.display = 'grid';
   empty.style.display = 'none';
   actions.style.display = 'flex';
+  if (statsEl) statsEl.style.display = 'flex';
   countEl.textContent = `共 ${state.wallItems.length} 件作品`;
+
+  // 计算统计数据
+  const directors = new Set(state.wallItems.map((i) => i.director).filter(Boolean));
+  const dates = new Set(
+    state.wallItems.map((i) => {
+      const d = new Date(i.timestamp);
+      return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+    })
+  );
+  const statCount = $('stat-count');
+  const statDirectors = $('stat-directors');
+  const statDays = $('stat-days');
+  if (statCount) statCount.textContent = state.wallItems.length;
+  if (statDirectors) statDirectors.textContent = directors.size;
+  if (statDays) statDays.textContent = dates.size;
 
   grid.innerHTML = '';
   state.wallItems.forEach((item, i) => {
@@ -883,6 +902,7 @@ function renderWallGrid() {
 
     el.innerHTML = `
       <img data-src="${escapeHtml(item.thumb || item.fullImage)}" alt="${escapeHtml(item.title)}">
+      <div class="wall-download-hint">点击下载 ↓</div>
       <button class="wall-delete" data-id="${escapeHtml(item.id)}" title="删除">×</button>
       <div class="wall-overlay">
         <div class="wall-title">${escapeHtml(item.title)}</div>

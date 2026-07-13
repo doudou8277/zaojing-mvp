@@ -2611,11 +2611,11 @@ async function generateGuessPoster(options: GenerateGuessPosterOptions): Promise
   const level = Math.max(1, Math.min(3, hintLevel));
   const hints: Record<number, { title: string; clues: string[] }> = {
     1: {
-      title: '🔍 初级提示',
+      title: '初级提示',
       clues: [`导演：${movie.director}`, `上映：${movie.releaseDate}`, `片名首字：${movie.title[0]}`],
     },
     2: {
-      title: '💡 中级提示',
+      title: '中级提示',
       clues: [
         `导演：${movie.director}`,
         `上映：${movie.releaseDate}`,
@@ -2624,7 +2624,7 @@ async function generateGuessPoster(options: GenerateGuessPosterOptions): Promise
       ],
     },
     3: {
-      title: '🎯 高级提示',
+      title: '高级提示',
       clues: [
         `片名：${movie.title}`,
         `导演：${movie.director}`,
@@ -2728,10 +2728,10 @@ async function generateCharacterMeme(options: GenerateCharacterMemeOptions): Pro
   }
 
   // 梗图类型标签
-  const typeLabels: Record<string, string> = { dialogue: '💬 经典台词', parody: '🎭 恶搞改编', reaction: '😱 神反应' };
+  const typeLabels: Record<string, string> = { dialogue: '经典台词', parody: '恶搞改编', reaction: '神反应' };
   ctx.fillStyle = hexToRgba(c.textLight || c.text, 0.4);
   ctx.font = `400 16px "Noto Sans SC", sans-serif`;
-  ctx.fillText(typeLabels[memeType] || '💬 二创', w / 2, h * 0.82);
+  ctx.fillText(typeLabels[memeType] || '二创', w / 2, h * 0.82);
 
   // 梗图文字（如果有）
   if (memeText) {

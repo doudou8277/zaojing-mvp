@@ -60,7 +60,7 @@ function renderPlatformTabs() {
     <button class="hot-platform-tab ${p.id === _currentPlatform ? 'active' : ''}"
             data-platform="${p.id}"
             style="${p.id === _currentPlatform ? `border-color:${p.color};color:${p.color}` : ''}">
-      ${p.icon} ${p.label}
+      <svg class="ico"><use href="#i-${p.icon}"/></svg> ${p.label}
     </button>
   `
   ).join('');
@@ -88,7 +88,8 @@ async function loadAndRenderTopics() {
     return;
   }
 
-  listEl.innerHTML = '<div class="hot-topics-loading">🔥 正在获取最新热搜...</div>';
+  listEl.innerHTML =
+    '<div class="hot-topics-loading"><svg class="ico"><use href="#i-flame"/></svg> 正在获取最新热搜...</div>';
 
   try {
     _allTopics = await fetchHotTopics();
@@ -125,7 +126,7 @@ function renderTopicList() {
           <div class="hot-topic-title">${escapeHtml(topic.title)}</div>
           <div class="hot-topic-meta">
             ${topic.category ? `<span class="hot-topic-cat" style="background:${catColor}20;color:${catColor}">${escapeHtml(topic.category)}</span>` : ''}
-            <span class="hot-topic-hot">🔥 ${formatHotValue(topic.hot)}</span>
+            <span class="hot-topic-hot"><svg class="ico"><use href="#i-flame"/></svg> ${formatHotValue(topic.hot)}</span>
           </div>
         </div>
         <button class="hot-topic-use" data-index="${i}">选用</button>

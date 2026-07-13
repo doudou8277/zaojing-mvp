@@ -20,6 +20,8 @@ import {
   switchResultToolsTab,
   ALL_MODAL_IDS,
   escapeHtml,
+  confirmDialog,
+  promptDialog,
 } from './shared.js';
 import { DIRECTORS } from './data';
 import * as AIClient from './ai-client';
@@ -233,21 +235,145 @@ function initDirectorsPageWithCallbacks() {
 // 向后兼容：movie-module.js 通过 typeof toast === 'function' 跨模块调用
 window.toast = toast;
 
+// ========== 导航辅助函数 ==========
+
+/** 重置到首页（清空状态） */
+function resetToHome() {
+  state.inputText = '';
+  state.moodTagId = null;
+  state.uploadedImage = null;
+  state.selectedDirectorIds = [];
+  state.posterResults = [];
+  state.currentPosterIndex = 0;
+  state.posterFormat = 'vertical';
+  state.showQuote = true;
+  state.currentTitle = '';
+  state.altTitles = [];
+  state.currentQuote = '';
+  state.imageEmotionAnalysis = null;
+  // 恢复引擎默认为 seedream
+  state.useAI = true;
+  state.aiEngine = 'seedream';
+  const seedreamBtn = document.querySelector('.engine-option[data-engine="seedream"]');
+  const canvasBtn = document.querySelector('.engine-option[data-engine="canvas"]');
+  if (seedreamBtn && canvasBtn) {
+    seedreamBtn.classList.add('active');
+    seedreamBtn.setAttribute('aria-checked', 'true');
+    canvasBtn.classList.remove('active');
+    canvasBtn.setAttribute('aria-checked', 'false');
+  }
+  const analysisEl = $('upload-analysis');
+  if (analysisEl) analysisEl.style.display = 'none';
+  // 重置上传按钮状态
+  const uploadBtn = $('btn-upload-image');
+  const uploadLabel = $('upload-label');
+  const uploadPreview = $('upload-preview');
+  if (uploadBtn) uploadBtn.classList.remove('has-image');
+  if (uploadLabel) uploadLabel.textContent = '上传参考图';
+  if (uploadPreview) {
+    uploadPreview.src = '';
+    uploadPreview.style.display = 'none';
+  }
+  initInputPage({ initDirectorsPage: initDirectorsPageWithCallbacks });
+  navigateTo('input');
+}
+
+/** 处理侧边栏/底部Tab的section导航 */
+function handleSectionNav(section, page) {
+  // 先关闭所有弹窗
+  closeAllModals();
+
+  if (section === 'create') {
+    // 创作：回到输入页
+    navigateTo('input');
+    // 滚动到顶部
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } else if (section === 'lab') {
+    // 实验室：如果不在输入页则先回到输入页，然后滚动到实验室区域
+    const activePage = document.querySelector('.page.active');
+    const isInputPage = activePage && activePage.id === 'page-input';
+    if (!isInputPage) {
+      navigateTo('input');
+      // 等待页面切换后滚动
+      setTimeout(() => {
+        const labSection = document.getElementById('lab-section');
+        if (labSection) labSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 300);
+    } else {
+      const labSection = document.getElementById('lab-section');
+      if (labSection) labSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  } else if (section === 'my') {
+    // 我的：导航到电影墙
+    ensurePageInit('result').then(() => {
+      lazyModules.result.initWallPage();
+    });
+  } else if (section === 'settings') {
+    // 返回展示页
+    window.location.href = 'showcase.html';
+  }
+}
+
+/** 处理topbar返回按钮 */
+function handleBackNavigation() {
+  // 先关闭弹窗
+  if (closeAllModals()) return;
+
+  // 根据当前页面返回
+  const activePage = document.querySelector('.page.active');
+  if (!activePage) {
+    navigateTo('input');
+    return;
+  }
+  const pageId = activePage.id.replace('page-', '');
+
+  // 核心流程返回逻辑
+  if (pageId === 'result') {
+    navigateTo('directors');
+  } else if (pageId === 'generating') {
+    navigateTo('directors');
+  } else if (pageId === 'directors') {
+    navigateTo('input');
+  } else if (pageId === 'wall') {
+    navigateTo('input');
+  } else if (
+    pageId === 'ticket' ||
+    pageId === 'cocreate' ||
+    pageId === 'movies' ||
+    pageId === 'batch' ||
+    pageId === 'hot-topics' ||
+    pageId === 'template'
+  ) {
+    navigateTo('input');
+  } else {
+    navigateTo('input');
+  }
+}
+
 // ========== 事件绑定 ==========
 function bindEvents() {
+  // 安全事件绑定辅助函数：元素不存在时静默跳过
+  const on = (id, event, handler) => {
+    const el = typeof id === 'string' ? $(id) : id;
+    if (el) el.addEventListener(event, handler);
+  };
+  const onClick = (id, handler) => on(id, 'click', handler);
+
   // 示例输入：点击填入输入框
   document.querySelectorAll('.example-chip').forEach((chip) => {
     chip.addEventListener('click', () => {
       const text = chip.dataset.text;
       const textarea = $('input-text');
-      textarea.value = text;
-      textarea.dispatchEvent(new Event('input'));
-      textarea.focus();
+      if (textarea) {
+        textarea.value = text;
+        textarea.dispatchEvent(new Event('input'));
+        textarea.focus();
+      }
     });
   });
 
   // 语音输入按钮：点击开始/停止录音
-  $('btn-voice-input').addEventListener('click', () => {
+  onClick('btn-voice-input', () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
       toast('当前浏览器不支持语音识别');
@@ -259,13 +385,15 @@ function bindEvents() {
         state.voiceRecognition.stop();
       }
       state.isListening = false;
-      $('voice-status').style.display = 'none';
+      const vs = $('voice-status');
+      if (vs) vs.style.display = 'none';
     } else {
       if (state.voiceRecognition) {
         try {
           state.voiceRecognition.start();
           state.isListening = true;
-          $('voice-status').style.display = 'flex';
+          const vs = $('voice-status');
+          if (vs) vs.style.display = 'flex';
         } catch (e) {
           logger.warn('启动语音识别失败:', e);
           toast('启动语音识别失败，请重试');
@@ -274,9 +402,10 @@ function bindEvents() {
     }
   });
 
-  // 选导演页
-  $('btn-back-input').addEventListener('click', () => navigateTo('input'));
-  $('btn-generate').addEventListener('click', async () => {
+  // 选导演页返回按钮（新ID）
+  onClick('btn-back-to-input', () => navigateTo('input'));
+  onClick('btn-back-input', () => navigateTo('input')); // 导演页内的"重新输入"按钮
+  onClick('btn-generate', async () => {
     if (state.selectedDirectorIds.length === 0) {
       toast('请至少选择一位导演');
       return;
@@ -286,7 +415,7 @@ function bindEvents() {
   });
 
   // 全选/清除
-  $('btn-select-all').addEventListener('click', () => {
+  onClick('btn-select-all', () => {
     state.selectedDirectorIds = DIRECTORS.map((d) => d.id);
     document.querySelectorAll('.director-card').forEach((card) => {
       card.classList.add('selected');
@@ -295,7 +424,7 @@ function bindEvents() {
     toast(`已全选 ${DIRECTORS.length} 位导演`);
   });
 
-  $('btn-clear-all').addEventListener('click', () => {
+  onClick('btn-clear-all', () => {
     state.selectedDirectorIds = ['miyazaki'];
     document.querySelectorAll('.director-card').forEach((card) => {
       card.classList.toggle('selected', card.dataset.id === 'miyazaki');
@@ -305,107 +434,167 @@ function bindEvents() {
   });
 
   // 结果页（懒加载 result 模块）
-  $('btn-download').addEventListener('click', async () => {
+  onClick('btn-download', async () => {
     await ensurePageInit('result');
     lazyModules.result.downloadPoster();
   });
-  $('btn-share').addEventListener('click', async () => {
+  onClick('btn-share', async () => {
     await ensurePageInit('result');
     lazyModules.result.sharePoster();
   });
-  $('btn-regenerate').addEventListener('click', async () => {
+  onClick('btn-regenerate', async () => {
     await ensurePageInit('result');
     lazyModules.result.regenerate();
   });
-  $('btn-refresh-quote').addEventListener('click', async () => {
+  onClick('btn-refresh-quote', async () => {
     await ensurePageInit('result');
     lazyModules.result.refreshQuote();
   });
 
   // 刷新 AI 影评
-  $('btn-refresh-review').addEventListener('click', async () => {
+  onClick('btn-refresh-review', async () => {
     await ensurePageInit('result');
     lazyModules.result.renderReview();
     toast('已换一段影评');
   });
 
   // 刷新导演手记
-  $('btn-refresh-notes').addEventListener('click', async () => {
+  onClick('btn-refresh-notes', async () => {
     await ensurePageInit('result');
     lazyModules.result.renderDirectorNotes();
     toast('已刷新导演手记');
   });
 
-  $('btn-home').addEventListener('click', () => {
-    state.inputText = '';
-    state.moodTagId = null;
-    state.uploadedImage = null;
-    state.selectedDirectorIds = [];
-    state.posterResults = [];
-    state.currentPosterIndex = 0;
-    state.posterFormat = 'vertical';
-    state.showQuote = true;
-    state.currentTitle = '';
-    state.altTitles = [];
-    state.currentQuote = '';
-    state.imageEmotionAnalysis = null;
-    const analysisEl = $('upload-analysis');
-    if (analysisEl) analysisEl.style.display = 'none';
-    initInputPage({ initDirectorsPage: initDirectorsPageWithCallbacks });
-    navigateTo('input');
+  // 首页/重置按钮（底部FAB和首页重置）
+  onClick('btn-home', resetToHome);
+  onClick('fab-create', () => {
+    closeAllModals();
+    resetToHome();
+  });
+
+  // 引擎选择开关（AI 生图 / Canvas）
+  document.querySelectorAll('.engine-option[data-engine]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const engine = btn.dataset.engine;
+      document.querySelectorAll('.engine-option[data-engine]').forEach((b) => {
+        b.classList.toggle('active', b === btn);
+        b.setAttribute('aria-checked', b === btn ? 'true' : 'false');
+      });
+      if (engine === 'canvas') {
+        state.useAI = false;
+        state.aiEngine = 'canvas';
+        toast('已切换为 Canvas 模式');
+      } else {
+        state.useAI = true;
+        state.aiEngine = 'seedream';
+        toast('已切换为 AI 生图模式');
+      }
+    });
+  });
+
+  // 侧边栏导航
+  document.querySelectorAll('.sidebar-nav-item[data-section]').forEach((item) => {
+    item.addEventListener('click', () => {
+      const section = item.dataset.section;
+      handleSectionNav(section, item.dataset.page);
+    });
+  });
+
+  // 底部Tab导航
+  document.querySelectorAll('.bottom-tab-item[data-section]').forEach((item) => {
+    item.addEventListener('click', () => {
+      const section = item.dataset.section;
+      handleSectionNav(section, item.dataset.page);
+    });
+  });
+
+  // 返回按钮（topbar中的返回按钮）
+  onClick('btn-back', handleBackNavigation);
+
+  // 热门电影按钮（topbar）- 懒加载movie模块
+  onClick('btn-hot-movies', async () => {
+    const m = await ensureMovieModuleInited();
+    m.navigateToMovies();
+  });
+
+  // 实验室弹窗中的功能按钮
+  onClick('btn-to-ticket', async () => {
+    closeAllModals();
+    await ensurePageInit('ticket');
+    navigateTo('ticket');
+    lazyModules.ticket.initTicketPage();
+  });
+  onClick('btn-to-cocreate', async () => {
+    closeAllModals();
+    await ensurePageInit('cocreate');
+    lazyModules.cocreate.initCocreatePage();
+  });
+  onClick('btn-to-batch', async () => {
+    await ensurePageInit('batch');
+    lazyModules.batch.openBatchModal();
+  });
+  onClick('btn-to-templates', async () => {
+    await ensurePageInit('templates');
+    lazyModules.templates.openTemplateModal();
+  });
+  onClick('btn-to-hot-topics', async () => {
+    await ensurePageInit('hot-topics');
+    lazyModules.hotTopics.openHotTopicsModal();
   });
 
   // 导演说开关
   const toggleQuote = $('toggle-quote');
-  async function toggleQuoteHandler() {
-    state.showQuote = !state.showQuote;
-    toggleQuote.classList.toggle('on', state.showQuote);
-    toggleQuote.setAttribute('aria-checked', state.showQuote);
-    if (state.posterResults.length > 0) {
-      await ensurePageInit('result');
-      await lazyModules.result.regenerateAllPosters();
-      const current = state.posterResults[state.currentPosterIndex];
-      $('quote-text').textContent = state.showQuote && current.quote ? `「${current.quote}」` : '';
-      $('quote-display').style.opacity = state.showQuote ? '1' : '0.4';
+  if (toggleQuote) {
+    async function toggleQuoteHandler() {
+      state.showQuote = !state.showQuote;
+      toggleQuote.classList.toggle('on', state.showQuote);
+      toggleQuote.setAttribute('aria-checked', state.showQuote);
+      if (state.posterResults.length > 0) {
+        await ensurePageInit('result');
+        await lazyModules.result.regenerateAllPosters();
+        const current = state.posterResults[state.currentPosterIndex];
+        const qt = $('quote-text');
+        const qd = $('quote-display');
+        if (qt) qt.textContent = state.showQuote && current.quote ? `「${current.quote}」` : '';
+        if (qd) qd.style.opacity = state.showQuote ? '1' : '0.4';
+      }
     }
+    toggleQuote.addEventListener('click', toggleQuoteHandler);
+    toggleQuote.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggleQuoteHandler();
+      }
+    });
   }
-  toggleQuote.addEventListener('click', toggleQuoteHandler);
-  toggleQuote.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      toggleQuoteHandler();
-    }
-  });
 
   // 电影墙
-  $('btn-to-wall').addEventListener('click', async () => {
+  onClick('btn-to-wall', async () => {
     await ensurePageInit('result');
     lazyModules.result.initWallPage();
   });
-  $('btn-wall-to-input').addEventListener('click', () => navigateTo('input'));
-  $('btn-wall-back').addEventListener('click', () => navigateTo('input'));
-  $('btn-wall-clear').addEventListener('click', async () => {
+  onClick('btn-wall-to-input', () => navigateTo('input'));
+  onClick('btn-wall-back', () => navigateTo('input'));
+  onClick('btn-wall-clear', async () => {
     if (state.wallItems.length === 0) return;
-    if (confirm('确定要清空所有作品吗？此操作不可撤销。')) {
+    const ok = await confirmDialog('确定要清空所有作品吗？此操作不可撤销。', {
+      title: '清空电影墙',
+      okText: '清空',
+      danger: true,
+    });
+    if (ok) {
       await ensurePageInit('result');
       lazyModules.result.clearWall();
       toast('电影墙已清空');
     }
   });
 
-  // 旅行票根
-  $('btn-to-ticket').addEventListener('click', async () => {
-    await ensurePageInit('ticket');
-    navigateTo('ticket');
-    lazyModules.ticket.initTicketPage();
-  });
-
   // 分享（action 按钮保留，close/overlay 由 zj-modal 统一处理）
-  $('btn-copy-link').addEventListener('click', async () => {
+  onClick('btn-copy-link', async () => {
     await ensurePageInit('result');
     lazyModules.result.copyShareLink();
   });
-  $('btn-download-qr').addEventListener('click', async () => {
+  onClick('btn-download-qr', async () => {
     await ensurePageInit('result');
     lazyModules.result.downloadQRCode();
   });
@@ -419,7 +608,7 @@ function bindEvents() {
   });
 
   // 保存图片按钮
-  $('btn-download-image').addEventListener('click', async () => {
+  onClick('btn-download-image', async () => {
     await ensurePageInit('result');
     lazyModules.result.savePosterImage();
   });
@@ -441,72 +630,65 @@ function bindEvents() {
   });
 
   // 多人共创（懒加载 cocreate 模块）
-  $('btn-to-cocreate').addEventListener('click', async () => {
+  onClick('btn-add-contributor', async () => {
     await ensurePageInit('cocreate');
-    lazyModules.cocreate.initCocreatePage();
-  });
-  $('btn-add-contributor').addEventListener('click', async () => {
-    await ensurePageInit('cocreate');
-    const count = $('cocreate-inputs').querySelectorAll('.cocreate-input-item').length;
+    const inputs = $('cocreate-inputs');
+    const count = inputs ? inputs.querySelectorAll('.cocreate-input-item').length : 0;
     lazyModules.cocreate.addCocreateInput(`创作者${count + 1}`, '');
   });
-  $('btn-cocreate-back').addEventListener('click', () => navigateTo('input'));
-  $('btn-cocreate-analyze').addEventListener('click', async () => {
+  onClick('btn-cocreate-back', () => navigateTo('input'));
+  onClick('btn-cocreate-analyze', async () => {
     await ensurePageInit('cocreate');
     lazyModules.cocreate.analyzeCocreate();
   });
-  $('btn-cocreate-generate').addEventListener('click', async () => {
+  onClick('btn-cocreate-generate', async () => {
     await ensurePageInit('cocreate');
     lazyModules.cocreate.generateCocreatePoster();
   });
 
   // 电影预告片（懒加载 trailer 模块；close/overlay 由 zj-modal 统一处理）
-  $('btn-trailer').addEventListener('click', async () => {
+  onClick('btn-trailer', async () => {
     await ensurePageInit('trailer');
     lazyModules.trailer.playTrailer();
   });
-  $('btn-trailer-replay').addEventListener('click', async () => {
+  onClick('btn-trailer-replay', async () => {
     await ensurePageInit('trailer');
     lazyModules.trailer.playTrailer();
   });
-  $('btn-trailer-skip').addEventListener('click', async () => {
+  onClick('btn-trailer-skip', async () => {
     await ensurePageInit('trailer');
     lazyModules.trailer.skipTrailer();
   });
 
   // 海报动效化（result 模块的动画功能；close/overlay 由 zj-modal 统一处理）
-  $('btn-animate').addEventListener('click', async () => {
+  onClick('btn-animate', async () => {
     await ensurePageInit('result');
     lazyModules.result.openAnimateModal();
   });
-  $('btn-download-video').addEventListener('click', async () => {
+  onClick('btn-download-video', async () => {
     await ensurePageInit('result');
     lazyModules.result.downloadAnimationVideo();
   });
 
   // 批量生成（懒加载 batch 模块）
-  $('btn-to-batch').addEventListener('click', async () => {
-    await ensurePageInit('batch');
-    lazyModules.batch.openBatchModal();
-  });
-  $('btn-batch-back').addEventListener('click', () => navigateTo('input'));
-  $('btn-batch-start').addEventListener('click', async () => {
+  onClick('btn-batch-back', () => navigateTo('input'));
+  onClick('btn-batch-start', async () => {
     await ensurePageInit('batch');
     lazyModules.batch.startBatchGeneration();
   });
-  $('btn-batch-abort').addEventListener('click', async () => {
+  onClick('btn-batch-abort', async () => {
     await ensurePageInit('batch');
     lazyModules.batch.abortBatchGeneration();
   });
-  $('btn-batch-finish').addEventListener('click', async () => {
+  onClick('btn-batch-finish', async () => {
     await ensurePageInit('batch');
     lazyModules.batch.finishBatch();
   });
-  $('btn-batch-download-all').addEventListener('click', async () => {
+  onClick('btn-batch-download-all', async () => {
     await ensurePageInit('batch');
     lazyModules.batch.downloadAllBatchPosters();
   });
-  $('batch-csv-input').addEventListener('change', async (e) => {
+  on('batch-csv-input', 'change', async (e) => {
     const file = e.target.files[0];
     if (file) {
       await ensurePageInit('batch');
@@ -514,7 +696,7 @@ function bindEvents() {
     }
     e.target.value = '';
   });
-  $('batch-text-input').addEventListener('input', () => {
+  on('batch-text-input', 'input', () => {
     const textarea = $('batch-text-input');
     const countEl = $('batch-input-count');
     if (!textarea || !countEl) return;
@@ -524,53 +706,45 @@ function bindEvents() {
   });
 
   // 模板库（懒加载 templates 模块）
-  $('btn-to-templates').addEventListener('click', async () => {
-    await ensurePageInit('templates');
-    lazyModules.templates.openTemplateModal();
-  });
-  $('btn-template-back').addEventListener('click', () => navigateTo('input'));
-  $('btn-save-template').addEventListener('click', async () => {
+  onClick('btn-template-back', () => navigateTo('input'));
+  onClick('btn-save-template', async () => {
     await ensurePageInit('templates');
     lazyModules.templates.saveCurrentAsTemplate();
   });
 
   // 品牌工具包（懒加载 brand 模块；close/overlay 由 zj-modal 统一处理）
-  $('btn-brand').addEventListener('click', async () => {
+  onClick('btn-brand', async () => {
     await ensurePageInit('brand');
     lazyModules.brand.openBrandModal();
   });
-  $('btn-brand-apply').addEventListener('click', async () => {
+  onClick('btn-brand-apply', async () => {
     await ensurePageInit('brand');
     lazyModules.brand.closeBrandModal();
   });
 
   // 热点话题（懒加载 hot-topics 模块）
-  $('btn-to-hot-topics').addEventListener('click', async () => {
-    await ensurePageInit('hot-topics');
-    lazyModules.hotTopics.openHotTopicsModal();
-  });
-  $('btn-hot-topics-back').addEventListener('click', () => navigateTo('input'));
-  $('btn-hot-topics-refresh').addEventListener('click', async () => {
+  onClick('btn-hot-topics-back', () => navigateTo('input'));
+  onClick('btn-hot-topics-refresh', async () => {
     await ensurePageInit('hot-topics');
     lazyModules.hotTopics.refreshHotTopics();
   });
 
   // 字体排版（懒加载 typography 模块；close/overlay 由 zj-modal 统一处理）
-  $('btn-typography').addEventListener('click', async () => {
+  onClick('btn-typography', async () => {
     await ensurePageInit('typography');
     lazyModules.typography.openTypographyModal();
   });
-  $('btn-typography-apply').addEventListener('click', async () => {
+  onClick('btn-typography-apply', async () => {
     await ensurePageInit('typography');
     lazyModules.typography.closeTypographyModal();
   });
 
   // 账号矩阵（懒加载 accounts 模块；close/overlay 由 zj-modal 统一处理）
-  $('btn-accounts').addEventListener('click', async () => {
+  onClick('btn-accounts', async () => {
     await ensurePageInit('accounts');
     lazyModules.accounts.openAccountsModal();
   });
-  $('btn-accounts-close').addEventListener('click', async () => {
+  onClick('btn-accounts-close', async () => {
     await ensurePageInit('accounts');
     lazyModules.accounts.closeAccountsModal();
   });
@@ -597,8 +771,8 @@ function bindEvents() {
     // ESC: 优先关闭弹窗，其次返回上一页
     if (e.key === 'Escape') {
       if (closeAllModals()) return;
-      if (pages.result.classList.contains('active')) navigateTo('directors');
-      else if (pages.directors.classList.contains('active')) navigateTo('input');
+      if (pages.result && pages.result.classList.contains('active')) navigateTo('directors');
+      else if (pages.directors && pages.directors.classList.contains('active')) navigateTo('input');
       return;
     }
 
@@ -608,7 +782,7 @@ function bindEvents() {
 
     // Ctrl/Cmd + Enter: 在选导演页触发生成
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-      if (pages.directors.classList.contains('active')) {
+      if (pages.directors && pages.directors.classList.contains('active')) {
         e.preventDefault();
         if (state.selectedDirectorIds.length > 0) {
           ensurePageInit('generating').then(() => lazyModules.generating.startGeneration());
@@ -629,7 +803,7 @@ function bindEvents() {
         break;
       case 'g':
         // G = Generate（选导演页）
-        if (pages.directors.classList.contains('active')) {
+        if (pages.directors && pages.directors.classList.contains('active')) {
           if (state.selectedDirectorIds.length > 0) {
             ensurePageInit('generating').then(() => lazyModules.generating.startGeneration());
           } else {
@@ -639,13 +813,13 @@ function bindEvents() {
         break;
       case 'r':
         // R = Regenerate（结果页）
-        if (pages.result.classList.contains('active')) {
+        if (pages.result && pages.result.classList.contains('active')) {
           ensurePageInit('result').then(() => lazyModules.result.regenerate());
         }
         break;
       case 'd':
         // D = Download（结果页）
-        if (pages.result.classList.contains('active')) {
+        if (pages.result && pages.result.classList.contains('active')) {
           ensurePageInit('result').then(() => lazyModules.result.downloadPoster());
         }
         break;
@@ -657,51 +831,52 @@ function bindEvents() {
   });
 
   // ========== 风格工具栏按钮（懒加载 style 模块）==========
-  $('btn-create-style')?.addEventListener('click', async () => {
+  onClick('btn-create-style', async () => {
     await ensurePageInit('style');
     lazyModules.style.openStyleCreateModal();
   });
-  $('btn-movie-style')?.addEventListener('click', async () => {
+  onClick('btn-movie-style', async () => {
     await ensurePageInit('style');
     lazyModules.style.openMovieStyleModal();
   });
-  $('btn-blend-style')?.addEventListener('click', async () => {
+  onClick('btn-blend-style', async () => {
     await ensurePageInit('style');
     lazyModules.style.openBlendModal();
   });
 
   // ========== 自定义风格创建 ==========
-  $('btn-parse-style')?.addEventListener('click', async () => {
+  onClick('btn-parse-style', async () => {
     await ensurePageInit('style');
     lazyModules.style.parseCustomStyle();
   });
-  $('btn-save-style')?.addEventListener('click', async () => {
+  onClick('btn-save-style', async () => {
     await ensurePageInit('style');
     lazyModules.style.saveAndUseCustomStyle();
   });
 
   // ========== 电影风格分析 ==========
-  $('btn-analyze-movie')?.addEventListener('click', async () => {
+  onClick('btn-analyze-movie', async () => {
     await ensurePageInit('style');
     lazyModules.style.analyzeMovieStyle();
   });
-  $('btn-save-movie-style')?.addEventListener('click', async () => {
+  onClick('btn-save-movie-style', async () => {
     await ensurePageInit('style');
     lazyModules.style.saveAndUseCustomStyle();
   });
 
   // ========== 风格混搭 ==========
-  $('btn-do-blend')?.addEventListener('click', async () => {
+  onClick('btn-do-blend', async () => {
     await ensurePageInit('style');
     lazyModules.style.doBlend();
   });
-  $('btn-save-blend-style')?.addEventListener('click', async () => {
+  onClick('btn-save-blend-style', async () => {
     await ensurePageInit('style');
     lazyModules.style.saveAndUseCustomStyle();
   });
-  $('blend-ratio-slider')?.addEventListener('input', (e) => {
+  on('blend-ratio-slider', 'input', (e) => {
     const v = e.target.value;
-    $('blend-ratio-value').textContent = `${v} : ${100 - v}`;
+    const valEl = $('blend-ratio-value');
+    if (valEl) valEl.textContent = `${v} : ${100 - v}`;
   });
 }
 
@@ -748,16 +923,7 @@ async function init() {
     }
   });
 
-  // 懒加载热门电影模块：首次点击导航按钮时才加载并初始化
-  ['nav-to-movies', 'btn-to-movies'].forEach((id) => {
-    const el = $(id);
-    if (el) {
-      el.onclick = async () => {
-        const m = await ensureMovieModuleInited();
-        m.navigateToMovies();
-      };
-    }
-  });
+  // 热门电影按钮已在 bindEvents 中绑定（btn-hot-movies）
 
   initInputPage({ initDirectorsPage: initDirectorsPageWithCallbacks });
 

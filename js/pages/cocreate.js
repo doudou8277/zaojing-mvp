@@ -9,7 +9,7 @@ import * as AIClient from '../ai-client';
 import { EMOTION_SPECTRUM } from '../data.js';
 
 const cocreateBoundary = createModuleBoundary('Cocreate');
-const COCREATE_AVATARS = ['🎬', '🎭', '🎨', '📷', '🎤', '🎸', '✍️', '🌟'];
+const COCREATE_AVATARS = ['clapper', 'masks', 'palette', 'camera', 'mic', 'music', 'edit', 'sparkles'];
 
 let _initDirectorsPage = null;
 
@@ -47,7 +47,7 @@ function addCocreateInput(name, text) {
   item.className = 'cocreate-input-item';
 
   item.innerHTML = `
-    <div class="cocreate-avatar">${avatar}</div>
+    <div class="cocreate-avatar"><svg class="ico ico-lg"><use href="#i-${avatar}"/></svg></div>
     <div class="cocreate-input-wrap">
       <div class="cocreate-input-name">${escapeHtml(contributorName)}</div>
       <textarea class="cocreate-input-field" placeholder="写下一句心情或故事…" maxlength="100" rows="2">${escapeHtml(text || '')}</textarea>
@@ -67,7 +67,8 @@ function addCocreateInput(name, text) {
       const nameEl = el.querySelector('.cocreate-input-name');
       if (nameEl) nameEl.textContent = `创作者${i + 1}`;
       const avatarEl = el.querySelector('.cocreate-avatar');
-      if (avatarEl) avatarEl.textContent = COCREATE_AVATARS[i % COCREATE_AVATARS.length];
+      if (avatarEl)
+        avatarEl.innerHTML = `<svg class="ico ico-lg"><use href="#i-${COCREATE_AVATARS[i % COCREATE_AVATARS.length]}"/></svg>`;
     });
   });
 

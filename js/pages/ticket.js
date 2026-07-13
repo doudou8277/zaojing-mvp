@@ -474,7 +474,7 @@ async function generateMoodText(destination, date) {
     if (moodDisplay) moodDisplay.textContent = '';
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
 
     fetch('/api/ticket/copy-stream', {
       method: 'POST',
@@ -496,7 +496,7 @@ async function generateMoodText(destination, date) {
         const decoder = new TextDecoder();
         let buffer = '';
         let moodText = '';
-        let eventType = '';
+        const eventType = '';
 
         function processChunk() {
           reader
