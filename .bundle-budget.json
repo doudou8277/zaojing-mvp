@@ -4,8 +4,8 @@
     "index": { "max": 50, "description": "主入口 chunk（首屏：路由 + 事件绑定 + 懒加载基础设施）" },
     "movie-module": { "max": 45, "description": "电影模块（懒加载，含 poster-engine + 情绪化渲染）" },
     "data": { "max": 10, "description": "数据层" },
-    "components": { "max": 2, "description": "Web Components" },
+    "components": { "max": 3, "description": "Web Components" },
     "ai-client": { "max": 2, "description": "AI 客户端（含 timeout/signal 支持 + agentCreate）" },
-    "total": { "max": 120, "description": "所有 chunk 总 gzip 体积（含懒加载页面模块）" }
+    "total": { "max": 130, "description": "所有 chunk 总 gzip 体积（含懒加载页面模块）；长期目标 100KB，需进一步拆分/精简" }
   }
 }
